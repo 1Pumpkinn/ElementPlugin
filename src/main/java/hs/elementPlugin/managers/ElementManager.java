@@ -22,16 +22,18 @@ public class ElementManager {
     private final ManaManager manaManager;
     private final TrustManager trustManager;
     private final CooldownManager cooldownManager;
+    private final ConfigManager configManager;
 
     private final Map<ElementType, Element> registry = new EnumMap<>(ElementType.class);
     private final Random random = new Random();
 
-    public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager, TrustManager trustManager, CooldownManager cooldownManager) {
+    public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager, TrustManager trustManager, CooldownManager cooldownManager, ConfigManager configManager) {
         this.plugin = plugin;
         this.store = store;
         this.manaManager = manaManager;
         this.trustManager = trustManager;
         this.cooldownManager = cooldownManager;
+        this.configManager = configManager;
 
         // Register elements
         register(new AirElement());
@@ -106,7 +108,7 @@ public class ElementManager {
         if (type == null) return false;
         Element e = registry.get(type);
         if (e == null) return false;
-        return e.ability1(player, pd.getUpgradeLevel(type), manaManager, cooldownManager, trustManager);
+        return e.ability1(player, pd.getUpgradeLevel(type), manaManager, cooldownManager, trustManager, configManager);
     }
 
     public boolean useAbility2(Player player) {
@@ -115,6 +117,6 @@ public class ElementManager {
         if (type == null) return false;
         Element e = registry.get(type);
         if (e == null) return false;
-        return e.ability2(player, pd.getUpgradeLevel(type), manaManager, cooldownManager, trustManager);
+        return e.ability2(player, pd.getUpgradeLevel(type), manaManager, cooldownManager, trustManager, configManager);
     }
 }

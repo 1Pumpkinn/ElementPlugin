@@ -2,6 +2,7 @@ package hs.elementPlugin.elements.impl;
 
 import hs.elementPlugin.elements.Element;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.CooldownManager;
 import hs.elementPlugin.managers.ManaManager;
 import hs.elementPlugin.managers.TrustManager;
@@ -21,7 +22,7 @@ public class LifeElement implements Element {
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
         // Upside 1: 15 hearts
-        var attr = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        var attr = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH);
         if (attr != null) {
             if (attr.getBaseValue() < 30.0) attr.setBaseValue(30.0);
             if (player.getHealth() > attr.getBaseValue()) player.setHealth(attr.getBaseValue());
@@ -29,9 +30,9 @@ public class LifeElement implements Element {
     }
 
     @Override
-    public boolean ability1(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust) {
+    public boolean ability1(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
         if (upgradeLevel < 1) { player.sendMessage(ChatColor.RED + "Need Upgrade I"); return false; }
-        int cost = 50;
+        int cost = config.getAbility1Cost(ElementType.LIFE);
         if (!mana.spend(player, cost)) { player.sendMessage(ChatColor.RED + "Not enough mana ("+cost+")"); return false; }
         int radius = 5;
         for (Player other : player.getWorld().getNearbyPlayers(player.getLocation(), radius)) {
@@ -43,9 +44,9 @@ public class LifeElement implements Element {
     }
 
     @Override
-    public boolean ability2(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust) {
+    public boolean ability2(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
         if (upgradeLevel < 2) { player.sendMessage(ChatColor.RED + "Need Upgrade II"); return false; }
-        int cost = 75;
+        int cost = config.getAbility2Cost(ElementType.LIFE);
         if (!mana.spend(player, cost)) { player.sendMessage(ChatColor.RED + "Not enough mana ("+cost+")"); return false; }
         // Grow crops in 5x5 around player
         for (int dx = -2; dx <= 2; dx++) {

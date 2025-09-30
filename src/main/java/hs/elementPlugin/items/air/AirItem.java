@@ -4,6 +4,7 @@ import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.items.ItemKeys;
 import hs.elementPlugin.items.api.ElementItem;
+import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.ManaManager;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -32,7 +33,7 @@ public final class AirItem implements ElementItem {
 
     @Override
     public ItemStack create(ElementPlugin plugin) {
-        ItemStack item = new ItemStack(Material.WIND_CHARGE);
+        ItemStack item = new ItemStack(Material.SNOWBALL);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName("§fWind Charge (Air)");
         meta.setLore(List.of("§7Infinite", "§7On hit: Weakness I + Slowness II (10s)", "§7Cost: 75 mana"));
@@ -51,7 +52,7 @@ public final class AirItem implements ElementItem {
         recipe.shape(" FE", "FWF", "EF ");
         recipe.setIngredient('F', Material.FEATHER);
         recipe.setIngredient('E', Material.ECHO_SHARD);
-        recipe.setIngredient('W', Material.WIND_CHARGE);
+        recipe.setIngredient('W', Material.SNOWBALL);
         plugin.getServer().addRecipe(recipe);
     }
 
@@ -67,15 +68,15 @@ public final class AirItem implements ElementItem {
     }
 
     @Override
-    public boolean handleUse(PlayerInteractEvent e, ElementPlugin plugin, ManaManager mana) {
+    public boolean handleUse(PlayerInteractEvent e, ElementPlugin plugin, ManaManager mana, ConfigManager config) {
         if (e.getHand() != EquipmentSlot.HAND && e.getHand() != EquipmentSlot.OFF_HAND) return false;
         Player p = e.getPlayer();
         ItemStack inHand = (e.getHand() == EquipmentSlot.HAND) ? p.getInventory().getItemInMainHand() : p.getInventory().getItemInOffHand();
         if (!isItem(inHand, plugin)) return false;
 
-        int cost = 75;
+        int cost = config.getItemUseCost(ElementType.AIR);
         if (!mana.spend(p, cost)) {
-            p.sendMessage("§cNot enough mana (75)");
+            p.sendMessage("§cNot enough mana (" + cost + ")");
             return true;
         }
         Snowball proj = p.launchProjectile(Snowball.class);
@@ -95,7 +96,7 @@ public final class AirItem implements ElementItem {
             Byte mark = proj.getPersistentDataContainer().get(new NamespacedKey(plugin, PROJ_KEY), PersistentDataType.BYTE);
             if (mark != null && mark == (byte)1) {
                 victim.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.WEAKNESS, 10 * 20, 0, true, true, true));
-                victim.addPotionEffect(new org.bukkit.potion.PotionEffect(PotionEffectType.SLOWNESS, 10 * 20, 1, true, true, true));
+                victim.addPotionEffect(new org.bukkit.potion.PotionEffect(PotionEffectType.SLOW, 10 * 20, 1, true, true, true));
             }
         }
     }

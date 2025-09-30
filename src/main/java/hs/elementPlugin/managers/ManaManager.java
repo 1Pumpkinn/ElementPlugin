@@ -3,6 +3,7 @@ package hs.elementPlugin.managers;
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.data.PlayerData;
+import hs.elementPlugin.managers.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -15,29 +16,38 @@ import java.util.UUID;
 public class ManaManager {
     private final ElementPlugin plugin;
     private final DataStore store;
+    private final ConfigManager configManager;
     private BukkitTask task;
 
     private final Map<UUID, PlayerData> cache = new HashMap<>();
 
-    public ManaManager(ElementPlugin plugin, DataStore store) {
+    public ManaManager(ElementPlugin plugin, DataStore store, ConfigManager configManager) {
         this.plugin = plugin;
         this.store = store;
+        this.configManager = configManager;
     }
 
     public void start() {
         if (task != null) return;
         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            int maxMana = configManager.getMaxMana();
+            int regenRate = configManager.getManaRegenPerSecond();
+            
             for (Player p : Bukkit.getOnlinePlayers()) {
                 PlayerData pd = get(p.getUniqueId());
                 int before = pd.getMana();
-                if (before < 100) {
-                    pd.addMana(1);
+                if (before < maxMana) {
+                    pd.addMana(regenRate);
+                    // Ensure we don't exceed max mana
+                    if (pd.getMana() > maxMana) {
+                        pd.setMana(maxMana);
+                    }
                     store.save(pd);
                 }
                 // Fire Upside 2: auto-smelt ores when upgrade >=2
                 autoSmeltIfFireUpside2(p, pd);
                 // Action bar display
-                p.sendActionBar(ChatColor.AQUA + "Mana: " + ChatColor.WHITE + pd.getMana() + ChatColor.GRAY + "/100");
+                p.sendActionBar(ChatColor.AQUA + "Mana: " + ChatColor.WHITE + pd.getMana() + ChatColor.GRAY + "/" + maxMana);
             }
         }, 20L, 20L);
     }

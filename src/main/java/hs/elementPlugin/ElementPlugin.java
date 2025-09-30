@@ -4,6 +4,7 @@ import hs.elementPlugin.commands.TrustCommand;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.listeners.CombatListener;
 import hs.elementPlugin.listeners.JoinListener;
+import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.CooldownManager;
 import hs.elementPlugin.managers.ElementManager;
 import hs.elementPlugin.managers.ManaManager;
@@ -15,6 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class ElementPlugin extends JavaPlugin {
 
     private DataStore dataStore;
+    private ConfigManager configManager;
     private ElementManager elementManager;
     private ManaManager manaManager;
     private TrustManager trustManager;
@@ -26,12 +28,13 @@ public final class ElementPlugin extends JavaPlugin {
         saveDefaultConfig();
 
         // Initialize core services
+        this.configManager = new ConfigManager(this);
         this.dataStore = new DataStore(this);
         this.trustManager = new TrustManager(this);
         this.cooldownManager = new CooldownManager();
-        this.manaManager = new ManaManager(this, dataStore);
-        this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager, cooldownManager);
-        this.itemManager = new ItemManager(this, manaManager);
+        this.manaManager = new ManaManager(this, dataStore, configManager);
+        this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager, cooldownManager, configManager);
+        this.itemManager = new ItemManager(this, manaManager, configManager);
 
         // Register commands
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
@@ -71,6 +74,7 @@ public final class ElementPlugin extends JavaPlugin {
     }
 
     public DataStore getDataStore() { return dataStore; }
+    public ConfigManager getConfigManager() { return configManager; }
     public ElementManager getElementManager() { return elementManager; }
     public ManaManager getManaManager() { return manaManager; }
     public TrustManager getTrustManager() { return trustManager; }

@@ -4,6 +4,7 @@ import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.items.ItemKeys;
 import hs.elementPlugin.items.api.ElementItem;
+import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.ManaManager;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -37,7 +38,7 @@ public class WaterItem implements ElementItem {
         ItemStack item = new ItemStack(Material.TRIDENT);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName("§bTidecaller Trident (Water)");
-        meta.setLore(List.of("§7Loyalty X", "§7On hit: Mining Fatigue I (5s)", "§7Cost to throw: 25 mana"));
+        meta.setLore(List.of("§7Loyalty X", "§7On hit: Mining Fatigue I (5s)", "§7Cost to throw: mana"));
         meta.addEnchant(Enchantment.LOYALTY, 10, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
@@ -67,7 +68,7 @@ public class WaterItem implements ElementItem {
     }
 
     @Override
-    public boolean handleUse(PlayerInteractEvent e, ElementPlugin plugin, ManaManager mana) {
+    public boolean handleUse(PlayerInteractEvent e, ElementPlugin plugin, ManaManager mana, ConfigManager config) {
         // Let vanilla throw action proceed; cost is handled in handleLaunch
         return false;
     }
@@ -78,24 +79,24 @@ public class WaterItem implements ElementItem {
         if (e.getDamager() instanceof Trident tr) {
             Byte mark = tr.getPersistentDataContainer().get(new NamespacedKey(plugin, PROJ_KEY), PersistentDataType.BYTE);
             if (mark != null && mark == (byte)1) {
-                victim.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 5 * 20, 0, true, true, true));
+                victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, 5 * 20, 0, true, true, true));
             }
         }
     }
 
     @Override
-    public void handleLaunch(ProjectileLaunchEvent e, ElementPlugin plugin, ManaManager mana) {
+    public void handleLaunch(ProjectileLaunchEvent e, ElementPlugin plugin, ManaManager mana, ConfigManager config) {
         if (!(e.getEntity() instanceof Trident tr)) return;
         if (!(tr.getShooter() instanceof Player p)) return;
         ItemStack inMain = p.getInventory().getItemInMainHand();
         ItemStack inOff = p.getInventory().getItemInOffHand();
         if (!isItem(inMain, plugin) && !isItem(inOff, plugin)) return;
 
-        int cost = 25;
+        int cost = config.getItemThrowCost(ElementType.WATER);
         if (!mana.spend(p, cost)) {
             // Cancel throw if not enough mana
             e.setCancelled(true);
-            p.sendMessage("§cNot enough mana (25)");
+            p.sendMessage("§cNot enough mana (" + cost + ")");
             return;
         }
         tr.getPersistentDataContainer().set(new NamespacedKey(plugin, PROJ_KEY), PersistentDataType.BYTE, (byte)1);

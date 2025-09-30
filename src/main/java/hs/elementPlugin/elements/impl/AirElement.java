@@ -2,6 +2,7 @@ package hs.elementPlugin.elements.impl;
 
 import hs.elementPlugin.elements.Element;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.CooldownManager;
 import hs.elementPlugin.managers.ManaManager;
 import hs.elementPlugin.managers.TrustManager;
@@ -27,12 +28,12 @@ public class AirElement implements Element {
     // Ability 1
 
     @Override
-    public boolean ability1(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust) {
+    public boolean ability1(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
         if (upgradeLevel < 1) {
             player.sendMessage(ChatColor.RED + "You need Upgrade I to use this ability.");
             return false;
         }
-        int cost = 50;
+        int cost = config.getAbility1Cost(ElementType.AIR);
         if (!mana.spend(player, cost)) {
             player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");
             return false;
@@ -65,21 +66,21 @@ public class AirElement implements Element {
     // Ability 2
 
     @Override
-    public boolean ability2(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust) {
+    public boolean ability2(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
         if (upgradeLevel < 2) {
             player.sendMessage(ChatColor.RED + "You need Upgrade II to use this ability.");
             return false;
         }
-        int cost = 100;
+        int cost = config.getAbility2Cost(ElementType.AIR);
         if (!mana.spend(player, cost)) {
             player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");
             return false;
         }
         // For 5 seconds, make weapon feel like a mace with added strength and airtime control
         int duration = 5 * 20;
-        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, duration, 1, true, true, true));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, duration, 2, true, true, true));
-        player.getWorld().playSound(player.getLocation(), Sound.ITEM_MACE_SMASH_GROUND, 1f, 1f);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, duration, 1, true, true, true));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, duration, 2, true, true, true));
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1f, 1f);
         return true;
     }
 }

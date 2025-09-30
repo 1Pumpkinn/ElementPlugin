@@ -4,6 +4,7 @@ import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.items.ItemKeys;
 import hs.elementPlugin.items.api.ElementItem;
+import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.ManaManager;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -34,7 +35,7 @@ public class FireItem implements ElementItem {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName("§cInferno Pick (Fire)");
         meta.setLore(List.of("§7Efficiency X", "§7Right-click: Haste V for 15s", "§7Cost: 75 mana"));
-        meta.addEnchant(Enchantment.EFFICIENCY, 10, true);
+        meta.addEnchant(Enchantment.DIG_SPEED, 10, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE, (byte)1);
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING, ElementType.FIRE.name());
@@ -61,16 +62,16 @@ public class FireItem implements ElementItem {
     }
 
     @Override
-    public boolean handleUse(PlayerInteractEvent e, ElementPlugin plugin, ManaManager mana) {
+    public boolean handleUse(PlayerInteractEvent e, ElementPlugin plugin, ManaManager mana, ConfigManager config) {
         if (e.getHand() != EquipmentSlot.HAND) return false;
         var a = e.getAction();
         if (!(a == org.bukkit.event.block.Action.RIGHT_CLICK_AIR || a == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK)) return false;
         var p = e.getPlayer();
         var inMain = p.getInventory().getItemInMainHand();
         if (!isItem(inMain, plugin)) return false;
-        int cost = 75;
-        if (!mana.spend(p, cost)) { p.sendMessage("§cNot enough mana (75)"); return true; }
-        p.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 15 * 20, 4, true, true, true));
+        int cost = config.getItemUseCost(ElementType.FIRE);
+        if (!mana.spend(p, cost)) { p.sendMessage("§cNot enough mana (" + cost + ")"); return true; }
+        p.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, 15 * 20, 4, true, true, true));
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_ANVIL_USE, 1f, 1.2f);
         e.setCancelled(true);
         return true;

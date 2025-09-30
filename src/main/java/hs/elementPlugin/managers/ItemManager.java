@@ -14,11 +14,13 @@ import java.util.Map;
 public class ItemManager {
     private final ElementPlugin plugin;
     private final ManaManager mana;
+    private final ConfigManager configManager;
     private final Map<ElementType, ElementItem> items = new EnumMap<>(ElementType.class);
 
-    public ItemManager(ElementPlugin plugin, ManaManager mana) {
+    public ItemManager(ElementPlugin plugin, ManaManager mana, ConfigManager configManager) {
         this.plugin = plugin;
         this.mana = mana;
+        this.configManager = configManager;
     }
 
     public void register(ElementItem item) {
@@ -32,7 +34,7 @@ public class ItemManager {
         var off = p.getInventory().getItemInOffHand();
         for (ElementItem item : items.values()) {
             if (item.isItem(main, plugin) || item.isItem(off, plugin)) {
-                boolean handled = item.handleUse(e, plugin, mana);
+                boolean handled = item.handleUse(e, plugin, mana, configManager);
                 if (handled) return true;
             }
         }
@@ -47,7 +49,7 @@ public class ItemManager {
 
     public void handleLaunch(ProjectileLaunchEvent e) {
         for (ElementItem item : items.values()) {
-            item.handleLaunch(e, plugin, mana);
+            item.handleLaunch(e, plugin, mana, configManager);
         }
     }
 

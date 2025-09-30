@@ -2,6 +2,7 @@ package hs.elementPlugin.elements.impl;
 
 import hs.elementPlugin.elements.Element;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.CooldownManager;
 import hs.elementPlugin.managers.ManaManager;
 import hs.elementPlugin.managers.TrustManager;
@@ -33,12 +34,12 @@ public class FireElement implements Element {
     }
 
     @Override
-    public boolean ability1(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust) {
+    public boolean ability1(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
         if (upgradeLevel < 1) {
             player.sendMessage(ChatColor.RED + "You need Upgrade I to use this ability.");
             return false;
         }
-        int cost = 50;
+        int cost = config.getAbility1Cost(ElementType.FIRE);
         if (!mana.spend(player, cost)) {
             player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");
             return false;
@@ -71,12 +72,12 @@ public class FireElement implements Element {
     }
 
     @Override
-    public boolean ability2(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust) {
+    public boolean ability2(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
         if (upgradeLevel < 2) {
             player.sendMessage(ChatColor.RED + "You need Upgrade II to use this ability.");
             return false;
         }
-        int cost = 75;
+        int cost = config.getAbility2Cost(ElementType.FIRE);
         if (!mana.spend(player, cost)) {
             player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");
             return false;

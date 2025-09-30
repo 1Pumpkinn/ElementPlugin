@@ -4,6 +4,7 @@ import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.items.ItemKeys;
 import hs.elementPlugin.items.api.ElementItem;
+import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.ManaManager;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -79,7 +80,7 @@ public class EarthItem implements ElementItem {
     }
 
     @Override
-    public boolean handleUse(PlayerInteractEvent e, ElementPlugin plugin, ManaManager mana) {
+    public boolean handleUse(PlayerInteractEvent e, ElementPlugin plugin, ManaManager mana, ConfigManager config) {
         if (e.getHand() != EquipmentSlot.HAND) return false;
 
         var a = e.getAction();
@@ -93,9 +94,9 @@ public class EarthItem implements ElementItem {
 
         if (!isItem(inMain, plugin)) return false;
 
-        int cost = 75;
+        int cost = config.getItemUseCost(ElementType.EARTH);
         if (!mana.spend(p, cost)) {
-            p.sendMessage("§cNot enough mana (75)");
+            p.sendMessage("§cNot enough mana (" + cost + ")");
             return true;
         }
 

@@ -2,6 +2,7 @@ package hs.elementPlugin.elements.impl;
 
 import hs.elementPlugin.elements.Element;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.CooldownManager;
 import hs.elementPlugin.managers.ManaManager;
 import hs.elementPlugin.managers.TrustManager;
@@ -29,12 +30,12 @@ public class WaterElement implements Element {
     }
 
     @Override
-    public boolean ability1(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust) {
+    public boolean ability1(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
         if (upgradeLevel < 1) {
             player.sendMessage(ChatColor.RED + "You need Upgrade I to use this ability.");
             return false;
         }
-        int cost = 50;
+        int cost = config.getAbility1Cost(ElementType.WATER);
         if (!mana.spend(player, cost)) {
             player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");
             return false;
@@ -60,7 +61,7 @@ public class WaterElement implements Element {
                 if (target.isDead() || !target.isValid()) { cancel(); return; }
                 Location loc = target.getLocation();
                 target.setVelocity(new Vector(0, 1.8, 0));
-                target.getWorld().spawnParticle(Particle.SPLASH, loc.getX(), loc.getY() - 0.01, loc.getZ(), 10, 0.2, 0.0, 0.2, 0.01);
+                target.getWorld().spawnParticle(Particle.WATER_SPLASH, loc.getX(), loc.getY() - 0.01, loc.getZ(), 10, 0.2, 0.0, 0.2, 0.01);
                 ticks++;
                 if (loc.getY() - startY >= 35 || ticks >= 25) {
                     cancel();
@@ -71,12 +72,12 @@ public class WaterElement implements Element {
     }
 
     @Override
-    public boolean ability2(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust) {
+    public boolean ability2(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
         if (upgradeLevel < 2) {
             player.sendMessage(ChatColor.RED + "You need Upgrade II to use this ability.");
             return false;
         }
-        int cost = 75;
+        int cost = config.getAbility2Cost(ElementType.WATER);
         if (!mana.spend(player, cost)) {
             player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");
             return false;
@@ -97,14 +98,14 @@ public class WaterElement implements Element {
                     } else {
                         le.damage(1.0, player); // half a heart per second -> 1.0 every second
                         Location hit = r.getHitPosition().toLocation(player.getWorld());
-                        player.getWorld().spawnParticle(Particle.DRIPPING_WATER, hit, 5, 0.1, 0.1, 0.1, 0.01);
+                        player.getWorld().spawnParticle(Particle.DRIP_WATER, hit, 5, 0.1, 0.1, 0.1, 0.01);
                     }
                 }
                 // Draw beam particles along the path
                 Location eye = player.getEyeLocation();
                 for (double d = 0; d <= 20; d += 0.5) {
                     Location pt = eye.clone().add(dir.clone().multiply(d));
-                    player.getWorld().spawnParticle(Particle.BUBBLE, pt, 1, 0, 0, 0, 0);
+                    player.getWorld().spawnParticle(Particle.WATER_BUBBLE, pt, 1, 0, 0, 0, 0);
                 }
                 cycles++;
                 if (cycles >= 10) cancel();
