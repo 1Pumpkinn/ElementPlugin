@@ -1,0 +1,33 @@
+# ElementPlugin configuration
+
+# Mana settings
+mana:
+  max: 100
+  regen_per_second: 1
+
+# Ability costs (can be tuned). If not referenced yet in code, they are placeholders for future use.
+costs:
+  air:
+    ability1: 50
+    ability2: 75
+    item_use: 75
+  water:
+    ability1: 50
+    ability2: 75
+    item_throw: 25
+  fire:
+    ability1: 50
+    ability2: 75
+    item_use: 75
+  earth:
+    ability1: 50
+    ability2: 75
+    item_use: 75
+  life:
+    ability1: 50
+    ability2: 75
+
+# Cooldowns in seconds
+cooldowns:
+  air:
+    ability2: 360

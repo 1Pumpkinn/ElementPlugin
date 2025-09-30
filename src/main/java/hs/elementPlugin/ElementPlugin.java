@@ -1,0 +1,78 @@
+package hs.elementPlugin;
+
+import hs.elementPlugin.commands.TrustCommand;
+import hs.elementPlugin.data.DataStore;
+import hs.elementPlugin.listeners.CombatListener;
+import hs.elementPlugin.listeners.JoinListener;
+import hs.elementPlugin.managers.CooldownManager;
+import hs.elementPlugin.managers.ElementManager;
+import hs.elementPlugin.managers.ManaManager;
+import hs.elementPlugin.managers.TrustManager;
+import hs.elementPlugin.managers.ItemManager;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public final class ElementPlugin extends JavaPlugin {
+
+    private DataStore dataStore;
+    private ElementManager elementManager;
+    private ManaManager manaManager;
+    private TrustManager trustManager;
+    private CooldownManager cooldownManager;
+    private ItemManager itemManager;
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+
+        // Initialize core services
+        this.dataStore = new DataStore(this);
+        this.trustManager = new TrustManager(this);
+        this.cooldownManager = new CooldownManager();
+        this.manaManager = new ManaManager(this, dataStore);
+        this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager, cooldownManager);
+        this.itemManager = new ItemManager(this, manaManager);
+
+        // Register commands
+        getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
+        getCommand("element").setExecutor(new hs.elementPlugin.commands.ElementCommand(elementManager));
+
+        // Register listeners
+        Bukkit.getPluginManager().registerEvents(new JoinListener(this, elementManager, manaManager), this);
+        Bukkit.getPluginManager().registerEvents(new CombatListener(trustManager, elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.AbilityListener(this, elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.CraftListener(this, elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.ItemRuleListener(this, elementManager, manaManager, itemManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.FriendlyMobListener(), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.EarthListener(elementManager), this);
+
+        // Register recipes
+        hs.elementPlugin.items.Upgrader1Item.registerRecipe(this);
+        hs.elementPlugin.items.Upgrader2Item.registerRecipe(this);
+        // Register element items via manager
+        this.itemManager.register(new hs.elementPlugin.items.air.AirItem());
+        this.itemManager.register(new hs.elementPlugin.items.water.WaterItem());
+        this.itemManager.register(new hs.elementPlugin.items.fire.FireItem());
+
+        // Start repeating tasks
+        this.manaManager.start();
+    }
+
+    @Override
+    public void onDisable() {
+        // Save data
+        if (dataStore != null) {
+            dataStore.flushAll();
+        }
+
+        if (manaManager != null) {
+            manaManager.stop();
+        }
+    }
+
+    public DataStore getDataStore() { return dataStore; }
+    public ElementManager getElementManager() { return elementManager; }
+    public ManaManager getManaManager() { return manaManager; }
+    public TrustManager getTrustManager() { return trustManager; }
+    public CooldownManager getCooldownManager() { return cooldownManager; }
+}
