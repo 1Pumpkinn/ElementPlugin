@@ -96,7 +96,8 @@ public class WaterElement implements Element {
                     if (le instanceof Player pv && trust.isTrusted(player.getUniqueId(), pv.getUniqueId())) {
                         // skip impact on trusted
                     } else {
-                        le.damage(1.0, player); // half a heart per second -> 1.0 every second
+                        // Half a heart per second = 0.5 damage per second
+                        le.damage(0.5, player);
                         Location hit = r.getHitPosition().toLocation(player.getWorld());
                         player.getWorld().spawnParticle(Particle.DRIPPING_WATER, hit, 5, 0.1, 0.1, 0.1, 0.01);
                     }

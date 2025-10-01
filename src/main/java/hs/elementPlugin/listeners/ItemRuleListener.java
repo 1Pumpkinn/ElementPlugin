@@ -9,6 +9,7 @@ import hs.elementPlugin.util.ItemUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
@@ -42,10 +43,17 @@ public class ItemRuleListener implements Listener {
         return ItemUtil.getElementType(plugin, stack);
     }
 
-    // Use handling: allow element items to process their own use and cancel default behavior
-    @EventHandler
+    // Use handling: allow element items to process their own use
+    @EventHandler(priority = EventPriority.HIGH)
     public void onInteract(PlayerInteractEvent e) {
-        // No element item interacts; abilities are handled in AbilityListener
+        // Let ItemManager delegate to specific element items
+        Player p = e.getPlayer();
+        ItemStack inHand = e.getItem();
+
+        if (inHand != null && isElementItem(inHand)) {
+            // Element items handle their own interactions
+            itemManager.handleUse(e);
+        }
     }
 
     // Prevent manual drops for element items
@@ -100,7 +108,7 @@ public class ItemRuleListener implements Listener {
         elements.applyUpsides(p);
     }
 
-    // On projectile hit damage, apply Air item debuffs
+    // On projectile hit damage, apply element item debuffs
     @EventHandler
     public void onDamage(EntityDamageByEntityEvent e) {
         itemManager.handleDamage(e);

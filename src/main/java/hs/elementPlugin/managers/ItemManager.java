@@ -5,6 +5,7 @@ import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.items.api.ElementItem;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -26,6 +27,14 @@ public class ItemManager {
         item.registerRecipe(plugin);
     }
 
+    public void handleUse(PlayerInteractEvent e) {
+        for (ElementItem item : items.values()) {
+            if (item.handleUse(e, plugin, mana, configManager)) {
+                // If an item handled the event, stop processing
+                return;
+            }
+        }
+    }
 
     public void handleDamage(EntityDamageByEntityEvent e) {
         for (ElementItem item : items.values()) {

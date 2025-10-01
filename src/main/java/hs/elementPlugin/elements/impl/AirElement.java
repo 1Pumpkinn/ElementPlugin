@@ -11,6 +11,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 public class AirElement implements Element {
@@ -38,23 +39,41 @@ public class AirElement implements Element {
             player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");
             return false;
         }
-        // Launch all nearby players away, with particles
+
         double radius = 6.0;
         World w = player.getWorld();
         Location center = player.getLocation();
 
-        // Particle ring
-        for (int i = 0; i < 360; i += 10) {
-            double rad = Math.toRadians(i);
-            double x = Math.cos(rad) * 1.5;
-            double z = Math.sin(rad) * 1.5;
-            w.spawnParticle(Particle.CLOUD, center.clone().add(x, 0.2, z), 2, 0.0, 0.0, 0.0, 0.0);
-        }
+        // Animated particle ring that shoots outward
+        new BukkitRunnable() {
+            int tick = 0;
+            @Override
+            public void run() {
+                double currentRadius = 1.5 + (tick * 0.8); // Expands outward
+                if (currentRadius > 8.0) {
+                    cancel();
+                    return;
+                }
 
+                // Spawn particles in a ring
+                for (int i = 0; i < 360; i += 10) {
+                    double rad = Math.toRadians(i);
+                    double x = Math.cos(rad) * currentRadius;
+                    double z = Math.sin(rad) * currentRadius;
+
+                    // Particles shrink as they move outward
+                    int count = Math.max(1, 3 - tick/2);
+                    w.spawnParticle(Particle.CLOUD, center.clone().add(x, 0.2, z), count, 0.0, 0.0, 0.0, 0.0);
+                }
+                tick++;
+            }
+        }.runTaskTimer(hs.elementPlugin.ElementPlugin.getPlugin(hs.elementPlugin.ElementPlugin.class), 0L, 1L);
+
+        // Launch nearby entities
         for (LivingEntity e : player.getLocation().getNearbyLivingEntities(radius)) {
             if (e instanceof Player other) {
                 if (other.equals(player)) continue;
-                if (trust.isTrusted(player.getUniqueId(), other.getUniqueId())) continue; // don't affect trusted
+                if (trust.isTrusted(player.getUniqueId(), other.getUniqueId())) continue;
             }
             Vector push = e.getLocation().toVector().subtract(center.toVector()).normalize().multiply(1.2).setY(0.6);
             e.setVelocity(push);
@@ -76,11 +95,12 @@ public class AirElement implements Element {
             player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");
             return false;
         }
-        // For 5 seconds, make weapon feel like a mace with added strength and airtime control
-        int duration = 5 * 20;
+        // For 15 seconds, make weapon feel like a mace with added strength and airtime control
+        int duration = 15 * 20;
         player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, duration, 1, true, true, true));
         player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, duration, 2, true, true, true));
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1f, 1f);
+        player.sendMessage(ChatColor.GREEN + "Mace empowerment active for 15s!");
         return true;
     }
 }
