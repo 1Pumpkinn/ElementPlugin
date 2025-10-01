@@ -32,8 +32,10 @@ public class CraftListener implements Listener {
         ItemMeta meta = result.getItemMeta();
         if (meta == null) return;
         // Upgrader crafting
+        // TODO: Consider cancelling the craft or moving upgrade to item use to avoid granting both upgrade and item.
         Integer level = meta.getPersistentDataContainer().get(new NamespacedKey(plugin, ItemKeys.KEY_UPGRADER_LEVEL), PersistentDataType.INTEGER);
         if (level != null) {
+            e.setCancelled(true);
             PlayerData pd = elements.data(p.getUniqueId());
             ElementType type = pd.getCurrentElement();
             if (type == null) {
@@ -48,8 +50,11 @@ public class CraftListener implements Listener {
             pd.setUpgradeLevel(type, level);
             plugin.getDataStore().save(pd);
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-            if (level == 1) p.sendMessage(ChatColor.GREEN + "Unlocked Ability 1 for " + ChatColor.AQUA + type.name());
-            if (level == 2) p.sendMessage(ChatColor.AQUA + "Unlocked Ability 2 and Upside 2 for " + ChatColor.GOLD + type.name());
+            if (level == 1) {
+                p.sendMessage(ChatColor.GREEN + "Unlocked Ability 1 for " + ChatColor.AQUA + type.name());
+            } else if (level == 2) {
+                p.sendMessage(ChatColor.AQUA + "Unlocked Ability 2 and Upside 2 for " + ChatColor.GOLD + type.name());
+            }
             return;
         }
         // Element item crafting: enforce once per player per element type
@@ -65,26 +70,14 @@ public class CraftListener implements Listener {
                 return;
             }
             pd.addElementItem(type);
+            pd.setUpgradeLevel(type, 0);
             plugin.getDataStore().save(pd);
             p.playSound(p.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
             p.sendMessage(ChatColor.GREEN + "Crafted element item for " + ChatColor.AQUA + type.name());
+            p.sendMessage(ChatColor.YELLOW + "Upgrades reset to None for " + ChatColor.AQUA + type.name());
+            return;
         }
 
-        PlayerData pd = elements.data(p.getUniqueId());
-        ElementType type = pd.getCurrentElement();
-        if (type == null) {
-            p.sendMessage(ChatColor.RED + "You don't have an element yet.");
-            return;
-        }
-        int current = pd.getUpgradeLevel(type);
-        if (level <= current) {
-            p.sendMessage(ChatColor.YELLOW + "You already have this upgrade.");
-            return;
-        }
-        pd.setUpgradeLevel(type, level);
-        plugin.getDataStore().save(pd);
-        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-        if (level == 1) p.sendMessage(ChatColor.GREEN + "Unlocked Ability 1 for " + ChatColor.AQUA + type.name());
-        if (level == 2) p.sendMessage(ChatColor.AQUA + "Unlocked Ability 2 and Upside 2 for " + ChatColor.GOLD + type.name());
+
     }
 }

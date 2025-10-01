@@ -48,17 +48,11 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.ItemRuleListener(this, elementManager, manaManager, itemManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.FriendlyMobListener(), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.EarthListener(elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.QuitListener(this, manaManager), this);
 
         // Register recipes
         hs.elementPlugin.items.Upgrader1Item.registerRecipe(this);
         hs.elementPlugin.items.Upgrader2Item.registerRecipe(this);
-
-        // Register element items via manager
-        this.itemManager.register(new hs.elementPlugin.items.air.AirItem());
-        this.itemManager.register(new hs.elementPlugin.items.water.WaterItem());
-        this.itemManager.register(new hs.elementPlugin.items.fire.FireItem());
-        this.itemManager.register(new hs.elementPlugin.items.earth.EarthItem());
-        this.itemManager.register(new hs.elementPlugin.items.life.LifeItem());
 
         // Start repeating tasks
         this.manaManager.start();
