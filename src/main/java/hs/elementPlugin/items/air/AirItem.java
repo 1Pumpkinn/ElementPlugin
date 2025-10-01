@@ -96,7 +96,7 @@ public final class AirItem implements ElementItem {
             Byte mark = proj.getPersistentDataContainer().get(new NamespacedKey(plugin, PROJ_KEY), PersistentDataType.BYTE);
             if (mark != null && mark == (byte)1) {
                 victim.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.WEAKNESS, 10 * 20, 0, true, true, true));
-                victim.addPotionEffect(new org.bukkit.potion.PotionEffect(PotionEffectType.SLOW, 10 * 20, 1, true, true, true));
+                victim.addPotionEffect(new org.bukkit.potion.PotionEffect(PotionEffectType.SLOWNESS, 10 * 20, 1, true, true, true));
             }
         }
     }

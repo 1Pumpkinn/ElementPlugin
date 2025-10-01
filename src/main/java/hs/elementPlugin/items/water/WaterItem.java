@@ -79,7 +79,7 @@ public class WaterItem implements ElementItem {
         if (e.getDamager() instanceof Trident tr) {
             Byte mark = tr.getPersistentDataContainer().get(new NamespacedKey(plugin, PROJ_KEY), PersistentDataType.BYTE);
             if (mark != null && mark == (byte)1) {
-                victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, 5 * 20, 0, true, true, true));
+                victim.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 5 * 20, 0, true, true, true));
             }
         }
     }

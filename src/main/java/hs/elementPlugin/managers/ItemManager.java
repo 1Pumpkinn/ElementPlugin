@@ -3,9 +3,7 @@ package hs.elementPlugin.managers;
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.items.api.ElementItem;
-import hs.elementPlugin.util.ItemUtil;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 
 import java.util.EnumMap;
@@ -28,18 +26,6 @@ public class ItemManager {
         item.registerRecipe(plugin);
     }
 
-    public boolean handleUse(PlayerInteractEvent e) {
-        var p = e.getPlayer();
-        var main = p.getInventory().getItemInMainHand();
-        var off = p.getInventory().getItemInOffHand();
-        for (ElementItem item : items.values()) {
-            if (item.isItem(main, plugin) || item.isItem(off, plugin)) {
-                boolean handled = item.handleUse(e, plugin, mana, configManager);
-                if (handled) return true;
-            }
-        }
-        return false;
-    }
 
     public void handleDamage(EntityDamageByEntityEvent e) {
         for (ElementItem item : items.values()) {
@@ -51,13 +37,5 @@ public class ItemManager {
         for (ElementItem item : items.values()) {
             item.handleLaunch(e, plugin, mana, configManager);
         }
-    }
-
-    public boolean isElementItem(org.bukkit.inventory.ItemStack stack) {
-        return ItemUtil.isElementItem(plugin, stack);
-    }
-
-    public ElementType getElementType(org.bukkit.inventory.ItemStack stack) {
-        return ItemUtil.getElementType(plugin, stack);
     }
 }

@@ -85,7 +85,7 @@ public class FireElement implements Element {
         // Spawn 3 friendly blazes with 20 hearts
         for (int i = 0; i < 3; i++) {
             Blaze blaze = player.getWorld().spawn(player.getLocation().add(player.getLocation().getDirection().multiply(1.5)), Blaze.class);
-            var attr = blaze.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+            var attr = blaze.getAttribute(Attribute.MAX_HEALTH);
             if (attr != null) attr.setBaseValue(40.0);
             blaze.setHealth(40.0);
             blaze.setMetadata(META_FRIENDLY_BLAZE_OWNER, new FixedMetadataValue(hs.elementPlugin.ElementPlugin.getPlugin(hs.elementPlugin.ElementPlugin.class), player.getUniqueId().toString()));

@@ -35,7 +35,7 @@ public class FireItem implements ElementItem {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName("§cInferno Pick (Fire)");
         meta.setLore(List.of("§7Efficiency X", "§7Right-click: Haste V for 15s", "§7Cost: 75 mana"));
-        meta.addEnchant(Enchantment.DIG_SPEED, 10, true);
+        meta.addEnchant(Enchantment.EFFICIENCY, 10, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE, (byte)1);
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING, ElementType.FIRE.name());
@@ -71,7 +71,7 @@ public class FireItem implements ElementItem {
         if (!isItem(inMain, plugin)) return false;
         int cost = config.getItemUseCost(ElementType.FIRE);
         if (!mana.spend(p, cost)) { p.sendMessage("§cNot enough mana (" + cost + ")"); return true; }
-        p.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, 15 * 20, 4, true, true, true));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 15 * 20, 4, true, true, true));
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_ANVIL_USE, 1f, 1.2f);
         e.setCancelled(true);
         return true;

@@ -78,8 +78,8 @@ public class AirElement implements Element {
         }
         // For 5 seconds, make weapon feel like a mace with added strength and airtime control
         int duration = 5 * 20;
-        player.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, duration, 1, true, true, true));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, duration, 2, true, true, true));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, duration, 1, true, true, true));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, duration, 2, true, true, true));
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1f, 1f);
         return true;
     }

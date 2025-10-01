@@ -3,8 +3,6 @@ package hs.elementPlugin.listeners;
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.PlayerData;
 import hs.elementPlugin.elements.ElementType;
-import hs.elementPlugin.items.ItemKeys;
-import hs.elementPlugin.items.air.AirItem;
 import hs.elementPlugin.managers.ElementManager;
 import hs.elementPlugin.managers.ManaManager;
 import hs.elementPlugin.util.ItemUtil;
@@ -22,8 +20,6 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.NamespacedKey;
-import org.bukkit.persistence.PersistentDataType;
 
 public class ItemRuleListener implements Listener {
     private final ElementPlugin plugin;

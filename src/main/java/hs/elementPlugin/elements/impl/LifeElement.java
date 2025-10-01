@@ -22,7 +22,7 @@ public class LifeElement implements Element {
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
         // Upside 1: 15 hearts
-        var attr = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH);
+        var attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null) {
             if (attr.getBaseValue() < 30.0) attr.setBaseValue(30.0);
             if (player.getHealth() > attr.getBaseValue()) player.setHealth(attr.getBaseValue());
