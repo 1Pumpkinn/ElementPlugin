@@ -4,6 +4,7 @@ import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.data.PlayerData;
 import hs.elementPlugin.elements.Element;
+import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.impl.AirElement;
 import org.bukkit.Bukkit;
@@ -108,7 +109,16 @@ public class ElementManager {
         if (type == null) return false;
         Element e = registry.get(type);
         if (e == null) return false;
-        return e.ability1(player, pd.getUpgradeLevel(type), manaManager, cooldownManager, trustManager, configManager);
+        
+        ElementContext context = new ElementContext(
+            player,
+            pd.getUpgradeLevel(type),
+            manaManager,
+            cooldownManager,
+            trustManager,
+            configManager
+        );
+        return e.ability1(context);
     }
 
     public boolean useAbility2(Player player) {
@@ -117,6 +127,15 @@ public class ElementManager {
         if (type == null) return false;
         Element e = registry.get(type);
         if (e == null) return false;
-        return e.ability2(player, pd.getUpgradeLevel(type), manaManager, cooldownManager, trustManager, configManager);
+        
+        ElementContext context = new ElementContext(
+            player,
+            pd.getUpgradeLevel(type),
+            manaManager,
+            cooldownManager,
+            trustManager,
+            configManager
+        );
+        return e.ability2(context);
     }
 }

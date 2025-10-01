@@ -1,9 +1,5 @@
 package hs.elementPlugin.elements;
 
-import hs.elementPlugin.managers.ConfigManager;
-import hs.elementPlugin.managers.CooldownManager;
-import hs.elementPlugin.managers.ManaManager;
-import hs.elementPlugin.managers.TrustManager;
 import org.bukkit.entity.Player;
 
 public interface Element {
@@ -11,7 +7,7 @@ public interface Element {
 
     void applyUpsides(Player player, int upgradeLevel);
 
-    boolean ability1(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config);
+    boolean ability1(ElementContext context);
 
-    boolean ability2(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config);
+    boolean ability2(ElementContext context);
 }
