@@ -41,7 +41,7 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.AbilityListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.CraftListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.ItemRuleListener(this, elementManager, manaManager, itemManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.FriendlyMobListener(), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.FriendlyMobListener(this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.EarthListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.QuitListener(this, manaManager), this);
 

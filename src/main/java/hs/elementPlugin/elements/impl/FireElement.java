@@ -38,6 +38,7 @@ public class FireElement extends BaseElement {
     protected boolean executeAbility1(ElementContext context) {
         Player player = context.getPlayer();
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_FIRECHARGE_USE, 1f, 1f);
+
         new BukkitRunnable() {
             int ticks = 0;
             @Override
@@ -45,22 +46,62 @@ public class FireElement extends BaseElement {
                 if (!player.isOnline()) { cancel(); return; }
                 Location eye = player.getEyeLocation();
                 Vector dir = eye.getDirection().normalize();
-                // Cone damage and particles
-                for (double d = 0; d <= 6; d += 0.5) {
+
+                // Start cone half a block in front of player
+                Vector startOffset = dir.clone().multiply(0.5);
+                Location startLoc = eye.clone().add(startOffset);
+
+                // Create cone shape that widens as it goes out
+                for (double d = 0; d <= 6; d += 0.4) {
                     Vector step = dir.clone().multiply(d);
-                    Location loc = eye.clone().add(step);
-                    player.getWorld().spawnParticle(Particle.FLAME, loc, 3, 0.1, 0.1, 0.1, 0.01);
-                    for (LivingEntity le : loc.getNearbyLivingEntities(1.0)) {
+                    Location centerLoc = startLoc.clone().add(step);
+
+                    // Cone radius increases with distance
+                    double coneRadius = d * 0.25; // Starts at 0, ends at 1.5 blocks wide
+
+                    // Spawn particles in a circle at this distance
+                    int particleCount = Math.max(1, (int)(coneRadius * 8));
+                    for (int i = 0; i < particleCount; i++) {
+                        double angle = (Math.PI * 2 * i) / particleCount;
+                        Vector perpendicular = getPerpendicular(dir);
+                        Vector rotated = rotateAroundAxis(perpendicular, dir, angle).multiply(coneRadius);
+                        Location particleLoc = centerLoc.clone().add(rotated);
+                        player.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0.05, 0.05, 0.05, 0.01);
+                    }
+
+                    // Damage entities in cone
+                    for (LivingEntity le : centerLoc.getNearbyLivingEntities(coneRadius + 0.5)) {
                         if (!isValidTarget(context, le)) continue;
                         le.setFireTicks(40);
                         if (ticks % 10 == 0) le.damage(1.0, player); // ~0.5 heart per second overall
                     }
                 }
-                ticks += 2; // runs every 2 ticks below
+
+                ticks += 2;
                 if (ticks >= 5 * 20) cancel();
             }
         }.runTaskTimer(plugin, 0L, 2L);
         return true;
+    }
+
+    // Helper method to get a perpendicular vector
+    private Vector getPerpendicular(Vector v) {
+        if (Math.abs(v.getX()) < 0.9) {
+            return new Vector(1, 0, 0).crossProduct(v).normalize();
+        } else {
+            return new Vector(0, 1, 0).crossProduct(v).normalize();
+        }
+    }
+
+    // Helper method to rotate a vector around an axis
+    private Vector rotateAroundAxis(Vector v, Vector axis, double angle) {
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        double dot = v.dot(axis);
+
+        return v.clone().multiply(cos)
+                .add(axis.clone().crossProduct(v).multiply(sin))
+                .add(axis.clone().multiply(dot * (1 - cos)));
     }
 
     @Override

@@ -29,6 +29,10 @@ public class WaterElement extends BaseElement {
     public void applyUpsides(Player player, int upgradeLevel) {
         // Upside 1: Infinite Conduit Power I
         player.addPotionEffect(new PotionEffect(PotionEffectType.CONDUIT_POWER, Integer.MAX_VALUE, 0, true, false));
+        // Upside 2: Dolphins Grace 5
+        if (upgradeLevel >= 2) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.DOLPHINS_GRACE, Integer.MAX_VALUE, 4, true, false));
+        }
     }
 
     @Override
@@ -86,14 +90,14 @@ public class WaterElement extends BaseElement {
                     if (isValidTarget(context, le)) {
                         le.damage(0.5, player);
                         Location hit = r.getHitPosition().toLocation(player.getWorld());
-                        player.getWorld().spawnParticle(Particle.DRIPPING_WATER, hit, 5, 0.1, 0.1, 0.1, 0.01);
+                        player.getWorld().spawnParticle(Particle.FALLING_WATER, hit, 5, 0.1, 0.1, 0.1, 0.0);
                     }
                 }
-                // Draw beam particles along the path
+                // Draw beam using FALLING_WATER particles (non-flashing alternative)
                 Location eye = player.getEyeLocation();
                 for (double d = 0; d <= 20; d += 0.5) {
                     Location pt = eye.clone().add(dir.clone().multiply(d));
-                    player.getWorld().spawnParticle(Particle.BUBBLE, pt, 1, 0, 0, 0, 0);
+                    player.getWorld().spawnParticle(Particle.FALLING_WATER, pt, 1, 0, 0, 0, 0);
                 }
                 cycles++;
                 if (cycles >= 10) cancel();
