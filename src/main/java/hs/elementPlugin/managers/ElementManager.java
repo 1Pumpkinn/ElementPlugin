@@ -7,6 +7,10 @@ import hs.elementPlugin.elements.Element;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.impl.AirElement;
+import hs.elementPlugin.elements.impl.WaterElement;
+import hs.elementPlugin.elements.impl.FireElement;
+import hs.elementPlugin.elements.impl.EarthElement;
+import hs.elementPlugin.elements.impl.LifeElement;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -36,12 +40,12 @@ public class ElementManager {
         this.cooldownManager = cooldownManager;
         this.configManager = configManager;
 
-        // Register elements
-        register(new AirElement());
-        register(new hs.elementPlugin.elements.impl.WaterElement());
-        register(new hs.elementPlugin.elements.impl.FireElement());
-        register(new hs.elementPlugin.elements.impl.EarthElement());
-        register(new hs.elementPlugin.elements.impl.LifeElement());
+        // Register elements with plugin parameter
+        register(new AirElement(plugin));
+        register(new WaterElement(plugin));
+        register(new FireElement(plugin));
+        register(new EarthElement(plugin));
+        register(new LifeElement(plugin));
     }
 
     private void register(Element element) {
@@ -71,10 +75,9 @@ public class ElementManager {
         // Slowing title roll animation, then assign
         String[] names = {"AIR", "WATER", "FIRE", "EARTH"};
         player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
-        int steps = 16; // number of flashes
+        int steps = 16;
         for (int i = 0; i < steps; i++) {
-            int delay = i * 3; // slows slightly over time
-            int idx = i % names.length;
+            int delay = i * 3;
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 String name = names[random.nextInt(names.length)];
                 player.sendTitle(ChatColor.YELLOW + "Rolling...", ChatColor.AQUA + name, 0, 10, 0);
@@ -92,7 +95,7 @@ public class ElementManager {
         store.save(pd);
         player.sendTitle(ChatColor.GOLD + "Attuned!", ChatColor.AQUA + pick.name(), 10, 40, 10);
         applyUpsides(player);
-        player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+        player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
 
     public void setElement(Player player, ElementType type) {
@@ -109,14 +112,14 @@ public class ElementManager {
         if (type == null) return false;
         Element e = registry.get(type);
         if (e == null) return false;
-        
+
         ElementContext context = new ElementContext(
-            player,
-            pd.getUpgradeLevel(type),
-            manaManager,
-            cooldownManager,
-            trustManager,
-            configManager
+                player,
+                pd.getUpgradeLevel(type),
+                manaManager,
+                cooldownManager,
+                trustManager,
+                configManager
         );
         return e.ability1(context);
     }
@@ -127,14 +130,14 @@ public class ElementManager {
         if (type == null) return false;
         Element e = registry.get(type);
         if (e == null) return false;
-        
+
         ElementContext context = new ElementContext(
-            player,
-            pd.getUpgradeLevel(type),
-            manaManager,
-            cooldownManager,
-            trustManager,
-            configManager
+                player,
+                pd.getUpgradeLevel(type),
+                manaManager,
+                cooldownManager,
+                trustManager,
+                configManager
         );
         return e.ability2(context);
     }

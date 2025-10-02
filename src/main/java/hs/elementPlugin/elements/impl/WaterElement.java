@@ -1,16 +1,13 @@
 package hs.elementPlugin.elements.impl;
 
-import hs.elementPlugin.elements.Element;
+import hs.elementPlugin.ElementPlugin;
+import hs.elementPlugin.elements.BaseElement;
+import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
-import hs.elementPlugin.managers.ConfigManager;
-import hs.elementPlugin.managers.CooldownManager;
-import hs.elementPlugin.managers.ManaManager;
-import hs.elementPlugin.managers.TrustManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -19,7 +16,12 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
-public class WaterElement implements Element {
+public class WaterElement extends BaseElement {
+
+    public WaterElement(ElementPlugin plugin) {
+        super(plugin);
+    }
+
     @Override
     public ElementType getType() { return ElementType.WATER; }
 
@@ -30,30 +32,24 @@ public class WaterElement implements Element {
     }
 
     @Override
-    public boolean ability1(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
-        if (upgradeLevel < 1) {
-            player.sendMessage(ChatColor.RED + "You need Upgrade I to use this ability.");
-            return false;
-        }
-        int cost = config.getAbility1Cost(ElementType.WATER);
-        if (!mana.spend(player, cost)) {
-            player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");
-            return false;
-        }
+    protected boolean executeAbility1(ElementContext context) {
+        Player player = context.getPlayer();
+
         // Ray trace a target up to 20 blocks
         RayTraceResult rt = player.rayTraceEntities(20);
         if (rt == null || rt.getHitEntity() == null || !(rt.getHitEntity() instanceof LivingEntity target)) {
             player.sendMessage(ChatColor.YELLOW + "No target in sight.");
             return false;
         }
-        if (target instanceof Player victim) {
-            if (trust.isTrusted(player.getUniqueId(), victim.getUniqueId())) {
-                player.sendMessage(ChatColor.YELLOW + "Target is trusted.");
-                return false;
-            }
+
+        if (!isValidTarget(context, target)) {
+            player.sendMessage(ChatColor.YELLOW + "Target is trusted.");
+            return false;
         }
+
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BUBBLE_COLUMN_UPWARDS_INSIDE, 1f, 1f);
         final double startY = target.getLocation().getY();
+
         new BukkitRunnable() {
             int ticks = 0;
             @Override
@@ -67,23 +63,17 @@ public class WaterElement implements Element {
                     cancel();
                 }
             }
-        }.runTaskTimer(hs.elementPlugin.ElementPlugin.getPlugin(hs.elementPlugin.ElementPlugin.class), 0L, 2L);
+        }.runTaskTimer(plugin, 0L, 2L);
         return true;
     }
 
     @Override
-    public boolean ability2(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
-        if (upgradeLevel < 2) {
-            player.sendMessage(ChatColor.RED + "You need Upgrade II to use this ability.");
-            return false;
-        }
-        int cost = config.getAbility2Cost(ElementType.WATER);
-        if (!mana.spend(player, cost)) {
-            player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");
-            return false;
-        }
+    protected boolean executeAbility2(ElementContext context) {
+        Player player = context.getPlayer();
+
         player.sendMessage(ChatColor.AQUA + "Water beam active for 10s...");
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_3, 1f, 1.2f);
+
         new BukkitRunnable() {
             int cycles = 0;
             @Override
@@ -93,10 +83,7 @@ public class WaterElement implements Element {
                 RayTraceResult r = player.getWorld().rayTraceEntities(player.getEyeLocation(), dir, 20.0,
                         entity -> entity instanceof LivingEntity && !entity.equals(player));
                 if (r != null && r.getHitEntity() instanceof LivingEntity le) {
-                    if (le instanceof Player pv && trust.isTrusted(player.getUniqueId(), pv.getUniqueId())) {
-                        // skip impact on trusted
-                    } else {
-                        // Half a heart per second = 0.5 damage per second
+                    if (isValidTarget(context, le)) {
                         le.damage(0.5, player);
                         Location hit = r.getHitPosition().toLocation(player.getWorld());
                         player.getWorld().spawnParticle(Particle.DRIPPING_WATER, hit, 5, 0.1, 0.1, 0.1, 0.01);
@@ -111,7 +98,7 @@ public class WaterElement implements Element {
                 cycles++;
                 if (cycles >= 10) cancel();
             }
-        }.runTaskTimer(hs.elementPlugin.ElementPlugin.getPlugin(hs.elementPlugin.ElementPlugin.class), 0L, 20L);
+        }.runTaskTimer(plugin, 0L, 20L);
         return true;
     }
 }

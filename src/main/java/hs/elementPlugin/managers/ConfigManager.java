@@ -47,10 +47,4 @@ public class ConfigManager {
         String path = "costs." + type.name().toLowerCase() + ".item_throw";
         return config.getInt(path, 25);
     }
-
-    // Cooldowns (in seconds)
-    public int getCooldown(ElementType type, String ability) {
-        String path = "cooldowns." + type.name().toLowerCase() + "." + ability;
-        return config.getInt(path, 0);
-    }
 }

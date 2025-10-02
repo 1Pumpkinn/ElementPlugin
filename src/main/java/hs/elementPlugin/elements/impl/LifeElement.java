@@ -1,11 +1,9 @@
 package hs.elementPlugin.elements.impl;
 
-import hs.elementPlugin.elements.Element;
+import hs.elementPlugin.ElementPlugin;
+import hs.elementPlugin.elements.BaseElement;
+import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
-import hs.elementPlugin.managers.ConfigManager;
-import hs.elementPlugin.managers.CooldownManager;
-import hs.elementPlugin.managers.ManaManager;
-import hs.elementPlugin.managers.TrustManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
@@ -15,7 +13,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-public class LifeElement implements Element {
+public class LifeElement extends BaseElement {
+
+    public LifeElement(ElementPlugin plugin) {
+        super(plugin);
+    }
+
     @Override
     public ElementType getType() { return ElementType.LIFE; }
 
@@ -30,13 +33,11 @@ public class LifeElement implements Element {
     }
 
     @Override
-    public boolean ability1(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
-        if (upgradeLevel < 1) { player.sendMessage(ChatColor.RED + "Need Upgrade I"); return false; }
-        int cost = config.getAbility1Cost(ElementType.LIFE);
-        if (!mana.spend(player, cost)) { player.sendMessage(ChatColor.RED + "Not enough mana ("+cost+")"); return false; }
+    protected boolean executeAbility1(ElementContext context) {
+        Player player = context.getPlayer();
         int radius = 5;
         for (Player other : player.getWorld().getNearbyPlayers(player.getLocation(), radius)) {
-            if (!other.equals(player) && !trust.isTrusted(player.getUniqueId(), other.getUniqueId())) continue;
+            if (!other.equals(player) && !context.getTrustManager().isTrusted(player.getUniqueId(), other.getUniqueId())) continue;
             other.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 10 * 20, 1, true, true, true));
         }
         player.sendMessage(ChatColor.GREEN + "Regen aura applied");
@@ -44,15 +45,12 @@ public class LifeElement implements Element {
     }
 
     @Override
-    public boolean ability2(Player player, int upgradeLevel, ManaManager mana, CooldownManager cooldowns, TrustManager trust, ConfigManager config) {
-        if (upgradeLevel < 2) { player.sendMessage(ChatColor.RED + "Need Upgrade II"); return false; }
-        int cost = config.getAbility2Cost(ElementType.LIFE);
-        if (!mana.spend(player, cost)) { player.sendMessage(ChatColor.RED + "Not enough mana ("+cost+")"); return false; }
+    protected boolean executeAbility2(ElementContext context) {
+        Player player = context.getPlayer();
         // Grow crops in 5x5 around player
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 Block b = player.getLocation().add(dx, 0, dz).getBlock();
-                // Check current and one above (for crops on farmland at Y)
                 growIfCrop(b);
                 growIfCrop(b.getRelative(0, 1, 0));
             }

@@ -4,12 +4,7 @@ import hs.elementPlugin.commands.TrustCommand;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.listeners.CombatListener;
 import hs.elementPlugin.listeners.JoinListener;
-import hs.elementPlugin.managers.ConfigManager;
-import hs.elementPlugin.managers.CooldownManager;
-import hs.elementPlugin.managers.ElementManager;
-import hs.elementPlugin.managers.ManaManager;
-import hs.elementPlugin.managers.TrustManager;
-import hs.elementPlugin.managers.ItemManager;
+import hs.elementPlugin.managers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
