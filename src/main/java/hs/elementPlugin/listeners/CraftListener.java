@@ -71,21 +71,39 @@ public class CraftListener implements Listener {
             ElementType type;
             try { type = ElementType.valueOf(t); } catch (Exception ex) { return; }
             PlayerData pd = elements.data(p.getUniqueId());
-            if (pd.hasElementItem(type)) {
-                e.setCancelled(true);
-                p.sendMessage(ChatColor.RED + "You can only craft this item once.");
-                return;
+            
+            // Special check for Life element - only one can be crafted server-wide
+            if (type == ElementType.LIFE) {
+                if (plugin.getDataStore().isLifeElementCrafted()) {
+                    e.setCancelled(true);
+                    p.sendMessage(ChatColor.RED + "The Life element has already been claimed by another player.");
+                    return;
+                }
+            } else {
+                // Regular check for other elements - once per player
+                if (pd.hasElementItem(type)) {
+                    e.setCancelled(true);
+                    p.sendMessage(ChatColor.RED + "You can only craft this item once.");
+                    return;
+                }
             }
 
             // Allow the craft to consume materials
             pd.addElementItem(type);
-            // Reset ALL upgrade levels when crafting a new element item
-            for (ElementType et : ElementType.values()) {
-                pd.setUpgradeLevel(et, 0);
+            // Reset upgrade level when crafting a new element item
+            pd.setCurrentElementUpgradeLevel(0);
+            
+            // Mark Life element as crafted server-wide
+            if (type == ElementType.LIFE) {
+                plugin.getDataStore().setLifeElementCrafted(true);
             }
+            
             plugin.getDataStore().save(pd);
             p.playSound(p.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
             p.sendMessage(ChatColor.GREEN + "Crafted element item for " + ChatColor.AQUA + type.name());
+            if (type == ElementType.LIFE) {
+                p.sendMessage(ChatColor.GOLD + "You are now the Life element bearer! This element cannot be crafted by others.");
+            }
             p.sendMessage(ChatColor.YELLOW + "All upgrades reset to None");
         }
     }

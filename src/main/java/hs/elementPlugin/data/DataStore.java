@@ -16,6 +16,8 @@ public class DataStore {
 
     private final File playerFile;
     private final FileConfiguration playerCfg;
+    private final File serverFile;
+    private final FileConfiguration serverCfg;
 
     public DataStore(ElementPlugin plugin) {
         this.plugin = plugin;
@@ -26,6 +28,12 @@ public class DataStore {
             try { playerFile.createNewFile(); } catch (IOException ignored) {}
         }
         this.playerCfg = YamlConfiguration.loadConfiguration(playerFile);
+        
+        this.serverFile = new File(dataDir, "server.yml");
+        if (!serverFile.exists()) {
+            try { serverFile.createNewFile(); } catch (IOException ignored) {}
+        }
+        this.serverCfg = YamlConfiguration.loadConfiguration(serverFile);
     }
 
     public synchronized PlayerData load(UUID uuid) {
@@ -34,17 +42,9 @@ public class DataStore {
         PlayerData pd = new PlayerData(uuid);
         if (sec != null) {
             String elem = sec.getString("element");
-            if (elem != null) pd.setCurrentElement(ElementType.valueOf(elem));
+            if (elem != null) pd.setCurrentElementWithoutReset(ElementType.valueOf(elem));
             pd.setMana(sec.getInt("mana", 100));
-            ConfigurationSection up = sec.getConfigurationSection("upgrades");
-            if (up != null) {
-                for (String name : up.getKeys(false)) {
-                    try {
-                        ElementType t = ElementType.valueOf(name);
-                        pd.setUpgradeLevel(t, up.getInt(name, 0));
-                    } catch (IllegalArgumentException ignored) {}
-                }
-            }
+            pd.setCurrentElementUpgradeLevel(sec.getInt("currentUpgradeLevel", 0));
             java.util.List<String> items = sec.getStringList("items");
             if (items != null) {
                 for (String name : items) {
@@ -64,11 +64,7 @@ public class DataStore {
         if (sec == null) sec = playerCfg.createSection(key);
         sec.set("element", pd.getCurrentElement() == null ? null : pd.getCurrentElement().name());
         sec.set("mana", pd.getMana());
-        Map<String, Integer> up = new HashMap<>();
-        for (Map.Entry<ElementType, Integer> e : pd.getUpgradesView().entrySet()) {
-            up.put(e.getKey().name(), e.getValue());
-        }
-        sec.createSection("upgrades", up);
+        sec.set("currentUpgradeLevel", pd.getCurrentElementUpgradeLevel());
         java.util.List<String> items = new java.util.ArrayList<>();
         for (ElementType t : pd.getOwnedItems()) items.add(t.name());
         sec.set("items", items);
@@ -101,5 +97,19 @@ public class DataStore {
         ConfigurationSection sec = playerCfg.createSection(base);
         for (UUID u : trusted) sec.set(u.toString(), true);
         flushQuiet();
+    }
+
+    // Server-wide restrictions
+    public synchronized boolean isLifeElementCrafted() {
+        return serverCfg.getBoolean("life_crafted", false);
+    }
+
+    public synchronized void setLifeElementCrafted(boolean crafted) {
+        serverCfg.set("life_crafted", crafted);
+        flushServerQuiet();
+    }
+
+    private void flushServerQuiet() {
+        try { serverCfg.save(serverFile); } catch (IOException ignored) {}
     }
 }

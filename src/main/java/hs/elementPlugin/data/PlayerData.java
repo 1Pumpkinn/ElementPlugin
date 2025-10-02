@@ -2,16 +2,14 @@ package hs.elementPlugin.data;
 
 import hs.elementPlugin.elements.ElementType;
 
-import java.util.EnumMap;
-import java.util.Map;
 import java.util.UUID;
 
 public class PlayerData {
     private final UUID uuid;
     private ElementType currentElement;
-    private final Map<ElementType, Integer> upgrades = new EnumMap<>(ElementType.class); // 0..2
     private final java.util.EnumSet<ElementType> ownedItems = java.util.EnumSet.noneOf(ElementType.class);
     private int mana = 100;
+    private int currentElementUpgradeLevel = 0; // Only save current element's upgrade level
 
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
@@ -19,19 +17,49 @@ public class PlayerData {
 
     public UUID getUuid() { return uuid; }
 
+    public int getCurrentElementUpgradeLevel() { return currentElementUpgradeLevel; }
+    
+    public void setCurrentElementUpgradeLevel(int level) { 
+        this.currentElementUpgradeLevel = Math.max(0, Math.min(2, level)); 
+    }
+
     public ElementType getCurrentElement() { return currentElement; }
 
-    public void setCurrentElement(ElementType currentElement) { this.currentElement = currentElement; }
+    public void setCurrentElement(ElementType currentElement) { 
+        this.currentElement = currentElement;
+        // Reset upgrade level when switching elements (except when loading from save)
+        if (currentElement != null) {
+            this.currentElementUpgradeLevel = 0;
+        }
+    }
+    
+    public void setCurrentElementWithoutReset(ElementType currentElement) {
+        // Used when loading from save - doesn't reset upgrade level
+        this.currentElement = currentElement;
+    }
 
     public int getUpgradeLevel(ElementType type) {
-        return upgrades.getOrDefault(type, 0);
+        // Only return upgrade level for current element
+        if (type != null && type.equals(currentElement)) {
+            return currentElementUpgradeLevel;
+        }
+        return 0;
     }
 
     public void setUpgradeLevel(ElementType type, int level) {
-        upgrades.put(type, Math.max(0, Math.min(2, level)));
+        // Only set upgrade level for current element
+        if (type != null && type.equals(currentElement)) {
+            setCurrentElementUpgradeLevel(level);
+        }
     }
 
-    public Map<ElementType, Integer> getUpgradesView() { return upgrades; }
+    public java.util.Map<ElementType, Integer> getUpgradesView() { 
+        java.util.Map<ElementType, Integer> map = new java.util.EnumMap<>(ElementType.class);
+        if (currentElement != null) {
+            map.put(currentElement, currentElementUpgradeLevel);
+        }
+        return map;
+    }
 
     public java.util.Set<ElementType> getOwnedItems() { return ownedItems; }
 

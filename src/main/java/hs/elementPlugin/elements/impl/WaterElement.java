@@ -93,11 +93,11 @@ public class WaterElement extends BaseElement {
                         player.getWorld().spawnParticle(Particle.FALLING_WATER, hit, 5, 0.1, 0.1, 0.1, 0.0);
                     }
                 }
-                // Draw beam using FALLING_WATER particles (non-flashing alternative)
+                // Draw steady beam using BUBBLE_COLUMN_UP particles
                 Location eye = player.getEyeLocation();
                 for (double d = 0; d <= 20; d += 0.5) {
                     Location pt = eye.clone().add(dir.clone().multiply(d));
-                    player.getWorld().spawnParticle(Particle.FALLING_WATER, pt, 1, 0, 0, 0, 0);
+                    player.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, pt, 2, 0.1, 0.1, 0.1, 0.0);
                 }
                 cycles++;
                 if (cycles >= 10) cancel();

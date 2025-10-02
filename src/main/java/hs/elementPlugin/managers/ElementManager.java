@@ -108,13 +108,12 @@ public class ElementManager {
         // Clear effects from previous element
         clearAllEffects(player);
 
-        pd.setCurrentElement(pick);
+        pd.setCurrentElement(pick); // This automatically resets upgrade level
         store.save(pd);
         player.sendTitle(ChatColor.GOLD + "Attuned!", ChatColor.AQUA + pick.name(), 10, 40, 10);
         applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
-
     public void setElement(Player player, ElementType type) {
         PlayerData pd = data(player.getUniqueId());
 

@@ -3,13 +3,14 @@ package hs.elementPlugin.elements;
 import hs.elementPlugin.ElementPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-
 /**
  * Abstract base class for all elements that provides common functionality
  * and reduces code duplication in element implementations.
  */
 public abstract class BaseElement implements Element {
     protected final ElementPlugin plugin;
+    private final java.util.Set<java.util.UUID> activeAbility1 = new java.util.HashSet<>();
+    private final java.util.Set<java.util.UUID> activeAbility2 = new java.util.HashSet<>();
     
     public BaseElement(ElementPlugin plugin) {
         this.plugin = plugin;
@@ -19,6 +20,12 @@ public abstract class BaseElement implements Element {
     public boolean ability1(ElementContext context) {
         if (!checkUpgradeLevel(context.getPlayer(), context.getUpgradeLevel(), 1)) return false;
         
+        // Check if ability is already active
+        if (isAbility1Active(context.getPlayer())) {
+            context.getPlayer().sendMessage(ChatColor.YELLOW + "Ability 1 is already active!");
+            return false;
+        }
+
         int cost = context.getConfigManager().getAbility1Cost(getType());
         if (!checkMana(context.getPlayer(), context.getManaManager(), cost)) return false;
         
@@ -28,6 +35,12 @@ public abstract class BaseElement implements Element {
     @Override
     public boolean ability2(ElementContext context) {
         if (!checkUpgradeLevel(context.getPlayer(), context.getUpgradeLevel(), 2)) return false;
+        
+        // Check if ability is already active
+        if (isAbility2Active(context.getPlayer())) {
+            context.getPlayer().sendMessage(ChatColor.YELLOW + "Ability 2 is already active!");
+            return false;
+        }
         
         int cost = context.getConfigManager().getAbility2Cost(getType());
         if (!checkMana(context.getPlayer(), context.getManaManager(), cost)) return false;
@@ -81,5 +94,32 @@ public abstract class BaseElement implements Element {
      */
     protected boolean isValidTarget(ElementContext context, org.bukkit.entity.LivingEntity target) {
         return isValidTarget(context.getPlayer(), target, context.getTrustManager());
+    }
+    
+    /**
+     * Ability cooldown management methods
+     */
+    protected boolean isAbility1Active(Player player) {
+        return activeAbility1.contains(player.getUniqueId());
+    }
+    
+    protected boolean isAbility2Active(Player player) {
+        return activeAbility2.contains(player.getUniqueId());
+    }
+    
+    protected void setAbility1Active(Player player, boolean active) {
+        if (active) {
+            activeAbility1.add(player.getUniqueId());
+        } else {
+            activeAbility1.remove(player.getUniqueId());
+        }
+    }
+    
+    protected void setAbility2Active(Player player, boolean active) {
+        if (active) {
+            activeAbility2.add(player.getUniqueId());
+        } else {
+            activeAbility2.remove(player.getUniqueId());
+        }
     }
 }
