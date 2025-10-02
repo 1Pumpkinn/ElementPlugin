@@ -79,30 +79,37 @@ public class WaterElement extends BaseElement {
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_3, 1f, 1.2f);
 
         new BukkitRunnable() {
-            int cycles = 0;
+            int ticks = 0;
             @Override
             public void run() {
-                if (!player.isOnline()) { cancel(); return; }
+                if (!player.isOnline() || ticks >= 200) { // Run for 10 seconds (200 ticks)
+                    cancel(); 
+                    return; 
+                }
                 Vector dir = player.getLocation().getDirection().normalize();
-                RayTraceResult r = player.getWorld().rayTraceEntities(player.getEyeLocation(), dir, 20.0,
-                        entity -> entity instanceof LivingEntity && !entity.equals(player));
-                if (r != null && r.getHitEntity() instanceof LivingEntity le) {
-                    if (isValidTarget(context, le)) {
-                        le.damage(0.5, player);
-                        Location hit = r.getHitPosition().toLocation(player.getWorld());
-                        player.getWorld().spawnParticle(Particle.FALLING_WATER, hit, 5, 0.1, 0.1, 0.1, 0.0);
+                
+                // Only damage every 20 ticks (1 second) to avoid spam
+                if (ticks % 20 == 0) {
+                    RayTraceResult r = player.getWorld().rayTraceEntities(player.getEyeLocation(), dir, 20.0,
+                            entity -> entity instanceof LivingEntity && !entity.equals(player));
+                    if (r != null && r.getHitEntity() instanceof LivingEntity le) {
+                        if (isValidTarget(context, le)) {
+                            le.damage(0.5, player);
+                            Location hit = r.getHitPosition().toLocation(player.getWorld());
+                            player.getWorld().spawnParticle(Particle.FALLING_WATER, hit, 5, 0.1, 0.1, 0.1, 0.0);
+                        }
                     }
                 }
-                // Draw steady beam using BUBBLE_COLUMN_UP particles
+                
+                // Draw steady beam using BUBBLE_COLUMN_UP particles every tick for smooth effect
                 Location eye = player.getEyeLocation();
                 for (double d = 0; d <= 20; d += 0.5) {
                     Location pt = eye.clone().add(dir.clone().multiply(d));
-                    player.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, pt, 2, 0.1, 0.1, 0.1, 0.0);
+                    player.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, pt, 1, 0.05, 0.05, 0.05, 0.0);
                 }
-                cycles++;
-                if (cycles >= 10) cancel();
+                ticks++;
             }
-        }.runTaskTimer(plugin, 0L, 20L);
+        }.runTaskTimer(plugin, 0L, 1L);
         return true;
     }
 }

@@ -75,34 +75,37 @@ public class LifeElement extends BaseElement {
                     return;
                 }
                 
-                // Ray trace to find target
-                RayTraceResult rt = player.rayTraceEntities(20);
-                if (rt != null && rt.getHitEntity() instanceof LivingEntity target) {
-                    // Check if target is an ally (player or trusted)
-                    if (target instanceof Player targetPlayer) {
-                        if (targetPlayer.equals(player) || context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {
-                            // Heal 1 heart (2 HP)
-                            double newHealth = Math.min(targetPlayer.getMaxHealth(), targetPlayer.getHealth() + 2.0);
-                            targetPlayer.setHealth(newHealth);
-                            
-                            // Show healing particles
-                            Location hitLoc = rt.getHitPosition().toLocation(player.getWorld());
-                            player.getWorld().spawnParticle(Particle.HEART, hitLoc, 3, 0.2, 0.2, 0.2, 0.0);
+                // Only heal every 20 ticks (1 second) to avoid spam
+                if (ticks % 20 == 0) {
+                    // Ray trace to find target
+                    RayTraceResult rt = player.rayTraceEntities(20);
+                    if (rt != null && rt.getHitEntity() instanceof LivingEntity target) {
+                        // Check if target is an ally (player or trusted)
+                        if (target instanceof Player targetPlayer) {
+                            if (targetPlayer.equals(player) || context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {
+                                // Heal 1 heart (2 HP)
+                                double newHealth = Math.min(targetPlayer.getMaxHealth(), targetPlayer.getHealth() + 2.0);
+                                targetPlayer.setHealth(newHealth);
+                                
+                                // Show healing particles
+                                Location hitLoc = rt.getHitPosition().toLocation(player.getWorld());
+                                player.getWorld().spawnParticle(Particle.HEART, hitLoc, 3, 0.2, 0.2, 0.2, 0.0);
+                            }
                         }
                     }
                 }
                 
-                // Draw healing beam using heart particles
+                // Draw healing beam using heart particles every tick for smooth effect
                 Vector dir = player.getLocation().getDirection().normalize();
                 Location eye = player.getEyeLocation();
                 for (double d = 0; d <= 20; d += 1.0) {
                     Location pt = eye.clone().add(dir.clone().multiply(d));
-                    player.getWorld().spawnParticle(Particle.HEART, pt, 1, 0, 0, 0, 0);
+                    player.getWorld().spawnParticle(Particle.HEART, pt, 1, 0.05, 0.05, 0.05, 0);
                 }
                 
-                ticks += 20; // Increment by 20 ticks (1 second)
+                ticks++;
             }
-        }.runTaskTimer(plugin, 0L, 20L); // Run every second
+        }.runTaskTimer(plugin, 0L, 1L); // Run every tick for smooth particles
         
         // Upside 2: Grow crops in 5x5 around player
         for (int dx = -2; dx <= 2; dx++) {
@@ -112,7 +115,7 @@ public class LifeElement extends BaseElement {
                 growIfCrop(b.getRelative(0, 1, 0));
             }
         }
-        player.sendMessage(ChatColor.GOLD + "Crops surged with life!");
+        player.sendMessage(ChatColor.GOLD + "Healing beam activated! Crops around you grow!");
         
         return true;
     }
