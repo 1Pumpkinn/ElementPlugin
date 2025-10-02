@@ -6,6 +6,7 @@ import hs.elementPlugin.data.PlayerData;
 import hs.elementPlugin.managers.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -32,22 +33,32 @@ public class ManaManager {
         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             int maxMana = configManager.getMaxMana();
             int regenRate = configManager.getManaRegenPerSecond();
-            
+
             for (Player p : Bukkit.getOnlinePlayers()) {
                 PlayerData pd = get(p.getUniqueId());
-                int before = pd.getMana();
-                if (before < maxMana) {
-                    pd.addMana(regenRate);
-                    // Ensure we don't exceed max mana
-                    if (pd.getMana() > maxMana) {
-                        pd.setMana(maxMana);
+
+                // Creative mode players have infinite mana
+                if (p.getGameMode() == GameMode.CREATIVE) {
+                    pd.setMana(maxMana);
+                } else {
+                    // Normal mana regen for survival/adventure/spectator
+                    int before = pd.getMana();
+                    if (before < maxMana) {
+                        pd.addMana(regenRate);
+                        // Ensure we don't exceed max mana
+                        if (pd.getMana() > maxMana) {
+                            pd.setMana(maxMana);
+                        }
+                        store.save(pd);
                     }
-                    store.save(pd);
                 }
+
                 // Fire Upside 2: auto-smelt ores when upgrade >=2
                 autoSmeltIfFireUpside2(p, pd);
+
                 // Action bar display
-                p.sendActionBar(ChatColor.AQUA + "Mana: " + ChatColor.WHITE + pd.getMana() + ChatColor.GRAY + "/" + maxMana);
+                String manaDisplay = p.getGameMode() == GameMode.CREATIVE ? "∞" : String.valueOf(pd.getMana());
+                p.sendActionBar(ChatColor.AQUA + "Mana: " + ChatColor.WHITE + manaDisplay + ChatColor.GRAY + "/" + maxMana);
             }
         }, 20L, 20L);
     }
@@ -67,6 +78,11 @@ public class ManaManager {
     }
 
     public boolean spend(Player player, int amount) {
+        // Creative mode players don't spend mana
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            return true;
+        }
+
         PlayerData pd = get(player.getUniqueId());
         if (pd.getMana() < amount) return false;
         pd.addMana(-amount);

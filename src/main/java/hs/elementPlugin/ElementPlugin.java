@@ -15,7 +15,6 @@ public final class ElementPlugin extends JavaPlugin {
     private ElementManager elementManager;
     private ManaManager manaManager;
     private TrustManager trustManager;
-    private CooldownManager cooldownManager;
     private ItemManager itemManager;
 
     @Override
@@ -26,14 +25,14 @@ public final class ElementPlugin extends JavaPlugin {
         this.configManager = new ConfigManager(this);
         this.dataStore = new DataStore(this);
         this.trustManager = new TrustManager(this);
-        this.cooldownManager = new CooldownManager();
         this.manaManager = new ManaManager(this, dataStore, configManager);
-        this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager, cooldownManager, configManager);
+        this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager, configManager);
         this.itemManager = new ItemManager(this, manaManager, configManager);
 
         // Register commands
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
         getCommand("element").setExecutor(new hs.elementPlugin.commands.ElementCommand(elementManager));
+        getCommand("mana").setExecutor(new hs.elementPlugin.commands.ManaCommand(manaManager, configManager)); // NEW
 
         // Register listeners
         Bukkit.getPluginManager().registerEvents(new JoinListener(this, elementManager, manaManager), this);
@@ -44,6 +43,7 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.FriendlyMobListener(this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.EarthListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.QuitListener(this, manaManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.GameModeListener(manaManager, configManager), this); // NEW
 
         // Register recipes
         hs.elementPlugin.items.Upgrader1Item.registerRecipe(this);
@@ -52,6 +52,7 @@ public final class ElementPlugin extends JavaPlugin {
         // Start repeating tasks
         this.manaManager.start();
     }
+
 
     @Override
     public void onDisable() {
@@ -70,5 +71,4 @@ public final class ElementPlugin extends JavaPlugin {
     public ElementManager getElementManager() { return elementManager; }
     public ManaManager getManaManager() { return manaManager; }
     public TrustManager getTrustManager() { return trustManager; }
-    public CooldownManager getCooldownManager() { return cooldownManager; }
 }

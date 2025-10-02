@@ -15,6 +15,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -26,18 +27,16 @@ public class ElementManager {
     private final DataStore store;
     private final ManaManager manaManager;
     private final TrustManager trustManager;
-    private final CooldownManager cooldownManager;
     private final ConfigManager configManager;
 
     private final Map<ElementType, Element> registry = new EnumMap<>(ElementType.class);
     private final Random random = new Random();
 
-    public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager, TrustManager trustManager, CooldownManager cooldownManager, ConfigManager configManager) {
+    public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager, TrustManager trustManager, ConfigManager configManager) {
         this.plugin = plugin;
         this.store = store;
         this.manaManager = manaManager;
         this.trustManager = trustManager;
-        this.cooldownManager = cooldownManager;
         this.configManager = configManager;
 
         // Register elements with plugin parameter
@@ -55,6 +54,20 @@ public class ElementManager {
     public PlayerData data(UUID uuid) { return manaManager.get(uuid); }
 
     public Element get(ElementType type) { return registry.get(type); }
+
+    private void clearAllEffects(Player player) {
+        // Remove all potion effects
+        for (PotionEffect effect : player.getActivePotionEffects()) {
+            player.removePotionEffect(effect.getType());
+        }
+
+        // Reset max health to default (20 HP)
+        var attr = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        if (attr != null) {
+            attr.setBaseValue(20.0);
+            if (player.getHealth() > 20.0) player.setHealth(20.0);
+        }
+    }
 
     public void applyUpsides(Player player) {
         PlayerData pd = data(player.getUniqueId());
@@ -87,10 +100,14 @@ public class ElementManager {
     }
 
     public void assignRandomWithTitle(Player player) {
-        // Randomly assign one of the 4 basic elements
+        // Randomly assign one of the 4 basic elements (no LIFE)
         ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH};
         ElementType pick = choices[random.nextInt(choices.length)];
         PlayerData pd = data(player.getUniqueId());
+
+        // Clear effects from previous element
+        clearAllEffects(player);
+
         pd.setCurrentElement(pick);
         store.save(pd);
         player.sendTitle(ChatColor.GOLD + "Attuned!", ChatColor.AQUA + pick.name(), 10, 40, 10);
@@ -100,6 +117,10 @@ public class ElementManager {
 
     public void setElement(Player player, ElementType type) {
         PlayerData pd = data(player.getUniqueId());
+
+        // Clear effects from previous element
+        clearAllEffects(player);
+
         pd.setCurrentElement(type);
         store.save(pd);
         player.sendMessage(ChatColor.GOLD + "Your element is now " + ChatColor.AQUA + type.name());
@@ -117,7 +138,6 @@ public class ElementManager {
                 player,
                 pd.getUpgradeLevel(type),
                 manaManager,
-                cooldownManager,
                 trustManager,
                 configManager
         );
@@ -135,7 +155,6 @@ public class ElementManager {
                 player,
                 pd.getUpgradeLevel(type),
                 manaManager,
-                cooldownManager,
                 trustManager,
                 configManager
         );

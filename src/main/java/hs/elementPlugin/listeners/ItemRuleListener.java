@@ -93,7 +93,7 @@ public class ItemRuleListener implements Listener {
         }
     }
 
-    // On pickup, swap element to the item's element
+    // On pickup, swap element to the item's element and clear old effects
     @EventHandler
     public void onPickup(EntityPickupItemEvent e) {
         if (!(e.getEntity() instanceof Player p)) return;
@@ -101,11 +101,15 @@ public class ItemRuleListener implements Listener {
         if (!isElementItem(stack)) return;
         ElementType type = getElementType(stack);
         if (type == null) return;
+
         PlayerData pd = elements.data(p.getUniqueId());
-        pd.setCurrentElement(type);
-        plugin.getDataStore().save(pd);
-        p.sendMessage(ChatColor.GOLD + "Your element has been swapped to " + ChatColor.AQUA + type.name());
-        elements.applyUpsides(p);
+        ElementType oldElement = pd.getCurrentElement();
+
+        // Only swap and clear effects if changing to a different element
+        if (oldElement != type) {
+            // Use ElementManager's setElement which handles effect clearing
+            elements.setElement(p, type);
+        }
     }
 
     // On projectile hit damage, apply element item debuffs
