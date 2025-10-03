@@ -20,27 +20,26 @@ public class AbilityListener implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent e) {
-        Action a = e.getAction();
-
-        // Handle ability 1: Shift + Left Click (main hand only)
-        if (e.getHand() == EquipmentSlot.HAND && e.getPlayer().isSneaking() && 
-            (a == Action.LEFT_CLICK_AIR || a == Action.LEFT_CLICK_BLOCK)) {
-            boolean ok = elements.useAbility1(e.getPlayer());
-            if (ok) e.setCancelled(true);
-            return;
-        }
+        // This handler is no longer used for abilities - abilities now use offhand keybind (F key)
     }
 
-    // Handle ability 2: Swap hands (F key) - works for all elements including Air
+    // Handle abilities using the offhand keybind (F key by default)
     @EventHandler
     public void onSwapHands(PlayerSwapHandItemsEvent e) {
         Player player = e.getPlayer();
         
-        // Try to use ability 2 regardless of offhand contents
-        // This allows Air element to work even with empty offhand
-        boolean ok = elements.useAbility2(player);
-        if (ok) {
-            e.setCancelled(true); // Prevent the actual item swap
+        if (player.isSneaking()) {
+            // Ability 2: Shift + Offhand keybind (Shift + F)
+            boolean ok = elements.useAbility2(player);
+            if (ok) {
+                e.setCancelled(true); // Prevent the actual item swap
+            }
+        } else {
+            // Ability 1: Offhand keybind (F key)
+            boolean ok = elements.useAbility1(player);
+            if (ok) {
+                e.setCancelled(true); // Prevent the actual item swap
+            }
         }
     }
 }

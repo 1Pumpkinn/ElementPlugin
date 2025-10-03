@@ -34,6 +34,12 @@ public abstract class BaseElement implements Element {
     
     @Override
     public boolean ability2(ElementContext context) {
+        // Require upgrade level 1 before allowing upgrade level 2
+        if (context.getUpgradeLevel() < 1) {
+            context.getPlayer().sendMessage(ChatColor.RED + "You need Upgrade I before you can use Upgrade II abilities.");
+            return false;
+        }
+        
         if (!checkUpgradeLevel(context.getPlayer(), context.getUpgradeLevel(), 2)) return false;
         
         // Check if ability is already active

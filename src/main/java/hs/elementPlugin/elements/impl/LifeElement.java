@@ -72,6 +72,35 @@ public class LifeElement extends BaseElement {
         
         int radius = 5;
         
+        // Show radius with red dust particles (like redstone) that follow the player
+        new BukkitRunnable() {
+            int tick = 0;
+            @Override
+            public void run() {
+                if (!player.isOnline() || tick >= 60) { // Show for 3 seconds (60 ticks)
+                    cancel();
+                    return;
+                }
+                
+                // Create a circle of particles at ground level that follows the player
+                Location currentCenter = player.getLocation();
+                for (int i = 0; i < 360; i += 15) {
+                    double rad = Math.toRadians(i);
+                    double x = Math.cos(rad) * radius;
+                    double z = Math.sin(rad) * radius;
+                    
+                    Location particleLoc = currentCenter.clone().add(x, 0.5, z);
+                    // Ensure particles are visible above ground
+                    while (particleLoc.getBlock().getType().isSolid() && particleLoc.getY() < currentCenter.getY() + 3) {
+                        particleLoc.add(0, 1, 0);
+                    }
+                    
+                    player.getWorld().spawnParticle(Particle.DUST, particleLoc, 1, 0.1, 0.1, 0.1, 0, new Particle.DustOptions(org.bukkit.Color.RED, 1.0f));
+                }
+                tick++;
+            }
+        }.runTaskTimer(plugin, 0L, 1L);
+        
         // Give regeneration 2 to player and trusted people in 5x5 radius for 10 seconds
         for (Player other : player.getWorld().getNearbyPlayers(player.getLocation(), radius)) {
             if (other.equals(player) || context.getTrustManager().isTrusted(player.getUniqueId(), other.getUniqueId())) {
@@ -129,10 +158,11 @@ public class LifeElement extends BaseElement {
                     }
                 }
                 
-                // Draw healing beam using heart particles every tick for smooth effect
+                // Draw healing beam using heart particles every tick for smooth effect (moves with player)
+                // Start beam 2 blocks away from player to avoid vision obstruction
                 Vector dir = player.getLocation().getDirection().normalize();
                 Location eye = player.getEyeLocation();
-                for (double d = 0; d <= 20; d += 1.0) {
+                for (double d = 2.0; d <= 20; d += 1.0) {
                     Location pt = eye.clone().add(dir.clone().multiply(d));
                     player.getWorld().spawnParticle(Particle.HEART, pt, 1, 0.05, 0.05, 0.05, 0);
                 }

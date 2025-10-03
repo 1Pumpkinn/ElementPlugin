@@ -56,9 +56,9 @@ public class ManaManager {
                 // Fire Upside 2: auto-smelt ores when upgrade >=2
                 autoSmeltIfFireUpside2(p, pd);
 
-                // Action bar display
+                // Action bar display with mana emoji
                 String manaDisplay = p.getGameMode() == GameMode.CREATIVE ? "∞" : String.valueOf(pd.getMana());
-                p.sendActionBar(ChatColor.AQUA + "Mana: " + ChatColor.WHITE + manaDisplay + ChatColor.GRAY + "/" + maxMana);
+                p.sendActionBar(ChatColor.AQUA + "🔮 Mana: " + ChatColor.WHITE + manaDisplay + ChatColor.GRAY + "/" + maxMana);
             }
         }, 20L, 20L);
     }

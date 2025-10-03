@@ -58,8 +58,6 @@ public class EarthElement extends BaseElement {
         if (player.hasMetadata(META_TUNNELING)) {
             // Cancel tunneling
             player.removeMetadata(META_TUNNELING, plugin);
-            player.setSwimming(false);
-            player.setGravity(true);
             player.sendMessage(ChatColor.YELLOW + "Tunneling cancelled");
             return true;
         }
@@ -73,8 +71,6 @@ public class EarthElement extends BaseElement {
             @Override
             public void run() {
                 if (!player.isOnline() || !player.hasMetadata(META_TUNNELING)) {
-                    player.setSwimming(false);
-                    player.setGravity(true);
                     cancel();
                     return;
                 }
@@ -82,41 +78,39 @@ public class EarthElement extends BaseElement {
                 long until = player.getMetadata(META_TUNNELING).get(0).asLong();
                 if (System.currentTimeMillis() > until) {
                     player.removeMetadata(META_TUNNELING, plugin);
-                    player.setSwimming(false);
-                    player.setGravity(true);
                     player.sendMessage(ChatColor.YELLOW + "Tunneling ended");
                     cancel();
                     return;
                 }
 
-                // Make player swim but don't move automatically
-                player.setSwimming(true);
-                player.setGravity(false);
+                // Allow normal walking - don't modify swimming or gravity
+                // Player controls their own movement completely
 
                 Vector direction = player.getLocation().getDirection().normalize();
                 
-                // Allow mining in all directions including straight up
+                // Allow mining in all directions including straight up and down
                 // No pitch restrictions - can mine in any direction
                 
                 // Mine in the direction player is looking
-                Location front = player.getEyeLocation().add(direction.multiply(1.5));
-                breakTunnel(front, player);
+                // For downward mining, start from player's feet level to avoid collision
+                Location mineLocation;
+                if (direction.getY() < -0.5) {
+                    // Mining downward - start from player's feet to avoid standing on the block
+                    mineLocation = player.getLocation().add(direction.multiply(1.0));
+                } else {
+                    // Mining forward/up - use eye location
+                    mineLocation = player.getEyeLocation().add(direction.multiply(1.5));
+                }
+                breakTunnel(mineLocation, player);
                 
-                // Allow full directional movement - no restrictions on up/down
-                // Faster movement for better tunneling experience
-                player.setVelocity(direction.multiply(0.25));
+                // Remove automatic movement - player controls their own movement
+                // Only apply slight momentum in the mining direction to help with movement
+                // player.setVelocity(direction.multiply(0.1));
                 
                 // Particles when mining
-                player.getWorld().spawnParticle(Particle.BLOCK, front, 10, 0.5, 0.5, 0.5, 0.1, Material.STONE.createBlockData());
+                player.getWorld().spawnParticle(Particle.BLOCK, mineLocation, 10, 0.5, 0.5, 0.5, 0.1, Material.STONE.createBlockData());
                 
-                // Safety check: if player gets 5+ blocks above ground during tunneling, teleport back down
-                Location playerLoc = player.getLocation();
-                int groundY = player.getWorld().getHighestBlockYAt(playerLoc.getBlockX(), playerLoc.getBlockZ());
-                if (playerLoc.getY() > groundY + 5) {
-                    Location safeGround = new Location(player.getWorld(), playerLoc.getX(), groundY + 1, playerLoc.getZ());
-                    player.teleport(safeGround);
-                    player.sendMessage(ChatColor.YELLOW + "Returned to ground level during tunneling");
-                }
+                // No teleportation - player controls their own movement completely
             }
         }.runTaskTimer(plugin, 0L, 2L);
 

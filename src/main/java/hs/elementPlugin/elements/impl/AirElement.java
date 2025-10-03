@@ -97,9 +97,10 @@ public class AirElement extends BaseElement {
             @Override
             public void run() {
                 if (player.isOnline() && isAbility2Active(player)) {
-                    // Give elytra with curse of binding
+                    // Give elytra with curse of binding and curse of vanishing
                     ItemStack elytra = new ItemStack(Material.ELYTRA);
                     elytra.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.BINDING_CURSE, 1);
+                    elytra.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.VANISHING_CURSE, 1);
                     player.getInventory().setChestplate(elytra);
                     player.sendMessage(ChatColor.AQUA + "Elytra activated! Glide for 10 seconds!");
                     
