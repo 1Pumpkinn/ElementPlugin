@@ -38,36 +38,42 @@ public class WaterElement extends BaseElement {
     @Override
     protected boolean executeAbility1(ElementContext context) {
         Player player = context.getPlayer();
+        Location playerLoc = player.getLocation();
 
-        // Ray trace a target up to 20 blocks
-        RayTraceResult rt = player.rayTraceEntities(20);
-        if (rt == null || rt.getHitEntity() == null || !(rt.getHitEntity() instanceof LivingEntity target)) {
-            player.sendMessage(ChatColor.YELLOW + "No target in sight.");
-            return false;
-        }
+        // Launch all valid targets in a 5x5 radius around the player
+        boolean foundTargets = false;
+        for (LivingEntity entity : playerLoc.getNearbyLivingEntities(5.0)) {
+            if (entity.equals(player)) continue; // Don't launch self
+            if (!isValidTarget(context, entity)) continue; // Skip trusted players
+            
+            foundTargets = true;
+            final LivingEntity target = entity;
+            final double startY = target.getLocation().getY();
 
-        if (!isValidTarget(context, target)) {
-            player.sendMessage(ChatColor.YELLOW + "Target is trusted.");
-            return false;
-        }
-
-        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BUBBLE_COLUMN_UPWARDS_INSIDE, 1f, 1f);
-        final double startY = target.getLocation().getY();
-
-        new BukkitRunnable() {
-            int ticks = 0;
-            @Override
-            public void run() {
-                if (target.isDead() || !target.isValid()) { cancel(); return; }
-                Location loc = target.getLocation();
-                target.setVelocity(new Vector(0, 1.8, 0));
-                target.getWorld().spawnParticle(Particle.SPLASH, loc.getX(), loc.getY() - 0.01, loc.getZ(), 10, 0.2, 0.0, 0.2, 0.01);
-                ticks++;
-                if (loc.getY() - startY >= 35 || ticks >= 25) {
-                    cancel();
+            // Launch each target individually
+            new BukkitRunnable() {
+                int ticks = 0;
+                @Override
+                public void run() {
+                    if (target.isDead() || !target.isValid()) { cancel(); return; }
+                    Location loc = target.getLocation();
+                    target.setVelocity(new Vector(0, 1.8, 0));
+                    target.getWorld().spawnParticle(Particle.SPLASH, loc.getX(), loc.getY() - 0.01, loc.getZ(), 10, 0.2, 0.0, 0.2, 0.01);
+                    ticks++;
+                    if (loc.getY() - startY >= 35 || ticks >= 25) {
+                        cancel();
+                    }
                 }
-            }
-        }.runTaskTimer(plugin, 0L, 2L);
+            }.runTaskTimer(plugin, 0L, 2L);
+        }
+
+        if (!foundTargets) {
+            player.sendMessage(ChatColor.YELLOW + "No valid targets within 5 blocks.");
+            return false;
+        }
+
+        player.getWorld().playSound(playerLoc, Sound.BLOCK_BUBBLE_COLUMN_UPWARDS_INSIDE, 1f, 1f);
+        player.sendMessage(ChatColor.AQUA + "Water geyser launched nearby enemies!");
         return true;
     }
 
@@ -88,13 +94,13 @@ public class WaterElement extends BaseElement {
                 }
                 Vector dir = player.getLocation().getDirection().normalize();
                 
-                // Only damage every 20 ticks (1 second) to avoid spam
-                if (ticks % 20 == 0) {
+                // Damage every 5 ticks (0.25 seconds) for constant damage
+                if (ticks % 5 == 0) {
                     RayTraceResult r = player.getWorld().rayTraceEntities(player.getEyeLocation(), dir, 20.0,
                             entity -> entity instanceof LivingEntity && !entity.equals(player));
                     if (r != null && r.getHitEntity() instanceof LivingEntity le) {
                         if (isValidTarget(context, le)) {
-                            le.damage(0.5, player);
+                            le.damage(0.25, player); // Reduced damage per tick but more frequent = same total DPS
                             Location hit = r.getHitPosition().toLocation(player.getWorld());
                             player.getWorld().spawnParticle(Particle.FALLING_WATER, hit, 5, 0.1, 0.1, 0.1, 0.0);
                         }

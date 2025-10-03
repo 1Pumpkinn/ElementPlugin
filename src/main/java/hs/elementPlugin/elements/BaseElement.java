@@ -103,7 +103,7 @@ public abstract class BaseElement implements Element {
         return activeAbility1.contains(player.getUniqueId());
     }
     
-    protected boolean isAbility2Active(Player player) {
+    public boolean isAbility2Active(Player player) {
         return activeAbility2.contains(player.getUniqueId());
     }
     

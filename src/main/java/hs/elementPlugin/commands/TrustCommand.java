@@ -24,7 +24,6 @@ public class TrustCommand implements CommandExecutor {
         this.trust = trust;
     }
 
-    @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player p)) {
             sender.sendMessage("Players only");
@@ -100,8 +99,8 @@ public class TrustCommand implements CommandExecutor {
                         return true;
                     }
                 }
-                trust.removeTrust(p.getUniqueId(), uuid);
-                p.sendMessage(ChatColor.YELLOW + "Removed trust.");
+                trust.removeMutualTrust(p.getUniqueId(), uuid);
+                p.sendMessage(ChatColor.YELLOW + "Removed mutual trust.");
             }
             default -> p.sendMessage(ChatColor.YELLOW + "Usage: /trust <list|add|remove> [player]");
         }

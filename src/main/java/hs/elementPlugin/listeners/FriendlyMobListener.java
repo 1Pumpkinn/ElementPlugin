@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.UUID;
@@ -64,13 +65,22 @@ public class FriendlyMobListener implements Listener {
 
     @EventHandler
     public void onTarget(EntityTargetLivingEntityEvent e) {
-        // Fire friendly blazes: don't target owner
+        // Fire friendly blazes: don't target owner or trusted players
         if (e.getEntity() instanceof Blaze blaze && e.getTarget() instanceof Player target) {
             if (blaze.hasMetadata(FireElement.META_FRIENDLY_BLAZE_OWNER)) {
                 try {
                     String ownerStr = blaze.getMetadata(FireElement.META_FRIENDLY_BLAZE_OWNER).get(0).asString();
-                    UUID owner = UUID.fromString(ownerStr);
-                    if (target.getUniqueId().equals(owner)) {
+                    UUID ownerId = UUID.fromString(ownerStr);
+                    
+                    // Don't target owner
+                    if (target.getUniqueId().equals(ownerId)) {
+                        e.setCancelled(true);
+                        return;
+                    }
+                    
+                    // Don't target trusted players
+                    var trustManager = plugin.getTrustManager();
+                    if (trustManager.isTrusted(ownerId, target.getUniqueId())) {
                         e.setCancelled(true);
                         return;
                     }
@@ -117,6 +127,58 @@ public class FriendlyMobListener implements Listener {
                         } else {
                             e.setCancelled(true);
                         }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    @EventHandler
+    public void onDamage(EntityDamageByEntityEvent e) {
+        // Prevent charmed mobs from damaging their owner or trusted players
+        if (e.getDamager() instanceof Mob mob && e.getEntity() instanceof Player target) {
+            if (mob.hasMetadata("earth_charmed_owner") && mob.hasMetadata("earth_charmed_until")) {
+                try {
+                    String ownerStr = mob.getMetadata("earth_charmed_owner").get(0).asString();
+                    long until = mob.getMetadata("earth_charmed_until").get(0).asLong();
+                    UUID ownerId = UUID.fromString(ownerStr);
+
+                    if (System.currentTimeMillis() > until) return; // expired
+
+                    // Don't damage owner
+                    if (target.getUniqueId().equals(ownerId)) {
+                        e.setCancelled(true);
+                        return;
+                    }
+
+                    // Don't damage trusted players
+                    var trustManager = plugin.getTrustManager();
+                    if (trustManager.isTrusted(ownerId, target.getUniqueId())) {
+                        e.setCancelled(true);
+                        return;
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // Prevent friendly blazes from damaging their owner or trusted players
+        if (e.getDamager() instanceof Blaze blaze && e.getEntity() instanceof Player target) {
+            if (blaze.hasMetadata(FireElement.META_FRIENDLY_BLAZE_OWNER)) {
+                try {
+                    String ownerStr = blaze.getMetadata(FireElement.META_FRIENDLY_BLAZE_OWNER).get(0).asString();
+                    UUID ownerId = UUID.fromString(ownerStr);
+                    
+                    // Don't damage owner
+                    if (target.getUniqueId().equals(ownerId)) {
+                        e.setCancelled(true);
+                        return;
+                    }
+                    
+                    // Don't damage trusted players
+                    var trustManager = plugin.getTrustManager();
+                    if (trustManager.isTrusted(ownerId, target.getUniqueId())) {
+                        e.setCancelled(true);
+                        return;
                     }
                 } catch (Exception ignored) {}
             }

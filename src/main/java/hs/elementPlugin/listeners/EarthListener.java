@@ -1,5 +1,4 @@
 package hs.elementPlugin.listeners;
-
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.impl.EarthElement;
 import hs.elementPlugin.managers.ElementManager;
@@ -8,12 +7,14 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Wither;
+import org.bukkit.entity.EnderDragon;
+import org.bukkit.entity.Warden;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.inventory.ItemStack;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -56,6 +57,13 @@ public class EarthListener implements Listener {
 
         long until = p.getMetadata(EarthElement.META_CHARM_NEXT_UNTIL).get(0).asLong();
         if (System.currentTimeMillis() > until) return;
+
+        // Check if mob can be charmed (prevent boss mobs)
+        if (mob instanceof Wither || mob instanceof EnderDragon || mob instanceof Warden) {
+            p.sendMessage(org.bukkit.ChatColor.RED + "This creature cannot be charmed!");
+            e.setCancelled(true);
+            return;
+        }
 
         // Consume the ability
         p.removeMetadata(EarthElement.META_CHARM_NEXT_UNTIL, hs.elementPlugin.ElementPlugin.getPlugin(hs.elementPlugin.ElementPlugin.class));

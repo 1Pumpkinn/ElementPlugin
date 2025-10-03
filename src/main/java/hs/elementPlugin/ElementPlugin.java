@@ -44,16 +44,19 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.EarthListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.QuitListener(this, manaManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.GameModeListener(manaManager, configManager), this); // NEW
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.RespawnListener(this, elementManager), this);
 
-        // Register recipes
-        hs.elementPlugin.items.Upgrader1Item.registerRecipe(this);
-        hs.elementPlugin.items.Upgrader2Item.registerRecipe(this);
+        // Register recipes with delay to ensure server is fully loaded
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            getLogger().info("Registering upgrader recipes...");
+            hs.elementPlugin.items.Upgrader1Item.registerRecipe(this);
+            hs.elementPlugin.items.Upgrader2Item.registerRecipe(this);
+            getLogger().info("Upgrader recipes registered successfully");
+        }, 20L); // 1 second delay
 
         // Start repeating tasks
         this.manaManager.start();
     }
-
-
     @Override
     public void onDisable() {
         // Save data

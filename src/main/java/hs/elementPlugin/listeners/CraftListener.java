@@ -50,7 +50,8 @@ public class CraftListener implements Listener {
                 return;
             }
 
-            // Allow the craft to consume materials normally
+            // Consume materials but don't give the upgrader item
+            e.getInventory().setResult(null); // Remove the result item
             pd.setUpgradeLevel(type, level);
             plugin.getDataStore().save(pd);
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);

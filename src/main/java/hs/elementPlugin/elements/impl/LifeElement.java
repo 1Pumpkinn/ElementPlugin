@@ -36,12 +36,40 @@ public class LifeElement extends BaseElement {
             if (player.getHealth() > attr.getBaseValue()) player.setHealth(attr.getBaseValue());
         }
         
-        // Upside 2: Crops within 5x5 radius instantly grow (passive effect when ability2 is used)
+        // Upside 2: Crops within 5x5 radius instantly grow (passive effect)
+        if (upgradeLevel >= 2) {
+            // This is a passive effect that triggers automatically
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (!player.isOnline()) {
+                        cancel();
+                        return;
+                    }
+                    
+                    // Grow crops in 5x5 around player every 5 seconds
+                    for (int dx = -2; dx <= 2; dx++) {
+                        for (int dz = -2; dz <= 2; dz++) {
+                            Block b = player.getLocation().add(dx, 0, dz).getBlock();
+                            growIfCrop(b);
+                            growIfCrop(b.getRelative(0, 1, 0));
+                        }
+                    }
+                }
+            }.runTaskTimer(plugin, 0L, 100L); // Every 5 seconds
+        }
     }
 
     @Override
     protected boolean executeAbility1(ElementContext context) {
         Player player = context.getPlayer();
+        
+        // Check mana cost (50)
+        if (!context.getManaManager().spend(player, 50)) {
+            player.sendMessage(ChatColor.RED + "Not enough mana! Need 50 mana.");
+            return false;
+        }
+        
         int radius = 5;
         
         // Give regeneration 2 to player and trusted people in 5x5 radius for 10 seconds
@@ -60,6 +88,12 @@ public class LifeElement extends BaseElement {
     @Override
     protected boolean executeAbility2(ElementContext context) {
         Player player = context.getPlayer();
+        
+        // Check mana cost (75)
+        if (!context.getManaManager().spend(player, 75)) {
+            player.sendMessage(ChatColor.RED + "Not enough mana! Need 75 mana.");
+            return false;
+        }
         
         player.sendMessage(ChatColor.GREEN + "Healing beam active...");
         setAbility2Active(player, true);
@@ -106,16 +140,6 @@ public class LifeElement extends BaseElement {
                 ticks++;
             }
         }.runTaskTimer(plugin, 0L, 1L); // Run every tick for smooth particles
-        
-        // Upside 2: Grow crops in 5x5 around player
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dz = -2; dz <= 2; dz++) {
-                Block b = player.getLocation().add(dx, 0, dz).getBlock();
-                growIfCrop(b);
-                growIfCrop(b.getRelative(0, 1, 0));
-            }
-        }
-        player.sendMessage(ChatColor.GOLD + "Healing beam activated! Crops around you grow!");
         
         return true;
     }

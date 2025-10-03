@@ -1,10 +1,12 @@
 package hs.elementPlugin.listeners;
 
 import hs.elementPlugin.managers.ElementManager;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
 public class AbilityListener implements Listener {
@@ -20,23 +22,25 @@ public class AbilityListener implements Listener {
     public void onInteract(PlayerInteractEvent e) {
         Action a = e.getAction();
 
-        // Only handle main-hand to avoid duplicate events
-        if (e.getHand() != EquipmentSlot.HAND) return;
-
-        // Require sneaking for both abilities
-        if (!e.getPlayer().isSneaking()) return;
-
-        // Ability 1: Shift + Left Click
-        if (a == Action.LEFT_CLICK_AIR || a == Action.LEFT_CLICK_BLOCK) {
+        // Handle ability 1: Shift + Left Click (main hand only)
+        if (e.getHand() == EquipmentSlot.HAND && e.getPlayer().isSneaking() && 
+            (a == Action.LEFT_CLICK_AIR || a == Action.LEFT_CLICK_BLOCK)) {
             boolean ok = elements.useAbility1(e.getPlayer());
             if (ok) e.setCancelled(true);
             return;
         }
+    }
 
-        // Ability 2: Shift + Right Click
-        if (a == Action.RIGHT_CLICK_AIR || a == Action.RIGHT_CLICK_BLOCK) {
-            boolean ok = elements.useAbility2(e.getPlayer());
-            if (ok) e.setCancelled(true);
+    // Handle ability 2: Swap hands (F key) - works for all elements including Air
+    @EventHandler
+    public void onSwapHands(PlayerSwapHandItemsEvent e) {
+        Player player = e.getPlayer();
+        
+        // Try to use ability 2 regardless of offhand contents
+        // This allows Air element to work even with empty offhand
+        boolean ok = elements.useAbility2(player);
+        if (ok) {
+            e.setCancelled(true); // Prevent the actual item swap
         }
     }
 }

@@ -28,12 +28,24 @@ public final class Upgrader2Item {
     }
 
     public static void registerRecipe(ElementPlugin plugin) {
-        ItemStack result = make(plugin);
-        NamespacedKey key = new NamespacedKey(plugin, KEY);
-        ShapedRecipe recipe = new ShapedRecipe(key, result);
-        recipe.shape("DDD", "DSD", "DDD");
-        recipe.setIngredient('D', Material.DIAMOND);
-        recipe.setIngredient('S', Material.NETHER_STAR);
-        plugin.getServer().addRecipe(recipe);
+        try {
+            ItemStack result = make(plugin);
+            NamespacedKey key = new NamespacedKey(plugin, KEY);
+            
+            // Remove existing recipe if it exists
+            plugin.getServer().removeRecipe(key);
+            
+            ShapedRecipe recipe = new ShapedRecipe(key, result);
+            recipe.shape("DDD", "DSD", "DDD");
+            recipe.setIngredient('D', Material.DIAMOND);
+            recipe.setIngredient('S', Material.NETHER_STAR);
+            
+            boolean success = plugin.getServer().addRecipe(recipe);
+            if (!success) {
+                plugin.getLogger().warning("Failed to register Upgrader II recipe");
+            }
+        } catch (Exception e) {
+            plugin.getLogger().severe("Error registering Upgrader II recipe: " + e.getMessage());
+        }
     }
 }

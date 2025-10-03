@@ -7,6 +7,7 @@ import hs.elementPlugin.managers.ElementManager;
 import hs.elementPlugin.managers.ManaManager;
 import hs.elementPlugin.util.ItemUtil;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -66,7 +67,7 @@ public class ItemRuleListener implements Listener {
         }
     }
 
-    // Prevent storing in containers
+    // Prevent storing in containers and elytra removal during Air ability
     @EventHandler
     public void onClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
@@ -74,6 +75,17 @@ public class ItemRuleListener implements Listener {
         ItemStack current = e.getCurrentItem();
         Inventory top = e.getView().getTopInventory();
         boolean isContainer = top != null && top.getType() != InventoryType.CRAFTING && top.getType() != InventoryType.PLAYER;
+        
+        // Prevent elytra removal during Air ability 2
+        PlayerData pd = elements.data(p.getUniqueId());
+        if (pd.getCurrentElement() == ElementType.AIR && elements.get(ElementType.AIR) instanceof hs.elementPlugin.elements.BaseElement airElement && airElement.isAbility2Active(p)) {
+            if (e.getSlot() == 38 && current != null && current.getType() == Material.ELYTRA) { // Chestplate slot
+                e.setCancelled(true);
+                p.sendMessage(ChatColor.RED + "Cannot remove elytra during flight ability!");
+                return;
+            }
+        }
+        
         if (!isContainer) return;
         if ((cursor != null && isElementItem(cursor)) || (current != null && isElementItem(current))) {
             e.setCancelled(true);

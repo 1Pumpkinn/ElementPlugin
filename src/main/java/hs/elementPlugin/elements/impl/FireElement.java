@@ -109,7 +109,12 @@ public class FireElement extends BaseElement {
         Player player = context.getPlayer();
         // Spawn 3 friendly blazes with 20 hearts
         for (int i = 0; i < 3; i++) {
-            Blaze blaze = player.getWorld().spawn(player.getLocation().add(player.getLocation().getDirection().multiply(1.5)), Blaze.class);
+            // Calculate spawn location in front of player, above ground
+            Location spawnLoc = player.getLocation().add(player.getLocation().getDirection().multiply(2.0));
+            // Ensure spawning above ground level
+            spawnLoc.setY(Math.max(spawnLoc.getY(), player.getWorld().getHighestBlockYAt(spawnLoc) + 2));
+            
+            Blaze blaze = player.getWorld().spawn(spawnLoc, Blaze.class);
             var attr = blaze.getAttribute(Attribute.MAX_HEALTH);
             if (attr != null) attr.setBaseValue(40.0);
             blaze.setHealth(40.0);

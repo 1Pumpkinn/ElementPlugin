@@ -8,6 +8,7 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -88,19 +89,34 @@ public class EarthElement extends BaseElement {
                     return;
                 }
 
-                // Make player swim and move forward
+                // Make player swim but don't move automatically
                 player.setSwimming(true);
                 player.setGravity(false);
 
-                Vector direction = player.getLocation().getDirection().normalize().multiply(0.3);
-                player.setVelocity(direction);
-
-                // Break blocks in a 3x3 area in front of player
-                Location front = player.getEyeLocation().add(player.getLocation().getDirection().multiply(1.5));
+                Vector direction = player.getLocation().getDirection().normalize();
+                
+                // Allow mining in all directions including straight up
+                // No pitch restrictions - can mine in any direction
+                
+                // Mine in the direction player is looking
+                Location front = player.getEyeLocation().add(direction.multiply(1.5));
                 breakTunnel(front, player);
-
-                // Particles
+                
+                // Allow full directional movement - no restrictions on up/down
+                // Faster movement for better tunneling experience
+                player.setVelocity(direction.multiply(0.25));
+                
+                // Particles when mining
                 player.getWorld().spawnParticle(Particle.BLOCK, front, 10, 0.5, 0.5, 0.5, 0.1, Material.STONE.createBlockData());
+                
+                // Safety check: if player gets 5+ blocks above ground during tunneling, teleport back down
+                Location playerLoc = player.getLocation();
+                int groundY = player.getWorld().getHighestBlockYAt(playerLoc.getBlockX(), playerLoc.getBlockZ());
+                if (playerLoc.getY() > groundY + 5) {
+                    Location safeGround = new Location(player.getWorld(), playerLoc.getX(), groundY + 1, playerLoc.getZ());
+                    player.teleport(safeGround);
+                    player.sendMessage(ChatColor.YELLOW + "Returned to ground level during tunneling");
+                }
             }
         }.runTaskTimer(plugin, 0L, 2L);
 
@@ -137,7 +153,25 @@ public class EarthElement extends BaseElement {
                 Block b = loc.getBlock();
 
                 if (TUNNELABLE.contains(b.getType())) {
-                    b.breakNaturally(player.getInventory().getItemInMainHand(), true);
+                    // Get the block's drops using proper tool
+                    ItemStack tool = player.getInventory().getItemInMainHand();
+                    if (tool == null || tool.getType() == Material.AIR) {
+                        // Use a diamond pickaxe for proper ore drops if no tool
+                        tool = new ItemStack(Material.DIAMOND_PICKAXE);
+                    }
+                    
+                    // Get all drops that would normally be produced
+                    java.util.Collection<ItemStack> drops = b.getDrops(tool);
+                    
+                    // Break the block without drops first
+                    b.setType(Material.AIR);
+                    
+                    // Drop all items at the block location
+                    for (ItemStack drop : drops) {
+                        if (drop != null && drop.getType() != Material.AIR) {
+                            b.getWorld().dropItemNaturally(loc, drop);
+                        }
+                    }
                 }
             }
         }
@@ -152,3 +186,5 @@ public class EarthElement extends BaseElement {
         return true;
     }
 }
+
+

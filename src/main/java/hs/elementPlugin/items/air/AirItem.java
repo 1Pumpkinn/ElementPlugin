@@ -11,7 +11,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Snowball;
+import org.bukkit.entity.WindCharge;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -33,10 +33,10 @@ public final class AirItem implements ElementItem {
 
     @Override
     public ItemStack create(ElementPlugin plugin) {
-        ItemStack item = new ItemStack(Material.SNOWBALL);
+        ItemStack item = new ItemStack(Material.WIND_CHARGE);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName("§fWind Charge (Air)");
-        meta.setLore(List.of("§7Infinite", "§7On hit: Weakness I + Slowness II (10s)", "§7Cost: 75 mana"));
+        meta.setLore(List.of("§7Infinite", "§7On hit: Weakness I + Slowness II (10s)", "§7Cost: 75 mana", "§7Cannot be dropped or placed in chests"));
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
         pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE, (byte)1);
         pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING, ElementType.AIR.name());
@@ -52,7 +52,7 @@ public final class AirItem implements ElementItem {
         recipe.shape(" FE", "FWF", "EF ");
         recipe.setIngredient('F', Material.FEATHER);
         recipe.setIngredient('E', Material.ECHO_SHARD);
-        recipe.setIngredient('W', Material.SNOWBALL);
+        recipe.setIngredient('W', Material.WIND_CHARGE);
         plugin.getServer().addRecipe(recipe);
     }
 
@@ -79,7 +79,7 @@ public final class AirItem implements ElementItem {
             p.sendMessage("§cNot enough mana (" + cost + ")");
             return true;
         }
-        Snowball proj = p.launchProjectile(Snowball.class);
+        WindCharge proj = p.launchProjectile(WindCharge.class);
         proj.setVelocity(p.getLocation().getDirection().normalize().multiply(1.3));
         proj.getPersistentDataContainer().set(new NamespacedKey(plugin, PROJ_KEY), PersistentDataType.BYTE, (byte)1);
         proj.setShooter(p);

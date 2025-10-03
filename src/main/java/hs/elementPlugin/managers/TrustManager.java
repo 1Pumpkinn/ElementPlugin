@@ -43,7 +43,6 @@ public class TrustManager {
     public boolean hasPending(UUID target, UUID requestor) {
         return pending.getOrDefault(target, Set.of()).contains(requestor);
     }
-
     public void clearPending(UUID target, UUID requestor) {
         Set<UUID> set = pending.get(target);
         if (set != null) set.remove(requestor);
@@ -53,6 +52,11 @@ public class TrustManager {
         Set<UUID> set = getTrusted(owner);
         set.remove(other);
         store.setTrusted(owner, set);
+    }
+
+    public void removeMutualTrust(UUID a, UUID b) {
+        removeTrust(a, b);
+        removeTrust(b, a);
     }
 
     public List<String> getTrustedNames(UUID owner) {
