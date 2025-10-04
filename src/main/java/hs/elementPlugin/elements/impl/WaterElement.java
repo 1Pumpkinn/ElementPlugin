@@ -57,10 +57,10 @@ public class WaterElement extends BaseElement {
                 public void run() {
                     if (target.isDead() || !target.isValid()) { cancel(); return; }
                     Location loc = target.getLocation();
-                    target.setVelocity(new Vector(0, 1.8, 0));
-                    target.getWorld().spawnParticle(Particle.SPLASH, loc.getX(), loc.getY() - 0.01, loc.getZ(), 10, 0.2, 0.0, 0.2, 0.01);
+                    target.setVelocity(new Vector(0, 1.2, 0));
+                    target.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, loc.getX(), loc.getY() - 0.01, loc.getZ(), 10, 0.2, 0.0, 0.2, 0.01);
                     ticks++;
-                    if (loc.getY() - startY >= 35 || ticks >= 25) {
+                    if (loc.getY() - startY >= 20 || ticks >= 25) {
                         cancel();
                     }
                 }
