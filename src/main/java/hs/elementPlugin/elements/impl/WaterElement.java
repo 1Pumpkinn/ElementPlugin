@@ -96,21 +96,25 @@ public class WaterElement extends BaseElement {
                 
                 // Damage every 5 ticks (0.25 seconds) for constant damage
                 if (ticks % 5 == 0) {
-                    RayTraceResult r = player.getWorld().rayTraceEntities(player.getEyeLocation(), dir, 20.0,
+                    Location chestLoc = player.getLocation().add(0, 1.2, 0);
+                    RayTraceResult r = player.getWorld().rayTraceEntities(chestLoc, dir, 20.0,
                             entity -> entity instanceof LivingEntity && !entity.equals(player));
                     if (r != null && r.getHitEntity() instanceof LivingEntity le) {
                         if (isValidTarget(context, le)) {
-                            le.damage(0.25, player); // Reduced damage per tick but more frequent = same total DPS
+                            // True damage that bypasses armor
+                            double currentHealth = le.getHealth();
+                            double newHealth = Math.max(0, currentHealth - 1.0);
+                            le.setHealth(newHealth);
                             Location hit = r.getHitPosition().toLocation(player.getWorld());
-                            player.getWorld().spawnParticle(Particle.FALLING_WATER, hit, 5, 0.1, 0.1, 0.1, 0.0);
+                            player.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, hit, 5, 0.1, 0.1, 0.1, 0.0);
                         }
                     }
                 }
                 
                 // Draw steady beam using BUBBLE_COLUMN_UP particles every tick for smooth effect
-                Location eye = player.getEyeLocation();
+                Location chestLoc = player.getLocation().add(0, 1.2, 0);
                 for (double d = 0; d <= 20; d += 0.5) {
-                    Location pt = eye.clone().add(dir.clone().multiply(d));
+                    Location pt = chestLoc.clone().add(dir.clone().multiply(d));
                     player.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, pt, 1, 0.05, 0.05, 0.05, 0.0);
                 }
                 ticks++;

@@ -44,12 +44,12 @@ public class FireElement extends BaseElement {
             @Override
             public void run() {
                 if (!player.isOnline()) { cancel(); return; }
-                Location eye = player.getEyeLocation();
-                Vector dir = eye.getDirection().normalize();
+                Location playerLoc = player.getLocation().add(0, 1.2, 0); // Chest level
+                Vector dir = player.getLocation().getDirection().normalize();
 
-                // Start cone half a block in front of player
-                Vector startOffset = dir.clone().multiply(0.5);
-                Location startLoc = eye.clone().add(startOffset);
+                // Start cone 1.5 blocks in front of player at chest level
+                Vector startOffset = dir.clone().multiply(1.5);
+                Location startLoc = playerLoc.clone().add(startOffset);
 
                 // Create cone shape that widens as it goes out
                 for (double d = 0; d <= 6; d += 0.4) {
@@ -73,7 +73,12 @@ public class FireElement extends BaseElement {
                     for (LivingEntity le : centerLoc.getNearbyLivingEntities(coneRadius + 0.5)) {
                         if (!isValidTarget(context, le)) continue;
                         le.setFireTicks(40);
-                        if (ticks % 10 == 0) le.damage(1.0, player); // ~0.5 heart per second overall
+                        if (ticks % 10 == 0) {
+                            // True damage that bypasses armor
+                            double currentHealth = le.getHealth();
+                            double newHealth = Math.max(0, currentHealth - 1.0);
+                            le.setHealth(newHealth);
+                        }
                     }
                 }
 
