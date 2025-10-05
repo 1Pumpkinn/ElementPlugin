@@ -57,9 +57,11 @@ public class FireElement extends BaseElement {
         final java.util.Set<LivingEntity> affectedEntities = new java.util.HashSet<>();
 
         new BukkitRunnable() {
+            int ticks = 0;
+
             @Override
             public void run() {
-                if (!player.isOnline()) {
+                if (!player.isOnline() || ticks >= 100) { // 5 seconds (100 ticks)
                     setAbility1Active(player, false);
                     cancel();
                     return;
@@ -72,43 +74,53 @@ public class FireElement extends BaseElement {
                 Vector startOffset = dir.clone().multiply(1.5);
                 Location startLoc = playerLoc.clone().add(startOffset);
 
+                // Get perpendicular vectors for creating the cone
+                Vector perpX = getPerpendicular(dir);
+                Vector perpY = dir.clone().crossProduct(perpX).normalize();
+
                 // Create cone shape that widens as it goes out
-                for (double d = 0; d <= 6; d += 0.4) {
+                for (double d = 0; d <= 6; d += 0.5) {
                     Vector step = dir.clone().multiply(d);
                     Location centerLoc = startLoc.clone().add(step);
 
                     // Cone radius increases with distance
-                    double coneRadius = d * 0.25; // Starts at 0, ends at 1.5 blocks wide
+                    double maxRadius = d * 0.25; // Starts at 0, ends at 1.5 blocks wide
 
-                    // Spawn particles in a circle at this distance - FURTHER REDUCED PARTICLE COUNT FOR VISIBILITY
-                    int particleCount = Math.max(1, (int)(coneRadius * 3)); // Reduced from 5 to 3
-                    for (int i = 0; i < particleCount; i++) {
-                        double angle = (Math.PI * 2 * i) / particleCount;
-                        Vector perpendicular = getPerpendicular(dir);
-                        Vector rotated = rotateAroundAxis(perpendicular, dir, angle).multiply(coneRadius);
-                        Location particleLoc = centerLoc.clone().add(rotated);
+                    // Create filled cone by spawning particles in concentric circles
+                    int radiusSteps = Math.max(1, (int)(maxRadius / 0.3));
+                    for (int r = 0; r <= radiusSteps; r++) {
+                        double radius = (maxRadius * r) / radiusSteps;
 
-                        // Only spawn particles every other tick to reduce visual clutter
-                        if (player.getTicksLived() % 2 == 0) {
-                            player.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0.05, 0.05, 0.05, 0.01);
+                        // Number of particles around this circle
+                        int particleCount = Math.max(3, (int)(radius * 8));
+
+                        for (int i = 0; i < particleCount; i++) {
+                            double angle = (Math.PI * 2 * i) / particleCount;
+
+                            // Calculate position using perpendicular vectors
+                            Vector offset = perpX.clone().multiply(Math.cos(angle) * radius)
+                                    .add(perpY.clone().multiply(Math.sin(angle) * radius));
+
+                            Location particleLoc = centerLoc.clone().add(offset);
+
+                            // Spawn flame particles
+                            player.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0.03, 0.03, 0.03, 0.01);
                         }
                     }
 
-                    // Damage and knockback entities in cone
-                    for (LivingEntity le : centerLoc.getNearbyLivingEntities(coneRadius + 0.5)) {
+                    // Damage entities in cone (no knockback)
+                    for (LivingEntity le : centerLoc.getNearbyLivingEntities(maxRadius + 0.5)) {
                         if (!isValidTarget(context, le)) continue;
                         le.setFireTicks(100); // 5 seconds of fire
 
-                        // Apply knockback effect
-                        Vector knockback = le.getLocation().toVector().subtract(player.getLocation().toVector()).normalize();
-                        knockback.setY(0.2); // Add slight upward component
-                        knockback = knockback.multiply(0.5); // Reduced knockback strength
-                        le.setVelocity(knockback);
+                        // Knockback removed as requested
 
                         // Add to affected entities for DoT
                         affectedEntities.add(le);
                     }
                 }
+
+                ticks++;
             }
         }.runTaskTimer(plugin, 0L, 1L); // Run every tick for continuous fire breath
 
@@ -139,14 +151,6 @@ public class FireElement extends BaseElement {
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L);
-
-        // End the ability after 5 seconds and mark as inactive
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                setAbility1Active(player, false);
-            }
-        }.runTaskLater(plugin, 100L); // 5 seconds = 100 ticks
 
         return true;
     }
