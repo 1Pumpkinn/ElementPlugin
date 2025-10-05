@@ -25,11 +25,22 @@ public abstract class BaseElement implements Element {
             context.getPlayer().sendMessage(ChatColor.YELLOW + "Ability 1 is already active!");
             return false;
         }
+        
+        // Check cooldown
+        String cooldownKey = getType().toString().toLowerCase() + "_ability1";
+        if (!plugin.getCooldownManager().tryUseAbility(context.getPlayer(), cooldownKey, 3)) {
+            return false;
+        }
 
         int cost = context.getConfigManager().getAbility1Cost(getType());
-        if (!checkMana(context.getPlayer(), context.getManaManager(), cost)) return false;
+        if (!hasMana(context.getPlayer(), context.getManaManager(), cost)) return false;
         
-        return executeAbility1(context);
+        // Execute ability first, only consume mana if successful
+        if (executeAbility1(context)) {
+            context.getManaManager().spend(context.getPlayer(), cost);
+            return true;
+        }
+        return false;
     }
     
     @Override
@@ -48,10 +59,21 @@ public abstract class BaseElement implements Element {
             return false;
         }
         
-        int cost = context.getConfigManager().getAbility2Cost(getType());
-        if (!checkMana(context.getPlayer(), context.getManaManager(), cost)) return false;
+        // Check cooldown
+        String cooldownKey = getType().toString().toLowerCase() + "_ability2";
+        if (!plugin.getCooldownManager().tryUseAbility(context.getPlayer(), cooldownKey, 3)) {
+            return false;
+        }
         
-        return executeAbility2(context);
+        int cost = context.getConfigManager().getAbility2Cost(getType());
+        if (!hasMana(context.getPlayer(), context.getManaManager(), cost)) return false;
+        
+        // Execute ability first, only consume mana if successful
+        if (executeAbility2(context)) {
+            context.getManaManager().spend(context.getPlayer(), cost);
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -67,8 +89,20 @@ public abstract class BaseElement implements Element {
     }
     
     /**
-     * Check if player has enough mana and spend it
+     * Check if player has enough mana (without spending it)
      */
+    protected boolean hasMana(Player player, hs.elementPlugin.managers.ManaManager mana, int cost) {
+        if (mana.get(player.getUniqueId()).getMana() < cost) {
+            player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * Check if player has enough mana and spend it (deprecated - use hasMana instead)
+     */
+    @Deprecated
     protected boolean checkMana(Player player, hs.elementPlugin.managers.ManaManager mana, int cost) {
         if (!mana.spend(player, cost)) {
             player.sendMessage(ChatColor.RED + "Not enough mana (" + cost + ")");

@@ -1,6 +1,7 @@
 package hs.elementPlugin.listeners;
 
 import hs.elementPlugin.ElementPlugin;
+import hs.elementPlugin.gui.ElementSelectionGUI;
 import hs.elementPlugin.managers.ElementManager;
 import hs.elementPlugin.managers.ManaManager;
 import org.bukkit.Bukkit;
@@ -10,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class JoinListener implements Listener {
     private final ElementPlugin plugin;
@@ -25,12 +27,23 @@ public class JoinListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        // Rolling animation: cycle action bar text for ~3s if first time
+        // Check if player has an element
         boolean first = (elements.data(p.getUniqueId()).getCurrentElement() == null);
+        
         if (first) {
-            elements.rollAndAssign(p);
-        } else {
+            // Open element selection GUI after a short delay
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (p.isOnline()) {
+                        ElementSelectionGUI gui = new ElementSelectionGUI(plugin, p, false);
+                        gui.open();
+                        p.sendMessage(ChatColor.GREEN + "Welcome! Please select your element.");
+                    }
+                }
+            }.runTaskLater(plugin, 20L); // 1 second delay
         }
+        
         // Ensure mana loaded
         mana.get(p.getUniqueId());
     }

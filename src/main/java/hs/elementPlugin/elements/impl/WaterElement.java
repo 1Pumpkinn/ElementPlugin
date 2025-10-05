@@ -84,11 +84,15 @@ public class WaterElement extends BaseElement {
         player.sendMessage(ChatColor.AQUA + "Water beam active for 10s...");
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_3, 1f, 1.2f);
 
+        // Mark ability as active to prevent stacking
+        setAbility2Active(player, true);
+
         new BukkitRunnable() {
             int ticks = 0;
             @Override
             public void run() {
                 if (!player.isOnline() || ticks >= 200) { // Run for 10 seconds (200 ticks)
+                    setAbility2Active(player, false);
                     cancel(); 
                     return; 
                 }
@@ -101,9 +105,15 @@ public class WaterElement extends BaseElement {
                             entity -> entity instanceof LivingEntity && !entity.equals(player));
                     if (r != null && r.getHitEntity() instanceof LivingEntity le) {
                         if (isValidTarget(context, le)) {
-                            // True damage that bypasses armor
+                            // Apply knockback effect
+                            Vector knockback = le.getLocation().toVector().subtract(player.getLocation().toVector()).normalize();
+                            knockback.setY(0.2); // Add slight upward component
+                            knockback = knockback.multiply(0.8); // Moderate knockback strength
+                            le.setVelocity(knockback);
+                            
+                            // True damage that bypasses armor - 0.25 hearts per second (0.5 hearts every 10 ticks)
                             double currentHealth = le.getHealth();
-                            double newHealth = Math.max(0, currentHealth - 1.0);
+                            double newHealth = Math.max(0, currentHealth - 0.5);
                             le.setHealth(newHealth);
                             Location hit = r.getHitPosition().toLocation(player.getWorld());
                             player.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, hit, 5, 0.1, 0.1, 0.1, 0.0);
@@ -120,6 +130,7 @@ public class WaterElement extends BaseElement {
                 ticks++;
             }
         }.runTaskTimer(plugin, 0L, 1L);
+        
         return true;
     }
 }

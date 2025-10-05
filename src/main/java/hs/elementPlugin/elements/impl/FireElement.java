@@ -4,6 +4,7 @@ import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -37,13 +38,30 @@ public class FireElement extends BaseElement {
     @Override
     protected boolean executeAbility1(ElementContext context) {
         Player player = context.getPlayer();
+        
+        // Check for 50 mana cost
+        if (!context.getManaManager().hasMana(player, 50)) {
+            player.sendMessage(ChatColor.RED + "Not enough mana! (50 required)");
+            return false;
+        }
+        
+        // Consume mana
+        context.getManaManager().spend(player, 50);
+        
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_FIRECHARGE_USE, 1f, 1f);
+        
+        // Mark ability as active to prevent stacking
+        setAbility1Active(player, true);
 
         new BukkitRunnable() {
-            int ticks = 0;
             @Override
             public void run() {
-                if (!player.isOnline()) { cancel(); return; }
+                if (!player.isOnline()) { 
+                    setAbility1Active(player, false);
+                    cancel(); 
+                    return; 
+                }
+                
                 Location playerLoc = player.getLocation().add(0, 1.2, 0); // Chest level
                 Vector dir = player.getLocation().getDirection().normalize();
 
@@ -69,23 +87,34 @@ public class FireElement extends BaseElement {
                         player.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0.05, 0.05, 0.05, 0.01);
                     }
 
-                    // Damage entities in cone
+                    // Damage and knockback entities in cone
                     for (LivingEntity le : centerLoc.getNearbyLivingEntities(coneRadius + 0.5)) {
                         if (!isValidTarget(context, le)) continue;
                         le.setFireTicks(40);
-                        if (ticks % 10 == 0) {
-                            // True damage that bypasses armor
-                            double currentHealth = le.getHealth();
-                            double newHealth = Math.max(0, currentHealth - 1.0);
-                            le.setHealth(newHealth);
-                        }
+                        
+                        // Apply knockback effect
+                        Vector knockback = le.getLocation().toVector().subtract(player.getLocation().toVector()).normalize();
+                        knockback.setY(0.3); // Add upward component
+                        knockback = knockback.multiply(1.2); // Knockback strength
+                        le.setVelocity(knockback);
+                        
+                        // True damage that bypasses armor (0.5 hearts per second)
+                        double currentHealth = le.getHealth();
+                        double newHealth = Math.max(0, currentHealth - 0.5);
+                        le.setHealth(newHealth);
                     }
                 }
-
-                ticks += 2;
-                if (ticks >= 5 * 20) cancel();
             }
-        }.runTaskTimer(plugin, 0L, 2L);
+        }.runTaskTimer(plugin, 0L, 1L); // Run every tick for continuous fire breath
+        
+        // End the ability after 5 seconds and mark as inactive
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                setAbility1Active(player, false);
+            }
+        }.runTaskLater(plugin, 100L); // 5 seconds = 100 ticks
+        
         return true;
     }
 

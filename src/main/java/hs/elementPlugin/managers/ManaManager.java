@@ -89,6 +89,22 @@ public class ManaManager {
         store.save(pd);
         return true;
     }
+    
+    /**
+     * Check if player has enough mana without spending it
+     * @param player The player to check
+     * @param amount The amount of mana required
+     * @return true if player has enough mana, false otherwise
+     */
+    public boolean hasMana(Player player, int amount) {
+        // Creative mode players always have mana
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            return true;
+        }
+        
+        PlayerData pd = get(player.getUniqueId());
+        return pd.getMana() >= amount;
+    }
 
     private void autoSmeltIfFireUpside2(Player p, PlayerData pd) {
         if (pd.getCurrentElement() != hs.elementPlugin.elements.ElementType.FIRE) return;

@@ -1,0 +1,146 @@
+package hs.elementPlugin.gui;
+
+import hs.elementPlugin.ElementPlugin;
+import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.managers.ElementManager;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+public class ElementSelectionGUI {
+    private static final String INVENTORY_TITLE = ChatColor.DARK_PURPLE + "Select Your Element";
+    private static final Map<UUID, ElementSelectionGUI> openGuis = new HashMap<>();
+    
+    private final ElementPlugin plugin;
+    private final ElementManager elementManager;
+    private final Player player;
+    private final Inventory inventory;
+    private final boolean isReroll;
+    
+    public ElementSelectionGUI(ElementPlugin plugin, Player player, boolean isReroll) {
+        this.plugin = plugin;
+        this.elementManager = plugin.getElementManager();
+        this.player = player;
+        this.isReroll = isReroll;
+        this.inventory = Bukkit.createInventory(null, 9, INVENTORY_TITLE);
+        
+        setupItems();
+        openGuis.put(player.getUniqueId(), this);
+    }
+    
+    private void setupItems() {
+        // Fire element item
+        ItemStack fireItem = new ItemStack(Material.FIRE_CHARGE);
+        ItemMeta fireMeta = fireItem.getItemMeta();
+        fireMeta.setDisplayName(ChatColor.RED + "Fire Element");
+        fireMeta.setLore(Arrays.asList(
+            ChatColor.GRAY + "Select the Fire element",
+            ChatColor.YELLOW + "Upside 1: Fire resistance",
+            ChatColor.YELLOW + "Ability 1: Fire breath",
+            ChatColor.YELLOW + "Ability 2: Fireball",
+            ChatColor.YELLOW + "Upside 2: Auto-smelt items"
+        ));
+        fireItem.setItemMeta(fireMeta);
+        
+        // Water element item
+        ItemStack waterItem = new ItemStack(Material.WATER_BUCKET);
+        ItemMeta waterMeta = waterItem.getItemMeta();
+        waterMeta.setDisplayName(ChatColor.BLUE + "Water Element");
+        waterMeta.setLore(Arrays.asList(
+            ChatColor.GRAY + "Select the Water element",
+            ChatColor.YELLOW + "Upside 1: Water breathing",
+            ChatColor.YELLOW + "Ability 1: Water shield",
+            ChatColor.YELLOW + "Ability 2: Water beam",
+            ChatColor.YELLOW + "Upside 2: Swim speed boost"
+        ));
+        waterItem.setItemMeta(waterMeta);
+        
+        // Earth element item
+        ItemStack earthItem = new ItemStack(Material.GRASS_BLOCK);
+        ItemMeta earthMeta = earthItem.getItemMeta();
+        earthMeta.setDisplayName(ChatColor.GREEN + "Earth Element");
+        earthMeta.setLore(Arrays.asList(
+            ChatColor.GRAY + "Select the Earth element",
+            ChatColor.YELLOW + "Upside 1: Haste I",
+            ChatColor.YELLOW + "Ability 1: Stomp",
+            ChatColor.YELLOW + "Ability 2: Rock wall",
+            ChatColor.YELLOW + "Upside 2: Crops grow faster"
+        ));
+        earthItem.setItemMeta(earthMeta);
+        
+        // Air element item
+        ItemStack airItem = new ItemStack(Material.FEATHER);
+        ItemMeta airMeta = airItem.getItemMeta();
+        airMeta.setDisplayName(ChatColor.WHITE + "Air Element");
+        airMeta.setLore(Arrays.asList(
+            ChatColor.GRAY + "Select the Air element",
+            ChatColor.YELLOW + "Upside 1: No fall damage",
+            ChatColor.YELLOW + "Ability 1: Dash",
+            ChatColor.YELLOW + "Ability 2: Flight",
+            ChatColor.YELLOW + "Upside 2: Speed boost"
+        ));
+        airItem.setItemMeta(airMeta);
+        
+        // Place items in inventory
+        inventory.setItem(1, fireItem);
+        inventory.setItem(3, waterItem);
+        inventory.setItem(5, earthItem);
+        inventory.setItem(7, airItem);
+    }
+    
+    public void open() {
+        player.openInventory(inventory);
+    }
+    
+    public void handleClick(int slot) {
+        ElementType selectedElement = null;
+        
+        switch (slot) {
+            case 1:
+                selectedElement = ElementType.FIRE;
+                break;
+            case 3:
+                selectedElement = ElementType.WATER;
+                break;
+            case 5:
+                selectedElement = ElementType.EARTH;
+                break;
+            case 7:
+                selectedElement = ElementType.AIR;
+                break;
+            default:
+                return;
+        }
+        
+        if (selectedElement != null) {
+            player.closeInventory();
+            
+            if (isReroll) {
+                elementManager.setElement(player, selectedElement);
+                player.sendMessage(ChatColor.GREEN + "Your element has been changed to " + 
+                    ChatColor.GOLD + selectedElement.name());
+            } else {
+                elementManager.assignElement(player, selectedElement);
+                player.sendMessage(ChatColor.GREEN + "You have selected the " + 
+                    ChatColor.GOLD + selectedElement.name() + ChatColor.GREEN + " element!");
+            }
+        }
+    }
+    
+    public static ElementSelectionGUI getGUI(UUID playerId) {
+        return openGuis.get(playerId);
+    }
+    
+    public static void removeGUI(UUID playerId) {
+        openGuis.remove(playerId);
+    }
+}

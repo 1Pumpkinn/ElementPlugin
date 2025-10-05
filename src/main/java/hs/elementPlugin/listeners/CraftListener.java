@@ -12,6 +12,7 @@ import org.bukkit.Sound;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.CraftItemEvent;
+import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -43,6 +44,17 @@ public class CraftListener implements Listener {
                 p.sendMessage(ChatColor.RED + "You don't have an element yet.");
                 return;
             }
+            
+            // Check tiered crafting requirement for Upgrader 2
+            if (level == 2) {
+                int currentLevel = pd.getUpgradeLevel(type);
+                if (currentLevel < 1) {
+                    e.setCancelled(true);
+                    p.sendMessage(ChatColor.RED + "You must craft and possess Upgrader I before crafting Upgrader II.");
+                    return;
+                }
+            }
+            
             int current = pd.getUpgradeLevel(type);
             if (level <= current) {
                 e.setCancelled(true);
@@ -50,8 +62,22 @@ public class CraftListener implements Listener {
                 return;
             }
 
-            // Consume materials but don't give the upgrader item
-            e.getInventory().setResult(null); // Remove the result item
+            // Prevent material retrieval by consuming all materials in the crafting grid
+            CraftingInventory craftingInv = e.getInventory();
+            ItemStack[] matrix = craftingInv.getMatrix();
+            
+            // Clear all materials from the crafting grid
+            for (int i = 0; i < matrix.length; i++) {
+                if (matrix[i] != null && matrix[i].getType() != Material.AIR) {
+                    matrix[i] = null;
+                }
+            }
+            craftingInv.setMatrix(matrix);
+            
+            // Remove the result item
+            e.getInventory().setResult(null);
+            
+            // Apply the upgrade
             pd.setUpgradeLevel(type, level);
             plugin.getDataStore().save(pd);
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);

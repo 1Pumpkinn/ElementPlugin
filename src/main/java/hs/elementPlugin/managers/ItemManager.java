@@ -6,6 +6,7 @@ import hs.elementPlugin.items.api.ElementItem;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -46,5 +47,21 @@ public class ItemManager {
         for (ElementItem item : items.values()) {
             item.handleLaunch(e, plugin, mana, configManager);
         }
+    }
+    
+    /**
+     * Creates an Upgrader1 item
+     * @return The created ItemStack
+     */
+    public ItemStack createUpgrader1() {
+        return hs.elementPlugin.items.Upgrader1Item.make(plugin);
+    }
+    
+    /**
+     * Creates an Upgrader2 item
+     * @return The created ItemStack
+     */
+    public ItemStack createUpgrader2() {
+        return hs.elementPlugin.items.Upgrader2Item.make(plugin);
     }
 }

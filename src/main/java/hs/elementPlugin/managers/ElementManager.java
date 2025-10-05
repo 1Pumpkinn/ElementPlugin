@@ -114,6 +114,20 @@ public class ElementManager {
         applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
+    
+    public void assignElement(Player player, ElementType type) {
+        PlayerData pd = data(player.getUniqueId());
+
+        // Clear effects from previous element
+        clearAllEffects(player);
+
+        pd.setCurrentElement(type); // This automatically resets upgrade level
+        store.save(pd);
+        player.sendTitle(ChatColor.GOLD + "Attuned!", ChatColor.AQUA + type.name(), 10, 40, 10);
+        applyUpsides(player);
+        player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+    }
+    
     public void setElement(Player player, ElementType type) {
         PlayerData pd = data(player.getUniqueId());
 

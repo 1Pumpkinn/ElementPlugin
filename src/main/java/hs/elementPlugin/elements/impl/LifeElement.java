@@ -64,12 +64,6 @@ public class LifeElement extends BaseElement {
     protected boolean executeAbility1(ElementContext context) {
         Player player = context.getPlayer();
         
-        // Check mana cost (50)
-        if (!context.getManaManager().spend(player, 50)) {
-            player.sendMessage(ChatColor.RED + "Not enough mana! Need 50 mana.");
-            return false;
-        }
-        
         int radius = 5;
         
         // Show radius with red dust particles (like redstone) that follow the player
@@ -117,12 +111,6 @@ public class LifeElement extends BaseElement {
     @Override
     protected boolean executeAbility2(ElementContext context) {
         Player player = context.getPlayer();
-        
-        // Check mana cost (75)
-        if (!context.getManaManager().spend(player, 75)) {
-            player.sendMessage(ChatColor.RED + "Not enough mana! Need 75 mana.");
-            return false;
-        }
         
         player.sendMessage(ChatColor.GREEN + "Healing beam active...");
         setAbility2Active(player, true);
