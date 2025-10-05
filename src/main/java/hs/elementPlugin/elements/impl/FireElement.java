@@ -38,30 +38,33 @@ public class FireElement extends BaseElement {
     @Override
     protected boolean executeAbility1(ElementContext context) {
         Player player = context.getPlayer();
-        
+
         // Check for 50 mana cost
         if (!context.getManaManager().hasMana(player, 50)) {
             player.sendMessage(ChatColor.RED + "Not enough mana! (50 required)");
             return false;
         }
-        
+
         // Consume mana
         context.getManaManager().spend(player, 50);
-        
+
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_FIRECHARGE_USE, 1f, 1f);
-        
+
         // Mark ability as active to prevent stacking
         setAbility1Active(player, true);
+
+        // Store affected entities to apply DoT effect
+        final java.util.Set<LivingEntity> affectedEntities = new java.util.HashSet<>();
 
         new BukkitRunnable() {
             @Override
             public void run() {
-                if (!player.isOnline()) { 
+                if (!player.isOnline()) {
                     setAbility1Active(player, false);
-                    cancel(); 
-                    return; 
+                    cancel();
+                    return;
                 }
-                
+
                 Location playerLoc = player.getLocation().add(0, 1.2, 0); // Chest level
                 Vector dir = player.getLocation().getDirection().normalize();
 
@@ -77,36 +80,66 @@ public class FireElement extends BaseElement {
                     // Cone radius increases with distance
                     double coneRadius = d * 0.25; // Starts at 0, ends at 1.5 blocks wide
 
-                    // Spawn particles in a circle at this distance
-                    int particleCount = Math.max(1, (int)(coneRadius * 8));
+                    // Spawn particles in a circle at this distance - FURTHER REDUCED PARTICLE COUNT FOR VISIBILITY
+                    int particleCount = Math.max(1, (int)(coneRadius * 3)); // Reduced from 5 to 3
                     for (int i = 0; i < particleCount; i++) {
                         double angle = (Math.PI * 2 * i) / particleCount;
                         Vector perpendicular = getPerpendicular(dir);
                         Vector rotated = rotateAroundAxis(perpendicular, dir, angle).multiply(coneRadius);
                         Location particleLoc = centerLoc.clone().add(rotated);
-                        player.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0.05, 0.05, 0.05, 0.01);
+
+                        // Only spawn particles every other tick to reduce visual clutter
+                        if (player.getTicksLived() % 2 == 0) {
+                            player.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0.05, 0.05, 0.05, 0.01);
+                        }
                     }
 
                     // Damage and knockback entities in cone
                     for (LivingEntity le : centerLoc.getNearbyLivingEntities(coneRadius + 0.5)) {
                         if (!isValidTarget(context, le)) continue;
-                        le.setFireTicks(40);
-                        
+                        le.setFireTicks(100); // 5 seconds of fire
+
                         // Apply knockback effect
                         Vector knockback = le.getLocation().toVector().subtract(player.getLocation().toVector()).normalize();
-                        knockback.setY(0.3); // Add upward component
-                        knockback = knockback.multiply(1.2); // Knockback strength
+                        knockback.setY(0.2); // Add slight upward component
+                        knockback = knockback.multiply(0.5); // Reduced knockback strength
                         le.setVelocity(knockback);
-                        
-                        // True damage that bypasses armor (0.5 hearts per second)
-                        double currentHealth = le.getHealth();
-                        double newHealth = Math.max(0, currentHealth - 0.5);
-                        le.setHealth(newHealth);
+
+                        // Add to affected entities for DoT
+                        affectedEntities.add(le);
                     }
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L); // Run every tick for continuous fire breath
-        
+
+        // Apply damage over time to affected entities
+        new BukkitRunnable() {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                ticks++;
+
+                // Apply damage every second (20 ticks)
+                if (ticks % 20 == 0) {
+                    for (LivingEntity entity : affectedEntities) {
+                        if (entity.isValid() && !entity.isDead()) {
+                            // Apply half a heart damage (1 point)
+                            double currentHealth = entity.getHealth();
+                            double newHealth = Math.max(0, currentHealth - 1.0);
+                            entity.setHealth(newHealth);
+                        }
+                    }
+                }
+
+                // End after 5 seconds (100 ticks)
+                if (ticks >= 100) {
+                    cancel();
+                    affectedEntities.clear();
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 1L);
+
         // End the ability after 5 seconds and mark as inactive
         new BukkitRunnable() {
             @Override
@@ -114,7 +147,7 @@ public class FireElement extends BaseElement {
                 setAbility1Active(player, false);
             }
         }.runTaskLater(plugin, 100L); // 5 seconds = 100 ticks
-        
+
         return true;
     }
 
@@ -141,20 +174,97 @@ public class FireElement extends BaseElement {
     @Override
     protected boolean executeAbility2(ElementContext context) {
         Player player = context.getPlayer();
-        // Spawn 3 friendly blazes with 20 hearts
-        for (int i = 0; i < 3; i++) {
-            // Calculate spawn location in front of player, above ground
-            Location spawnLoc = player.getLocation().add(player.getLocation().getDirection().multiply(2.0));
-            // Ensure spawning above ground level
-            spawnLoc.setY(Math.max(spawnLoc.getY(), player.getWorld().getHighestBlockYAt(spawnLoc) + 2));
-            
-            Blaze blaze = player.getWorld().spawn(spawnLoc, Blaze.class);
-            var attr = blaze.getAttribute(Attribute.MAX_HEALTH);
-            if (attr != null) attr.setBaseValue(40.0);
-            blaze.setHealth(40.0);
-            blaze.setMetadata(META_FRIENDLY_BLAZE_OWNER, new FixedMetadataValue(plugin, player.getUniqueId().toString()));
+
+        // Check for 75 mana cost
+        if (!context.getManaManager().hasMana(player, 75)) {
+            player.sendMessage(ChatColor.RED + "Not enough mana! (75 required)");
+            return false;
         }
+
+        // Consume mana
+        context.getManaManager().spend(player, 75);
+
+        // Mark ability as active to prevent stacking
+        setAbility2Active(player, true);
+
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1f, 0.8f);
+
+        // Store affected entities to apply DoT effect
+        final java.util.Set<LivingEntity> affectedEntities = new java.util.HashSet<>();
+
+        // Create fire beam that extends from player's face
+        new BukkitRunnable() {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                if (!player.isOnline() || ticks >= 200) { // 10 seconds (200 ticks)
+                    setAbility2Active(player, false);
+                    cancel();
+                    return;
+                }
+
+                Location eyeLocation = player.getEyeLocation();
+                Vector direction = player.getLocation().getDirection().normalize();
+
+                // Create beam particles
+                for (double d = 1.0; d <= 15.0; d += 0.5) {
+                    Vector pos = direction.clone().multiply(d);
+                    Location particleLoc = eyeLocation.clone().add(pos);
+
+                    // Spawn fewer particles for better visibility
+                    player.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0.1, 0.1, 0.1, 0.01);
+
+                    // Check for entities in beam path
+                    for (LivingEntity entity : particleLoc.getNearbyLivingEntities(1.0)) {
+                        if (!isValidTarget(context, entity)) continue;
+
+                        // Apply knockback
+                        Vector knockback = entity.getLocation().toVector().subtract(player.getLocation().toVector()).normalize();
+                        knockback.setY(0.2); // Add slight upward component
+                        knockback = knockback.multiply(0.3); // Light knockback
+                        entity.setVelocity(knockback);
+
+                        // Add to affected entities for DoT
+                        affectedEntities.add(entity);
+                    }
+                }
+
+                ticks++;
+            }
+        }.runTaskTimer(plugin, 0L, 1L);
+
+        // Apply damage over time to affected entities
+        new BukkitRunnable() {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                ticks++;
+
+                // Apply damage every second (20 ticks)
+                if (ticks % 20 == 0) {
+                    for (LivingEntity entity : affectedEntities) {
+                        if (entity.isValid() && !entity.isDead()) {
+                            // Apply quarter heart damage (0.5 point)
+                            double currentHealth = entity.getHealth();
+                            double newHealth = Math.max(0, currentHealth - 0.5);
+                            entity.setHealth(newHealth);
+
+                            // Visual effect for damage
+                            entity.getWorld().spawnParticle(Particle.FLAME, entity.getLocation().add(0, 1, 0), 5, 0.2, 0.2, 0.2, 0.05);
+                        }
+                    }
+                }
+
+                // End after 10 seconds (200 ticks)
+                if (ticks >= 200) {
+                    cancel();
+                    affectedEntities.clear();
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 1L);
+
         return true;
     }
 }
