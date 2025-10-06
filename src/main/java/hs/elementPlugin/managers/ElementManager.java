@@ -18,8 +18,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 public class ElementManager {
@@ -31,6 +33,7 @@ public class ElementManager {
 
     private final Map<ElementType, Element> registry = new EnumMap<>(ElementType.class);
     private final Random random = new Random();
+    private final Set<UUID> currentlyRolling = new HashSet<>();
 
     public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager, TrustManager trustManager, ConfigManager configManager) {
         this.plugin = plugin;
@@ -84,7 +87,20 @@ public class ElementManager {
         }
     }
 
+    public boolean isCurrentlyRolling(Player player) {
+        return currentlyRolling.contains(player.getUniqueId());
+    }
+    
     public void rollAndAssign(Player player) {
+        // Check if player is already rolling
+        if (isCurrentlyRolling(player)) {
+            player.sendMessage(ChatColor.RED + "You are already rerolling your element!");
+            return;
+        }
+        
+        // Add player to currently rolling set
+        currentlyRolling.add(player.getUniqueId());
+        
         // Slowing title roll animation, then assign
         String[] names = {"AIR", "WATER", "FIRE", "EARTH"};
         player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
@@ -96,7 +112,11 @@ public class ElementManager {
                 player.sendTitle(ChatColor.YELLOW + "Rolling...", ChatColor.AQUA + name, 0, 10, 0);
             }, delay);
         }
-        Bukkit.getScheduler().runTaskLater(plugin, () -> assignRandomWithTitle(player), steps * 3L + 2L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            assignRandomWithTitle(player);
+            // Remove player from currently rolling set when done
+            currentlyRolling.remove(player.getUniqueId());
+        }, steps * 3L + 2L);
     }
 
     public void assignRandomWithTitle(Player player) {

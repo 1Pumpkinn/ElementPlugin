@@ -149,7 +149,7 @@ public class WaterElement extends BaseElement {
 
         // Store the task ID so we can properly cancel it if player dies or logs off
         final int[] taskId = {-1};
-        
+
         BukkitRunnable task = new BukkitRunnable() {
             int ticks = 0;
             double totalDamageDealt = 0; // Track total damage dealt
@@ -158,11 +158,11 @@ public class WaterElement extends BaseElement {
                 // Make sure to properly clean up if player is offline or ability ends
                 if (!player.isOnline() || ticks >= 200 || totalDamageDealt >= 10) { // Run for 10 seconds (200 ticks) or until 5 hearts (10 damage) is dealt
                     setAbility2Active(player, false);
-                    cancel(); 
-                    return; 
+                    cancel();
+                    return;
                 }
                 Vector dir = player.getLocation().getDirection().normalize();
-                
+
                 // Damage every 5 ticks (0.25 seconds) for constant damage
                 if (ticks % 5 == 0) {
                     Location chestLoc = player.getLocation().add(0, 1.2, 0);
@@ -175,23 +175,23 @@ public class WaterElement extends BaseElement {
                             knockback.setY(0.2); // Add slight upward component
                             knockback = knockback.multiply(0.8); // Moderate knockback strength
                             le.setVelocity(knockback);
-                            
+
                             // Only deal damage if we haven't reached 5 hearts total
                             if (totalDamageDealt < 10) {
-                                // True damage that bypasses armor - 0.25 damage per hit
+                                // True damage that bypasses armor - 0.5 damage per hit
                                 double damageAmount = 0.5;
                                 // Make sure we don't exceed 5 hearts total
                                 if (totalDamageDealt + damageAmount > 10) {
                                     damageAmount = 10 - totalDamageDealt;
                                 }
-                                
+
                                 double currentHealth = le.getHealth();
                                 double newHealth = Math.max(0, currentHealth - damageAmount);
                                 le.setHealth(newHealth);
                                 totalDamageDealt += damageAmount;
-                                
+
                                 Location hit = r.getHitPosition().toLocation(player.getWorld());
-                                
+
                                 try {
                                     // Enhanced hit effect based on the image
                                     if (le instanceof Player) {
@@ -202,7 +202,7 @@ public class WaterElement extends BaseElement {
                                         player.getWorld().spawnParticle(Particle.BUBBLE_POP, hit, 10, 0.2, 0.2, 0.2, 0.1);
                                         // Play splash sound
                                         player.getWorld().playSound(hit, Sound.ENTITY_PLAYER_SPLASH, 0.8f, 1.5f);
-                                        
+
                                         // Create water ring effect
                                         for (double angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
                                             double x = Math.cos(angle) * 0.5;
@@ -222,27 +222,34 @@ public class WaterElement extends BaseElement {
                         }
                     }
                 }
-                
+
                 try {
-                    // Draw steady beam using BUBBLE_COLUMN_UP particles every tick for smooth effect
-                    Location chestLoc = player.getLocation().add(0, 1.2, 0);
-                    // Reduce particle count to improve performance
-                    for (double d = 0; d <= 20; d += 1.0) {
-                        Location pt = chestLoc.clone().add(dir.clone().multiply(d));
-                        player.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, pt, 1, 0.05, 0.05, 0.05, 0.0);
+                    // Draw steady vertical geyser beam - only spawn particles every few ticks to prevent flashing
+                    if (ticks % 2 == 0) {
+                        Location chestLoc = player.getLocation().add(0, 1.2, 0);
+                        // Create a straight upward geyser effect
+                        for (double d = 0; d <= 20; d += 0.5) {
+                            Location pt = chestLoc.clone().add(dir.clone().multiply(d));
+                            // Use BUBBLE_COLUMN_UP with no spread for a tight, straight beam
+                            player.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, pt, 1, 0.0, 0.0, 0.0, 0.0);
+                            // Add occasional water droplets for visual interest
+                            if (d % 2.0 < 0.5) {
+                                player.getWorld().spawnParticle(Particle.DRIPPING_WATER, pt, 1, 0.0, 0.0, 0.0, 0.0);
+                            }
+                        }
                     }
                 } catch (Exception e) {
                     // Catch any particle errors to prevent ability from breaking
                     plugin.getLogger().warning("Error spawning water beam particles: " + e.getMessage());
                 }
-                
+
                 ticks++;
             }
         };
-        
+
         // Store the task ID and start the task
         taskId[0] = task.runTaskTimer(plugin, 0L, 1L).getTaskId();
-        
+
         // Register a listener to ensure ability is properly deactivated if player dies or logs off
         plugin.getServer().getPluginManager().registerEvents(new Listener() {
             @EventHandler
@@ -255,7 +262,7 @@ public class WaterElement extends BaseElement {
                     HandlerList.unregisterAll(this);
                 }
             }
-            
+
             @EventHandler
             public void onPlayerDeath(PlayerDeathEvent event) {
                 if (event.getEntity().equals(player)) {
@@ -267,7 +274,7 @@ public class WaterElement extends BaseElement {
                 }
             }
         }, plugin);
-        
+
         return true;
     }
 }

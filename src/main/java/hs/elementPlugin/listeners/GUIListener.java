@@ -3,6 +3,7 @@ package hs.elementPlugin.listeners;
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.gui.ElementSelectionGUI;
 import hs.elementPlugin.items.ItemKeys;
+import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -63,9 +64,9 @@ public class GUIListener implements Listener {
                 player.getInventory().removeItem(item);
             }
             
-            // Open element selection GUI
-            ElementSelectionGUI gui = new ElementSelectionGUI(plugin, player, true);
-            gui.open();
+            // Automatically reroll the element instead of opening GUI
+            plugin.getElementManager().rollAndAssign(player);
+            player.sendMessage(ChatColor.GREEN + "Your element has been rerolled!");
         }
     }
 }

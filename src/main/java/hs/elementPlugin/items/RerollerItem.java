@@ -24,7 +24,7 @@ public final class RerollerItem {
         meta.setLore(List.of(
             ChatColor.GRAY + "A mystical shard that allows",
             ChatColor.GRAY + "you to change your element",
-            ChatColor.YELLOW + "Right-click to open element selection"
+            ChatColor.YELLOW + "Right-click to randomly reroll your element"
         ));
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
         pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_REROLLER), PersistentDataType.BYTE, (byte)1);
