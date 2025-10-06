@@ -22,8 +22,7 @@ public final class RerollerItem {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Element Reroller");
         meta.setLore(List.of(
-            ChatColor.GRAY + "A mystical shard that allows",
-            ChatColor.GRAY + "you to change your element",
+            ChatColor.GRAY + "Allows you to change your element",
             ChatColor.YELLOW + "Right-click to randomly reroll your element"
         ));
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
@@ -41,10 +40,13 @@ public final class RerollerItem {
             plugin.getServer().removeRecipe(key);
             
             ShapedRecipe recipe = new ShapedRecipe(key, result);
-            recipe.shape("DED", "ENE", "DED");
-            recipe.setIngredient('D', Material.DIAMOND);
+            recipe.shape("IEG", "ETE", "DEM");
+            recipe.setIngredient('I', Material.IRON_BLOCK);
+            recipe.setIngredient('G', Material.GOLD_BLOCK);
+            recipe.setIngredient('D', Material.DIAMOND_BLOCK);
+            recipe.setIngredient('M', Material.EMERALD_BLOCK);
             recipe.setIngredient('E', Material.ECHO_SHARD);
-            recipe.setIngredient('N', Material.NETHERITE_INGOT);
+            recipe.setIngredient('T', Material.TOTEM_OF_UNDYING);
             
             boolean success = plugin.getServer().addRecipe(recipe);
             if (!success) {

@@ -26,7 +26,6 @@ public class AirElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: Permanent speed 1
         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, true, false));
     }
 
@@ -37,7 +36,6 @@ public class AirElement extends BaseElement {
         World w = player.getWorld();
         Location center = player.getLocation();
 
-        // Animated particle ring that shoots outward
         new BukkitRunnable() {
             int tick = 0;
             @Override
@@ -48,15 +46,13 @@ public class AirElement extends BaseElement {
                     return;
                 }
 
-                // Spawn particles in a ring above ground
                 for (int i = 0; i < 360; i += 10) {
                     double rad = Math.toRadians(i);
                     double x = Math.cos(rad) * currentRadius;
                     double z = Math.sin(rad) * currentRadius;
 
-                    // Ensure particles spawn above ground level
                     Location particleLoc = center.clone().add(x, 1.0, z);
-                    // Check if the location is solid, if so move particles up
+                    // Adjust particle height to appear above solid blocks
                     while (particleLoc.getBlock().getType().isSolid() && particleLoc.getY() < center.getY() + 5) {
                         particleLoc.add(0, 1, 0);
                     }
@@ -68,7 +64,6 @@ public class AirElement extends BaseElement {
             }
         }.runTaskTimer(plugin, 0L, 1L);
 
-        // Launch nearby entities
         for (LivingEntity e : player.getLocation().getNearbyLivingEntities(radius)) {
             if (!isValidTarget(context, e)) continue;
             Vector push = e.getLocation().toVector().subtract(center.toVector()).normalize().multiply(2.25).setY(1.5);
@@ -82,29 +77,23 @@ public class AirElement extends BaseElement {
     protected boolean executeAbility2(ElementContext context) {
         Player player = context.getPlayer();
         
-        // Mark ability as active to prevent elytra removal
         setAbility2Active(player, true);
         
-        // Launch player 30 blocks up first
         Vector upward = new Vector(0, 2.0, 0);
         player.setVelocity(upward);
         
-        // Store original chestplate
         ItemStack originalChestplate = player.getInventory().getChestplate();
         
-        // Wait a moment for the launch, then give elytra
         new BukkitRunnable() {
             @Override
             public void run() {
                 if (player.isOnline() && isAbility2Active(player)) {
-                    // Give elytra with curse of binding and curse of vanishing
                     ItemStack elytra = new ItemStack(Material.ELYTRA);
                     elytra.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.BINDING_CURSE, 1);
                     elytra.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.VANISHING_CURSE, 1);
                     player.getInventory().setChestplate(elytra);
                     player.sendMessage(ChatColor.AQUA + "Elytra activated! Glide for 10 seconds!");
                     
-                    // Remove elytra after 10 seconds
                     new BukkitRunnable() {
                         @Override
                         public void run() {
@@ -114,7 +103,7 @@ public class AirElement extends BaseElement {
                                 player.sendMessage(ChatColor.GRAY + "Elytra effect ended.");
                             }
                         }
-                    }.runTaskLater(plugin, 200L); // 10 seconds = 200 ticks
+                    }.runTaskLater(plugin, 200L); // 10 seconds
                 }
             }
         }.runTaskLater(plugin, 20L); // 1 second delay after launch

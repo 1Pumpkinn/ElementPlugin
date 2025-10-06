@@ -47,7 +47,6 @@ public class EarthElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: Hero of the Village I
         player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, Integer.MAX_VALUE, 0, true, false));
     }
 
@@ -56,13 +55,11 @@ public class EarthElement extends BaseElement {
         Player player = context.getPlayer();
 
         if (player.hasMetadata(META_TUNNELING)) {
-            // Cancel tunneling
             player.removeMetadata(META_TUNNELING, plugin);
             player.sendMessage(ChatColor.YELLOW + "Tunneling cancelled");
             return true;
         }
 
-        // Start tunneling mode
         player.setMetadata(META_TUNNELING, new FixedMetadataValue(plugin, System.currentTimeMillis() + 20_000L));
         player.sendMessage(ChatColor.GREEN + "Earth tunneling active! Look where you want to go. Sneak+Left-Click again to cancel.");
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_STONE_BREAK, 1f, 0.8f);
@@ -83,34 +80,18 @@ public class EarthElement extends BaseElement {
                     return;
                 }
 
-                // Allow normal walking - don't modify swimming or gravity
-                // Player controls their own movement completely
-
                 Vector direction = player.getLocation().getDirection().normalize();
                 
-                // Allow mining in all directions including straight up and down
-                // No pitch restrictions - can mine in any direction
-                
-                // Mine in the direction player is looking
-                // For downward mining, start from player's feet level to avoid collision
+                // Adjust mine location based on look direction
                 Location mineLocation;
                 if (direction.getY() < -0.5) {
-                    // Mining downward - start from player's feet to avoid standing on the block
                     mineLocation = player.getLocation().add(direction.multiply(1.0));
                 } else {
-                    // Mining forward/up - use eye location
                     mineLocation = player.getEyeLocation().add(direction.multiply(1.5));
                 }
                 breakTunnel(mineLocation, player);
                 
-                // Remove automatic movement - player controls their own movement
-                // Only apply slight momentum in the mining direction to help with movement
-                // player.setVelocity(direction.multiply(0.1));
-                
-                // Particles when mining
                 player.getWorld().spawnParticle(Particle.BLOCK, mineLocation, 10, 0.5, 0.5, 0.5, 0.1, Material.STONE.createBlockData());
-                
-                // No teleportation - player controls their own movement completely
             }
         }.runTaskTimer(plugin, 0L, 2L);
 
@@ -121,24 +102,21 @@ public class EarthElement extends BaseElement {
         Vector dir = player.getLocation().getDirection().normalize();
         Vector perpX, perpY;
 
-        // Get perpendicular vectors for the plane based on look direction
+        // Calculate perpendicular vectors based on look direction
         double yComponent = Math.abs(dir.getY());
 
         if (yComponent > 0.9) {
-            // Looking nearly straight up or down - use X and Z as perpendiculars
             perpX = new Vector(1, 0, 0);
             perpY = new Vector(0, 0, 1);
         } else if (yComponent > 0.5) {
-            // Looking at an angle - blend between horizontal and vertical planes
             perpX = new Vector(-dir.getZ(), 0, dir.getX()).normalize();
             perpY = new Vector(0, 1, 0);
         } else {
-            // Looking mostly horizontally
             perpX = new Vector(-dir.getZ(), 0, dir.getX()).normalize();
             perpY = new Vector(0, 1, 0);
         }
 
-        // Break 3x3 grid perpendicular to look direction
+        // Create 3x3 tunnel perpendicular to look direction
         for (int x = -1; x <= 1; x++) {
             for (int y = -1; y <= 1; y++) {
                 Location loc = center.clone()
@@ -147,20 +125,14 @@ public class EarthElement extends BaseElement {
                 Block b = loc.getBlock();
 
                 if (TUNNELABLE.contains(b.getType())) {
-                    // Get the block's drops using proper tool
                     ItemStack tool = player.getInventory().getItemInMainHand();
                     if (tool == null || tool.getType() == Material.AIR) {
-                        // Use a diamond pickaxe for proper ore drops if no tool
                         tool = new ItemStack(Material.DIAMOND_PICKAXE);
                     }
                     
-                    // Get all drops that would normally be produced
                     java.util.Collection<ItemStack> drops = b.getDrops(tool);
-                    
-                    // Break the block without drops first
                     b.setType(Material.AIR);
                     
-                    // Drop all items at the block location
                     for (ItemStack drop : drops) {
                         if (drop != null && drop.getType() != Material.AIR) {
                             b.getWorld().dropItemNaturally(loc, drop);

@@ -36,10 +36,16 @@ public final class Upgrader1Item {
             plugin.getServer().removeRecipe(key);
             
             ShapedRecipe recipe = new ShapedRecipe(key, result);
-            recipe.shape("III", "ISI", "III");
-            recipe.setIngredient('I', Material.IRON_INGOT);
-            recipe.setIngredient('S', Material.AMETHYST_SHARD);
-            
+            recipe.shape("GFG", "WDB", "GFG");
+            recipe.setIngredient('G', Material.GOLD_BLOCK);
+            recipe.setIngredient('D', Material.DIAMOND_BLOCK);
+
+            recipe.setIngredient('F', Material.FIRE_CHARGE);
+            recipe.setIngredient('W', Material.WATER_BUCKET);
+            recipe.setIngredient('B', Material.GRASS_BLOCK);
+            recipe.setIngredient('F', Material.FEATHER);
+
+
             boolean success = plugin.getServer().addRecipe(recipe);
             if (!success) {
                 plugin.getLogger().warning("Failed to register Upgrader I recipe");
