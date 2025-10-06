@@ -57,6 +57,12 @@ public class GUIListener implements Listener {
                 .has(new NamespacedKey(plugin, ItemKeys.KEY_REROLLER), PersistentDataType.BYTE)) {
             event.setCancelled(true);
             
+            // Check if player is already rolling
+            if (plugin.getElementManager().isCurrentlyRolling(player)) {
+                player.sendMessage(ChatColor.RED + "You are already rerolling your element!");
+                return;
+            }
+            
             // Remove one reroller item
             if (item.getAmount() > 1) {
                 item.setAmount(item.getAmount() - 1);

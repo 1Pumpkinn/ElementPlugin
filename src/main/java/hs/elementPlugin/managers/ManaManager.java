@@ -58,7 +58,7 @@ public class ManaManager {
 
                 // Action bar display with mana emoji
                 String manaDisplay = p.getGameMode() == GameMode.CREATIVE ? "∞" : String.valueOf(pd.getMana());
-                p.sendActionBar(ChatColor.AQUA + "🔮 Mana: " + ChatColor.WHITE + manaDisplay + ChatColor.GRAY + "/" + maxMana);
+                p.sendActionBar(ChatColor.AQUA + "♋ Mana: " + ChatColor.WHITE + manaDisplay + ChatColor.GRAY + "/" + maxMana);
             }
         }, 20L, 20L);
     }

@@ -42,7 +42,7 @@ public class ElementManager {
         this.trustManager = trustManager;
         this.configManager = configManager;
 
-        // Register elements with plugin parameter
+        // Register elements with plugin parameter only
         register(new AirElement(plugin));
         register(new WaterElement(plugin));
         register(new FireElement(plugin));
@@ -170,9 +170,11 @@ public class ElementManager {
         ElementContext context = new ElementContext(
                 player,
                 pd.getUpgradeLevel(type),
+                type,
                 manaManager,
                 trustManager,
-                configManager
+                configManager,
+                plugin
         );
         return e.ability1(context);
     }
@@ -187,9 +189,11 @@ public class ElementManager {
         ElementContext context = new ElementContext(
                 player,
                 pd.getUpgradeLevel(type),
+                type,
                 manaManager,
                 trustManager,
-                configManager
+                configManager,
+                plugin
         );
         return e.ability2(context);
     }

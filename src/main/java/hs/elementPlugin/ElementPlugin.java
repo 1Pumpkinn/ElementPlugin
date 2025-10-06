@@ -1,7 +1,11 @@
 package hs.elementPlugin;
 
+import hs.elementPlugin.abilities.AbilityManager;
+import hs.elementPlugin.abilities.water.WaterGeyserAbility;
 import hs.elementPlugin.commands.TrustCommand;
 import hs.elementPlugin.data.DataStore;
+import hs.elementPlugin.elements.ElementRegistry;
+import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.listeners.CombatListener;
 import hs.elementPlugin.listeners.DeathListener;
 import hs.elementPlugin.listeners.JoinListener;
@@ -18,6 +22,8 @@ public final class ElementPlugin extends JavaPlugin {
     private TrustManager trustManager;
     private ItemManager itemManager;
     private CooldownManager cooldownManager;
+    private AbilityManager abilityManager;
+    private ElementRegistry elementRegistry;
 
     @Override
     public void onEnable() {
@@ -28,9 +34,13 @@ public final class ElementPlugin extends JavaPlugin {
         this.dataStore = new DataStore(this);
         this.trustManager = new TrustManager(this);
         this.manaManager = new ManaManager(this, dataStore, configManager);
+        this.abilityManager = new AbilityManager(this);
         this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager, configManager);
         this.itemManager = new ItemManager(this, manaManager, configManager);
         this.cooldownManager = new CooldownManager();
+        
+        // Initialize ability system
+        this.abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility());
 
         // Register commands
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));

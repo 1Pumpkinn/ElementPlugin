@@ -62,17 +62,57 @@ public class CraftListener implements Listener {
                 return;
             }
 
-            // Prevent material retrieval by consuming all materials in the crafting grid
+            // Handle crafting with excess items
             CraftingInventory craftingInv = e.getInventory();
             ItemStack[] matrix = craftingInv.getMatrix();
             
-            // Clear all materials from the crafting grid
-            for (int i = 0; i < matrix.length; i++) {
-                if (matrix[i] != null && matrix[i].getType() != Material.AIR) {
-                    matrix[i] = null;
+            // Get the recipe pattern to determine which slots need to be consumed
+            org.bukkit.inventory.Recipe recipe = e.getRecipe();
+            if (recipe instanceof org.bukkit.inventory.ShapedRecipe shapedRecipe) {
+                String[] shape = shapedRecipe.getShape();
+                java.util.Map<Character, org.bukkit.inventory.RecipeChoice> ingredients = shapedRecipe.getChoiceMap();
+                
+                // Process each slot in the crafting grid
+                for (int i = 0; i < matrix.length; i++) {
+                    ItemStack item = matrix[i];
+                    if (item == null || item.getType() == Material.AIR) continue;
+                    
+                    // Calculate row and column in the 3x3 grid
+                    int row = i / 3;
+                    int col = i % 3;
+                    
+                    // Check if this position is part of the recipe pattern
+                    boolean isPartOfRecipe = false;
+                    if (row < shape.length && col < shape[row].length()) {
+                        char ingredientChar = shape[row].charAt(col);
+                        isPartOfRecipe = ingredients.containsKey(ingredientChar);
+                    }
+                    
+                    if (isPartOfRecipe) {
+                        // Consume only one item from this slot
+                        if (item.getAmount() > 1) {
+                            item.setAmount(item.getAmount() - 1);
+                            matrix[i] = item;
+                        } else {
+                            matrix[i] = null;
+                        }
+                    }
                 }
+                
+                craftingInv.setMatrix(matrix);
+            } else {
+                // Fallback for non-shaped recipes
+                for (int i = 0; i < matrix.length; i++) {
+                    if (matrix[i] != null && matrix[i].getType() != Material.AIR) {
+                        if (matrix[i].getAmount() > 1) {
+                            matrix[i].setAmount(matrix[i].getAmount() - 1);
+                        } else {
+                            matrix[i] = null;
+                        }
+                    }
+                }
+                craftingInv.setMatrix(matrix);
             }
-            craftingInv.setMatrix(matrix);
             
             // Remove the result item
             e.getInventory().setResult(null);
@@ -115,7 +155,65 @@ public class CraftListener implements Listener {
                 }
             }
 
-            // Allow the craft to consume materials
+            // Handle crafting with excess items
+            CraftingInventory craftingInv = e.getInventory();
+            ItemStack[] matrix = craftingInv.getMatrix();
+            
+            // Get the recipe pattern to determine which slots need to be consumed
+            org.bukkit.inventory.Recipe recipe = e.getRecipe();
+            if (recipe instanceof org.bukkit.inventory.ShapedRecipe shapedRecipe) {
+                String[] shape = shapedRecipe.getShape();
+                java.util.Map<Character, org.bukkit.inventory.RecipeChoice> ingredients = shapedRecipe.getChoiceMap();
+                
+                // Process each slot in the crafting grid
+                for (int i = 0; i < matrix.length; i++) {
+                    ItemStack item = matrix[i];
+                    if (item == null || item.getType() == Material.AIR) continue;
+                    
+                    // Calculate row and column in the 3x3 grid
+                    int row = i / 3;
+                    int col = i % 3;
+                    
+                    // Check if this position is part of the recipe pattern
+                    boolean isPartOfRecipe = false;
+                    if (row < shape.length && col < shape[row].length()) {
+                        char ingredientChar = shape[row].charAt(col);
+                        isPartOfRecipe = ingredients.containsKey(ingredientChar);
+                    }
+                    
+                    if (isPartOfRecipe) {
+                        // Consume only one item from this slot
+                        if (item.getAmount() > 1) {
+                            item.setAmount(item.getAmount() - 1);
+                            matrix[i] = item;
+                        } else {
+                            matrix[i] = null;
+                        }
+                    }
+                }
+                
+                craftingInv.setMatrix(matrix);
+            } else {
+                // Fallback for non-shaped recipes
+                for (int i = 0; i < matrix.length; i++) {
+                    if (matrix[i] != null && matrix[i].getType() != Material.AIR) {
+                        if (matrix[i].getAmount() > 1) {
+                            matrix[i].setAmount(matrix[i].getAmount() - 1);
+                        } else {
+                            matrix[i] = null;
+                        }
+                    }
+                }
+                craftingInv.setMatrix(matrix);
+            }
+            
+            // Cancel the event to prevent normal crafting behavior
+            e.setCancelled(true);
+            
+            // Add the element item to player's inventory
+            p.getInventory().addItem(result);
+            
+            // Update player data
             pd.addElementItem(type);
             // Reset upgrade level when crafting a new element item
             pd.setCurrentElementUpgradeLevel(0);
