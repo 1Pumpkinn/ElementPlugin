@@ -34,10 +34,9 @@ public class DeathElementListener implements Listener {
         if (pd == null || pd.getCurrentElement() != ElementType.DEATH) return;
         Material food = event.getItem().getType();
         if (isRawOrUndeadFood(food)) {
-            // Apply golden apple effects
-            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 10 * 20, 1)); // 10s regen II
+            // Apply regular golden apple effects (not enchanted)
+            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 5 * 20, 1)); // 5s regen II
             player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 120 * 20, 0)); // 2 min absorption I
-            player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 60 * 20, 0)); // 1 min fire resist
         }
     }
 

@@ -75,4 +75,53 @@ public class GUIListener implements Listener {
             player.sendMessage(ChatColor.GREEN + "Your element has been rerolled!");
         }
     }
+    
+    @EventHandler
+    public void onElementItemUse(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        ItemStack item = event.getItem();
+        
+        if (item == null || !item.hasItemMeta()) return;
+        
+        // Check if this is an element item
+        if (item.getItemMeta().getPersistentDataContainer()
+                .has(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE)) {
+            
+            // Only handle right-click actions
+            if (event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_AIR && 
+                event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
+                return;
+            }
+            
+            event.setCancelled(true);
+            
+            // Get the element type from the item
+            String elementTypeString = item.getItemMeta().getPersistentDataContainer()
+                    .get(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING);
+            
+            if (elementTypeString == null) {
+                player.sendMessage(ChatColor.RED + "Invalid element item!");
+                return;
+            }
+            
+            try {
+                hs.elementPlugin.elements.ElementType elementType = 
+                    hs.elementPlugin.elements.ElementType.valueOf(elementTypeString);
+                
+                // Check if player already has this element
+                hs.elementPlugin.data.PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
+                if (pd.getCurrentElement() == elementType) {
+                    player.sendMessage(ChatColor.YELLOW + "You are already attuned to " + elementType.name() + "!");
+                    return;
+                }
+                
+                // Apply the element
+                plugin.getElementManager().assignElement(player, elementType);
+                player.sendMessage(ChatColor.GREEN + "You have attuned to " + ChatColor.AQUA + elementType.name() + ChatColor.GREEN + "!");
+                
+            } catch (IllegalArgumentException e) {
+                player.sendMessage(ChatColor.RED + "Invalid element type!");
+            }
+        }
+    }
 }
