@@ -1,7 +1,7 @@
 package hs.elementPlugin.listeners;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.fire.FireSummonAbility;
+import hs.elementPlugin.elements.abilities.fire.FireSummonAbility;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Blaze;
 import org.bukkit.entity.Mob;

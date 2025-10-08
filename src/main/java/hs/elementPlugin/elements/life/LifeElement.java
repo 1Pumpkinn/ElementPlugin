@@ -1,9 +1,9 @@
 package hs.elementPlugin.elements.life;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.Ability;
-import hs.elementPlugin.abilities.life.LifeHealingBeamAbility;
-import hs.elementPlugin.abilities.life.LifeRegenAbility;
+import hs.elementPlugin.elements.abilities.Ability;
+import hs.elementPlugin.elements.abilities.life.LifeHealingBeamAbility;
+import hs.elementPlugin.elements.abilities.life.LifeRegenAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;

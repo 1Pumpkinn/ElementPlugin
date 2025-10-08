@@ -1,9 +1,9 @@
 package hs.elementPlugin.elements.air;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.Ability;
-import hs.elementPlugin.abilities.air.AirBlastAbility;
-import hs.elementPlugin.abilities.air.AirDashAbility;
+import hs.elementPlugin.elements.abilities.Ability;
+import hs.elementPlugin.elements.abilities.air.AirBlastAbility;
+import hs.elementPlugin.elements.abilities.air.AirDashAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;

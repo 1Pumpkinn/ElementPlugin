@@ -1,7 +1,7 @@
-package hs.elementPlugin.abilities.death;
+package hs.elementPlugin.elements.abilities.death;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.BaseAbility;
+import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -19,7 +19,7 @@ public class DeathSummonUndeadAbility extends BaseAbility {
     private static final List<Class<? extends LivingEntity>> UNDEAD_TYPES = List.of(
             Zombie.class, Skeleton.class, Husk.class, Stray.class // Bogged is 1.20+ only, add if available
     );
-    private static final String META_FRIENDLY_UNDEAD_OWNER = "death_friendly_undead_owner";
+    public static final String META_FRIENDLY_UNDEAD_OWNER = "death_friendly_undead_owner";
     private final Random random = new Random();
 
     public DeathSummonUndeadAbility(ElementPlugin plugin) {

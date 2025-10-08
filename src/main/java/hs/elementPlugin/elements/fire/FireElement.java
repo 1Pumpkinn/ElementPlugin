@@ -1,9 +1,9 @@
 package hs.elementPlugin.elements.fire;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.Ability;
-import hs.elementPlugin.abilities.fire.FireBreathAbility;
-import hs.elementPlugin.abilities.fire.FireSummonAbility;
+import hs.elementPlugin.elements.abilities.Ability;
+import hs.elementPlugin.elements.abilities.fire.FireBreathAbility;
+import hs.elementPlugin.elements.abilities.fire.FireSummonAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;

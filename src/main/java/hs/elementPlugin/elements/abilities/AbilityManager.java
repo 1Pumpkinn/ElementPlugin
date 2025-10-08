@@ -1,4 +1,4 @@
-package hs.elementPlugin.abilities;
+package hs.elementPlugin.elements.abilities;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementContext;

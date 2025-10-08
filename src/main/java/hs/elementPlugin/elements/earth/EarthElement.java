@@ -1,9 +1,9 @@
 package hs.elementPlugin.elements.earth;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.Ability;
-import hs.elementPlugin.abilities.earth.EarthCharmAbility;
-import hs.elementPlugin.abilities.earth.EarthTunnelAbility;
+import hs.elementPlugin.elements.abilities.Ability;
+import hs.elementPlugin.elements.abilities.earth.EarthCharmAbility;
+import hs.elementPlugin.elements.abilities.earth.EarthTunnelAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;

@@ -1,9 +1,9 @@
 package hs.elementPlugin;
 
-import hs.elementPlugin.abilities.AbilityManager;
-import hs.elementPlugin.abilities.water.WaterGeyserAbility;
-import hs.elementPlugin.abilities.death.DeathWitherSkullAbility;
-import hs.elementPlugin.abilities.death.DeathSummonUndeadAbility;
+import hs.elementPlugin.elements.abilities.AbilityManager;
+import hs.elementPlugin.elements.abilities.water.WaterGeyserAbility;
+import hs.elementPlugin.elements.abilities.death.DeathWitherSkullAbility;
+import hs.elementPlugin.elements.abilities.death.DeathSummonUndeadAbility;
 import hs.elementPlugin.commands.TrustCommand;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.elements.ElementRegistry;
@@ -62,14 +62,16 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.FriendlyMobListener(this), this);
         
         // Register element-specific listeners
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.fire.FireListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.water.WaterListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.air.AirListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.earth.EarthListener(elementManager, this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.life.LifeListener(elementManager), this);
         
-        // Register Death element listeners
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.death.DeathElementListener(this, elementManager), this);
+        // Register refactored element listeners
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.FireElementListener(this, elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.EarthElementListener(elementManager, this), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.DeathElementListener(this, elementManager), this);
+        
+        // Register Death element craft listener
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.death.DeathElementCraftListener(this, elementManager), this);
         
         // Register Life element crafting listener

@@ -1,6 +1,6 @@
-package hs.elementPlugin.abilities.water;
+package hs.elementPlugin.elements.abilities.water;
 
-import hs.elementPlugin.abilities.BaseAbility;
+import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;

@@ -1,4 +1,4 @@
-package hs.elementPlugin.abilities;
+package hs.elementPlugin.elements.abilities;
 
 import hs.elementPlugin.elements.ElementContext;
 import org.bukkit.entity.Player;

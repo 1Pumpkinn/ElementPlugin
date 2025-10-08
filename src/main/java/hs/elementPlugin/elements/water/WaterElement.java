@@ -1,9 +1,9 @@
 package hs.elementPlugin.elements.water;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.Ability;
-import hs.elementPlugin.abilities.water.WaterBeamAbility;
-import hs.elementPlugin.abilities.water.WaterGeyserAbility;
+import hs.elementPlugin.elements.abilities.Ability;
+import hs.elementPlugin.elements.abilities.water.WaterBeamAbility;
+import hs.elementPlugin.elements.abilities.water.WaterGeyserAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;

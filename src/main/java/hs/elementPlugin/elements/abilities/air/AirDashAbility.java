@@ -1,7 +1,6 @@
-package hs.elementPlugin.abilities.air;
+package hs.elementPlugin.elements.abilities.air;
 
-import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.BaseAbility;
+import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
 import org.bukkit.*;
 import org.bukkit.entity.LivingEntity;

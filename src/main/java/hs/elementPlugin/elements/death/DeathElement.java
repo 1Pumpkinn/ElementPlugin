@@ -1,9 +1,9 @@
 package hs.elementPlugin.elements.death;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.Ability;
-import hs.elementPlugin.abilities.death.DeathWitherSkullAbility;
-import hs.elementPlugin.abilities.death.DeathSummonUndeadAbility;
+import hs.elementPlugin.elements.abilities.Ability;
+import hs.elementPlugin.elements.abilities.death.DeathWitherSkullAbility;
+import hs.elementPlugin.elements.abilities.death.DeathSummonUndeadAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;

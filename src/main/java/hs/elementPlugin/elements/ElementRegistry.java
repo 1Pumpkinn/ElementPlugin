@@ -1,8 +1,8 @@
 package hs.elementPlugin.elements;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.Ability;
-import hs.elementPlugin.abilities.AbilityManager;
+import hs.elementPlugin.elements.abilities.Ability;
+import hs.elementPlugin.elements.abilities.AbilityManager;
 import hs.elementPlugin.elements.death.DeathElement;
 
 import java.util.HashMap;

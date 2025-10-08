@@ -1,13 +1,12 @@
-package hs.elementPlugin.abilities.death;
+package hs.elementPlugin.elements.abilities.death;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.BaseAbility;
+import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.WitherSkull;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
 
 public class DeathWitherSkullAbility extends BaseAbility {

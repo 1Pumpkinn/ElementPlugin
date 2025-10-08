@@ -1,7 +1,6 @@
-package hs.elementPlugin.abilities.earth;
+package hs.elementPlugin.elements.abilities.earth;
 
-import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.abilities.BaseAbility;
+import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.earth.EarthElement;
 import org.bukkit.*;
@@ -13,7 +12,6 @@ import org.bukkit.util.Vector;
 
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.UUID;
 
 public class EarthTunnelAbility extends BaseAbility {
     private static final Set<Material> TUNNELABLE = EnumSet.of(
