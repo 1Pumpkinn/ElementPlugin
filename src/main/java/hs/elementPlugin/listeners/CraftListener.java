@@ -34,202 +34,203 @@ public class CraftListener implements Listener {
         ItemMeta meta = result.getItemMeta();
         if (meta == null) return;
 
-        // Upgrader crafting
+        // Upgrader crafting (generic logic)
         Integer level = meta.getPersistentDataContainer().get(new NamespacedKey(plugin, ItemKeys.KEY_UPGRADER_LEVEL), PersistentDataType.INTEGER);
         if (level != null) {
-            PlayerData pd = elements.data(p.getUniqueId());
-            ElementType type = pd.getCurrentElement();
-            if (type == null) {
-                e.setCancelled(true);
-                p.sendMessage(ChatColor.RED + "You don't have an element yet.");
-                return;
-            }
-            
-            // Check tiered crafting requirement for Upgrader 2
-            if (level == 2) {
-                int currentLevel = pd.getUpgradeLevel(type);
-                if (currentLevel < 1) {
-                    e.setCancelled(true);
-                    p.sendMessage(ChatColor.RED + "You must craft and possess Upgrader I before crafting Upgrader II.");
-                    return;
-                }
-            }
-            
-            int current = pd.getUpgradeLevel(type);
-            if (level <= current) {
-                e.setCancelled(true);
-                p.sendMessage(ChatColor.YELLOW + "You already have this upgrade.");
-                return;
-            }
-
-            // Handle crafting with excess items
-            CraftingInventory craftingInv = e.getInventory();
-            ItemStack[] matrix = craftingInv.getMatrix();
-            
-            // Get the recipe pattern to determine which slots need to be consumed
-            org.bukkit.inventory.Recipe recipe = e.getRecipe();
-            if (recipe instanceof org.bukkit.inventory.ShapedRecipe shapedRecipe) {
-                String[] shape = shapedRecipe.getShape();
-                java.util.Map<Character, org.bukkit.inventory.RecipeChoice> ingredients = shapedRecipe.getChoiceMap();
-                
-                // Process each slot in the crafting grid
-                for (int i = 0; i < matrix.length; i++) {
-                    ItemStack item = matrix[i];
-                    if (item == null || item.getType() == Material.AIR) continue;
-                    
-                    // Calculate row and column in the 3x3 grid
-                    int row = i / 3;
-                    int col = i % 3;
-                    
-                    // Check if this position is part of the recipe pattern
-                    boolean isPartOfRecipe = false;
-                    if (row < shape.length && col < shape[row].length()) {
-                        char ingredientChar = shape[row].charAt(col);
-                        isPartOfRecipe = ingredients.containsKey(ingredientChar);
-                    }
-                    
-                    if (isPartOfRecipe) {
-                        // Consume only one item from this slot
-                        if (item.getAmount() > 1) {
-                            item.setAmount(item.getAmount() - 1);
-                            matrix[i] = item;
-                        } else {
-                            matrix[i] = null;
-                        }
-                    }
-                }
-                
-                craftingInv.setMatrix(matrix);
-            } else {
-                // Fallback for non-shaped recipes
-                for (int i = 0; i < matrix.length; i++) {
-                    if (matrix[i] != null && matrix[i].getType() != Material.AIR) {
-                        if (matrix[i].getAmount() > 1) {
-                            matrix[i].setAmount(matrix[i].getAmount() - 1);
-                        } else {
-                            matrix[i] = null;
-                        }
-                    }
-                }
-                craftingInv.setMatrix(matrix);
-            }
-            
-            // Remove the result item
-            e.getInventory().setResult(null);
-            
-            // Apply the upgrade
-            pd.setUpgradeLevel(type, level);
-            plugin.getDataStore().save(pd);
-            p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-            if (level == 1) {
-                p.sendMessage(ChatColor.GREEN + "Unlocked Ability 1 for " + ChatColor.AQUA + type.name());
-            } else if (level == 2) {
-                p.sendMessage(ChatColor.AQUA + "Unlocked Ability 2 and Upside 2 for " + ChatColor.GOLD + type.name());
-                // Reapply upsides to include Upside 2
-                elements.applyUpsides(p);
-            }
+            handleUpgraderCrafting(e, p, level);
             return;
         }
 
-        // Element item crafting: enforce once per player per element type
+        // Element item crafting - delegate to element-specific listeners
         Byte isElem = meta.getPersistentDataContainer().get(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE);
         if (isElem != null && isElem == (byte)1) {
             String t = meta.getPersistentDataContainer().get(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING);
             ElementType type;
-            try { type = ElementType.valueOf(t); } catch (Exception ex) { return; }
-            PlayerData pd = elements.data(p.getUniqueId());
-            
-            // Special check for Life element - only one can be crafted server-wide
-            if (type == ElementType.LIFE) {
-                if (plugin.getDataStore().isLifeElementCrafted()) {
-                    e.setCancelled(true);
-                    p.sendMessage(ChatColor.RED + "The Life element has already been claimed by another player.");
-                    return;
-                }
-            } else {
-                // Regular check for other elements - once per player
-                if (pd.hasElementItem(type)) {
-                    e.setCancelled(true);
-                    p.sendMessage(ChatColor.RED + "You can only craft this item once.");
-                    return;
-                }
-            }
-
-            // Handle crafting with excess items
-            CraftingInventory craftingInv = e.getInventory();
-            ItemStack[] matrix = craftingInv.getMatrix();
-            
-            // Get the recipe pattern to determine which slots need to be consumed
-            org.bukkit.inventory.Recipe recipe = e.getRecipe();
-            if (recipe instanceof org.bukkit.inventory.ShapedRecipe shapedRecipe) {
-                String[] shape = shapedRecipe.getShape();
-                java.util.Map<Character, org.bukkit.inventory.RecipeChoice> ingredients = shapedRecipe.getChoiceMap();
-                
-                // Process each slot in the crafting grid
-                for (int i = 0; i < matrix.length; i++) {
-                    ItemStack item = matrix[i];
-                    if (item == null || item.getType() == Material.AIR) continue;
-                    
-                    // Calculate row and column in the 3x3 grid
-                    int row = i / 3;
-                    int col = i % 3;
-                    
-                    // Check if this position is part of the recipe pattern
-                    boolean isPartOfRecipe = false;
-                    if (row < shape.length && col < shape[row].length()) {
-                        char ingredientChar = shape[row].charAt(col);
-                        isPartOfRecipe = ingredients.containsKey(ingredientChar);
-                    }
-                    
-                    if (isPartOfRecipe) {
-                        // Consume only one item from this slot
-                        if (item.getAmount() > 1) {
-                            item.setAmount(item.getAmount() - 1);
-                            matrix[i] = item;
-                        } else {
-                            matrix[i] = null;
-                        }
-                    }
-                }
-                
-                craftingInv.setMatrix(matrix);
-            } else {
-                // Fallback for non-shaped recipes
-                for (int i = 0; i < matrix.length; i++) {
-                    if (matrix[i] != null && matrix[i].getType() != Material.AIR) {
-                        if (matrix[i].getAmount() > 1) {
-                            matrix[i].setAmount(matrix[i].getAmount() - 1);
-                        } else {
-                            matrix[i] = null;
-                        }
-                    }
-                }
-                craftingInv.setMatrix(matrix);
+            try { 
+                type = ElementType.valueOf(t); 
+            } catch (Exception ex) { 
+                return; 
             }
             
-            // Cancel the event to prevent normal crafting behavior
-            e.setCancelled(true);
-            
-            // Add the element item to player's inventory
-            p.getInventory().addItem(result);
-            
-            // Update player data
-            pd.addElementItem(type);
-            // Reset upgrade level when crafting a new element item
-            pd.setCurrentElementUpgradeLevel(0);
-            
-            // Mark Life element as crafted server-wide
-            if (type == ElementType.LIFE) {
-                plugin.getDataStore().setLifeElementCrafted(true);
+            // For basic elements (AIR, WATER, FIRE, EARTH), handle here
+            if (type == ElementType.AIR || type == ElementType.WATER || type == ElementType.FIRE || type == ElementType.EARTH) {
+                handleBasicElementCrafting(e, p, type);
             }
-            
-            plugin.getDataStore().save(pd);
-            p.playSound(p.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
-            p.sendMessage(ChatColor.GREEN + "Crafted element item for " + ChatColor.AQUA + type.name());
-            if (type == ElementType.LIFE) {
-                p.sendMessage(ChatColor.GOLD + "You are now the Life element bearer! This element cannot be crafted by others.");
-            }
-            p.sendMessage(ChatColor.YELLOW + "All upgrades reset to None");
+            // For special elements (LIFE, DEATH), let their specific listeners handle it
+            // This prevents double handling
         }
+    }
+
+    private void handleUpgraderCrafting(CraftItemEvent e, org.bukkit.entity.Player p, Integer level) {
+        PlayerData pd = elements.data(p.getUniqueId());
+        ElementType type = pd.getCurrentElement();
+        if (type == null) {
+            e.setCancelled(true);
+            p.sendMessage(ChatColor.RED + "You don't have an element yet.");
+            return;
+        }
+        
+        // Check tiered crafting requirement for Upgrader 2
+        if (level == 2) {
+            int currentLevel = pd.getUpgradeLevel(type);
+            if (currentLevel < 1) {
+                e.setCancelled(true);
+                p.sendMessage(ChatColor.RED + "You must craft and possess Upgrader I before crafting Upgrader II.");
+                return;
+            }
+        }
+        
+        int current = pd.getUpgradeLevel(type);
+        if (level <= current) {
+            e.setCancelled(true);
+            p.sendMessage(ChatColor.YELLOW + "You already have this upgrade.");
+            return;
+        }
+
+        // Handle crafting with excess items
+        CraftingInventory craftingInv = e.getInventory();
+        ItemStack[] matrix = craftingInv.getMatrix();
+        
+        // Get the recipe pattern to determine which slots need to be consumed
+        org.bukkit.inventory.Recipe recipe = e.getRecipe();
+        if (recipe instanceof org.bukkit.inventory.ShapedRecipe shapedRecipe) {
+            String[] shape = shapedRecipe.getShape();
+            java.util.Map<Character, org.bukkit.inventory.RecipeChoice> ingredients = shapedRecipe.getChoiceMap();
+            
+            // Process each slot in the crafting grid
+            for (int i = 0; i < matrix.length; i++) {
+                ItemStack item = matrix[i];
+                if (item == null || item.getType() == Material.AIR) continue;
+                
+                // Calculate row and column in the 3x3 grid
+                int row = i / 3;
+                int col = i % 3;
+                
+                // Check if this position is part of the recipe pattern
+                boolean isPartOfRecipe = false;
+                if (row < shape.length && col < shape[row].length()) {
+                    char ingredientChar = shape[row].charAt(col);
+                    isPartOfRecipe = ingredients.containsKey(ingredientChar);
+                }
+                
+                if (isPartOfRecipe) {
+                    // Consume only one item from this slot
+                    if (item.getAmount() > 1) {
+                        item.setAmount(item.getAmount() - 1);
+                        matrix[i] = item;
+                    } else {
+                        matrix[i] = null;
+                    }
+                }
+            }
+            
+            craftingInv.setMatrix(matrix);
+        } else {
+            // Fallback for non-shaped recipes
+            for (int i = 0; i < matrix.length; i++) {
+                if (matrix[i] != null && matrix[i].getType() != Material.AIR) {
+                    if (matrix[i].getAmount() > 1) {
+                        matrix[i].setAmount(matrix[i].getAmount() - 1);
+                    } else {
+                        matrix[i] = null;
+                    }
+                }
+            }
+            craftingInv.setMatrix(matrix);
+        }
+        
+        // Remove the result item
+        e.getInventory().setResult(null);
+        
+        // Apply the upgrade
+        pd.setUpgradeLevel(type, level);
+        plugin.getDataStore().save(pd);
+        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+        if (level == 1) {
+            p.sendMessage(ChatColor.GREEN + "Unlocked Ability 1 for " + ChatColor.AQUA + type.name());
+        } else if (level == 2) {
+            p.sendMessage(ChatColor.AQUA + "Unlocked Ability 2 and Upside 2 for " + ChatColor.GOLD + type.name());
+            // Reapply upsides to include Upside 2
+            elements.applyUpsides(p);
+        }
+    }
+
+    private void handleBasicElementCrafting(CraftItemEvent e, org.bukkit.entity.Player p, ElementType type) {
+        PlayerData pd = elements.data(p.getUniqueId());
+        
+        // Regular check for basic elements - once per player
+        if (pd.hasElementItem(type)) {
+            e.setCancelled(true);
+            p.sendMessage(ChatColor.RED + "You can only craft this item once.");
+            return;
+        }
+
+        // Handle crafting with excess items
+        CraftingInventory craftingInv = e.getInventory();
+        ItemStack[] matrix = craftingInv.getMatrix();
+        
+        // Get the recipe pattern to determine which slots need to be consumed
+        org.bukkit.inventory.Recipe recipe = e.getRecipe();
+        if (recipe instanceof org.bukkit.inventory.ShapedRecipe shapedRecipe) {
+            String[] shape = shapedRecipe.getShape();
+            java.util.Map<Character, org.bukkit.inventory.RecipeChoice> ingredients = shapedRecipe.getChoiceMap();
+            
+            // Process each slot in the crafting grid
+            for (int i = 0; i < matrix.length; i++) {
+                ItemStack item = matrix[i];
+                if (item == null || item.getType() == Material.AIR) continue;
+                
+                // Calculate row and column in the 3x3 grid
+                int row = i / 3;
+                int col = i % 3;
+                
+                // Check if this position is part of the recipe pattern
+                boolean isPartOfRecipe = false;
+                if (row < shape.length && col < shape[row].length()) {
+                    char ingredientChar = shape[row].charAt(col);
+                    isPartOfRecipe = ingredients.containsKey(ingredientChar);
+                }
+                
+                if (isPartOfRecipe) {
+                    // Consume only one item from this slot
+                    if (item.getAmount() > 1) {
+                        item.setAmount(item.getAmount() - 1);
+                        matrix[i] = item;
+                    } else {
+                        matrix[i] = null;
+                    }
+                }
+            }
+            
+            craftingInv.setMatrix(matrix);
+        } else {
+            // Fallback for non-shaped recipes
+            for (int i = 0; i < matrix.length; i++) {
+                if (matrix[i] != null && matrix[i].getType() != Material.AIR) {
+                    if (matrix[i].getAmount() > 1) {
+                        matrix[i].setAmount(matrix[i].getAmount() - 1);
+                    } else {
+                        matrix[i] = null;
+                    }
+                }
+            }
+            craftingInv.setMatrix(matrix);
+        }
+        
+        // Cancel the event to prevent normal crafting behavior
+        e.setCancelled(true);
+        
+        // Add the element item to player's inventory
+        p.getInventory().addItem(e.getRecipe().getResult());
+        
+        // Update player data
+        pd.addElementItem(type);
+        // Reset upgrade level when crafting a new element item
+        pd.setCurrentElementUpgradeLevel(0);
+        
+        plugin.getDataStore().save(pd);
+        p.playSound(p.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
+        p.sendMessage(ChatColor.GREEN + "Crafted element item for " + ChatColor.AQUA + type.name());
+        p.sendMessage(ChatColor.YELLOW + "All upgrades reset to None");
     }
 }

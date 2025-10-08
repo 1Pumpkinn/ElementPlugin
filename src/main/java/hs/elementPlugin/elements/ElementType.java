@@ -5,5 +5,6 @@ public enum ElementType {
     WATER,
     FIRE,
     EARTH,
-    LIFE
+    LIFE,
+    DEATH
 }

@@ -11,11 +11,20 @@ import hs.elementPlugin.elements.water.WaterElement;
 import hs.elementPlugin.elements.fire.FireElement;
 import hs.elementPlugin.elements.earth.EarthElement;
 import hs.elementPlugin.elements.life.LifeElement;
+import hs.elementPlugin.elements.death.DeathElement;
+import hs.elementPlugin.items.ItemKeys;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -48,6 +57,7 @@ public class ElementManager {
         register(new FireElement(plugin));
         register(new EarthElement(plugin));
         register(new LifeElement(plugin));
+        register(new DeathElement(plugin));
     }
     
     public ElementType getPlayerElement(Player player) {
@@ -59,7 +69,7 @@ public class ElementManager {
         registry.put(element.getType(), element);
     }
 
-    public PlayerData data(UUID uuid) { return manaManager.get(uuid); }
+    public PlayerData data(@NotNull UUID uuid) { return manaManager.get(uuid); }
 
     public Element get(ElementType type) { return registry.get(type); }
 
@@ -125,19 +135,23 @@ public class ElementManager {
     }
 
     public void assignRandomWithTitle(Player player) {
-        // Randomly assign one of the 4 basic elements (no LIFE)
         ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH};
         ElementType pick = choices[random.nextInt(choices.length)];
         PlayerData pd = data(player.getUniqueId());
 
-        // Clear effects from previous element
+        ElementType previousElement = pd.getCurrentElement();
+        
         clearAllEffects(player);
 
-        pd.setCurrentElement(pick); // This automatically resets upgrade level
+        pd.setCurrentElement(pick);
         store.save(pd);
         player.sendTitle(ChatColor.GOLD + "Attuned!", ChatColor.AQUA + pick.name(), 10, 40, 10);
         applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+        
+        if (previousElement == ElementType.LIFE || previousElement == ElementType.DEATH) {
+            giveElementItem(player, previousElement);
+        }
     }
     
     public void assignElement(Player player, ElementType type) {
@@ -201,5 +215,54 @@ public class ElementManager {
                 plugin
         );
         return e.ability2(context);
+    }
+    
+    private void giveElementItem(Player player, ElementType elementType) {
+        ItemStack item = createElementItem(elementType);
+        player.getInventory().addItem(item);
+        player.sendMessage(ChatColor.GREEN + "You received a " + getElementDisplayName(elementType) + " item!");
+    }
+    
+    private ItemStack createElementItem(ElementType elementType) {
+        Material material;
+        ChatColor color;
+        String displayName;
+        
+        switch (elementType) {
+            case LIFE:
+                material = Material.TOTEM_OF_UNDYING;
+                color = ChatColor.LIGHT_PURPLE;
+                displayName = "Life Element";
+                break;
+            case DEATH:
+                material = Material.WITHER_SKELETON_SKULL;
+                color = ChatColor.DARK_PURPLE;
+                displayName = "Death Element";
+                break;
+            default:
+                return null;
+        }
+        
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(color + displayName);
+        
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING, elementType.name());
+        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE, (byte) 1);
+        
+        item.setItemMeta(meta);
+        return item;
+    }
+    
+    private String getElementDisplayName(ElementType elementType) {
+        switch (elementType) {
+            case LIFE:
+                return ChatColor.LIGHT_PURPLE + "Life Element";
+            case DEATH:
+                return ChatColor.DARK_PURPLE + "Death Element";
+            default:
+                return elementType.name();
+        }
     }
 }

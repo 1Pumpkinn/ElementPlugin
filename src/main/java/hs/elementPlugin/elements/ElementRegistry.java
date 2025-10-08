@@ -3,6 +3,7 @@ package hs.elementPlugin.elements;
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.abilities.Ability;
 import hs.elementPlugin.abilities.AbilityManager;
+import hs.elementPlugin.elements.death.DeathElement;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,8 @@ public class ElementRegistry {
     public ElementRegistry(ElementPlugin plugin, AbilityManager abilityManager) {
         this.plugin = plugin;
         this.abilityManager = abilityManager;
+        // Register Death element
+        registerElement(ElementType.DEATH, () -> new DeathElement(plugin));
     }
     
     /**

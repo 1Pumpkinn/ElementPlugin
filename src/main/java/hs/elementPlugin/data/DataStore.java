@@ -2,7 +2,6 @@ package hs.elementPlugin.data;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementType;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -205,6 +204,24 @@ public class DataStore {
             flushServerData();
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to set life element crafted status", e);
+        }
+    }
+
+    public synchronized boolean isDeathElementCrafted() {
+        try {
+            return serverCfg.getBoolean("death_crafted", false);
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to check death element crafted status", e);
+            return false; // Safe default
+        }
+    }
+
+    public synchronized void setDeathElementCrafted(boolean crafted) {
+        try {
+            serverCfg.set("death_crafted", crafted);
+            flushServerData();
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to set death element crafted status", e);
         }
     }
 

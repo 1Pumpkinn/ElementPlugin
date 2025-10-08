@@ -34,8 +34,8 @@ public class UpgraderListener implements Listener {
         Player player = event.getPlayer();
         ItemStack item = event.getItem();
 
-        // Check if the item is valid
-        if (item == null || item.getType() != Material.AMETHYST_SHARD) {
+        // Check if the item is valid (either Upgrader 1 or Upgrader 2)
+        if (item == null || (item.getType() != Material.AMETHYST_SHARD && item.getType() != Material.NETHER_STAR)) {
             return;
         }
 
@@ -56,7 +56,7 @@ public class UpgraderListener implements Listener {
         int upgraderLevel = pdc.get(upgraderKey, PersistentDataType.INTEGER);
         
         // Get player's current element and upgrade level
-        var playerData = plugin.getDataStore().load(player.getUniqueId());
+        var playerData = elementManager.data(player.getUniqueId());
         var currentElement = playerData.getCurrentElement();
         int currentUpgradeLevel = playerData.getUpgradeLevel(currentElement);
 

@@ -2,6 +2,8 @@ package hs.elementPlugin;
 
 import hs.elementPlugin.abilities.AbilityManager;
 import hs.elementPlugin.abilities.water.WaterGeyserAbility;
+import hs.elementPlugin.abilities.death.DeathWitherSkullAbility;
+import hs.elementPlugin.abilities.death.DeathSummonUndeadAbility;
 import hs.elementPlugin.commands.TrustCommand;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.elements.ElementRegistry;
@@ -41,11 +43,14 @@ public final class ElementPlugin extends JavaPlugin {
         
         // Initialize ability system
         this.abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility(this));
+        this.abilityManager.registerAbility(ElementType.DEATH, 1, new DeathWitherSkullAbility(this));
+        this.abilityManager.registerAbility(ElementType.DEATH, 2, new DeathSummonUndeadAbility(this));
 
         // Register commands
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
-        getCommand("element").setExecutor(new hs.elementPlugin.commands.ElementCommand(elementManager));
+        getCommand("element").setExecutor(new hs.elementPlugin.commands.ElementCommand(this));
         getCommand("mana").setExecutor(new hs.elementPlugin.commands.ManaCommand(manaManager, configManager));
+        getCommand("util").setExecutor(new hs.elementPlugin.commands.UtilCommand(this));
 
         // Register listeners
         Bukkit.getPluginManager().registerEvents(new JoinListener(this, elementManager, manaManager), this);
@@ -62,6 +67,13 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.air.AirListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.earth.EarthListener(elementManager, this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.life.LifeListener(elementManager), this);
+        
+        // Register Death element listeners
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.death.DeathElementListener(this, elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.death.DeathElementCraftListener(this, elementManager), this);
+        
+        // Register Life element crafting listener
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.life.LifeElementCraftListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.QuitListener(this, manaManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.GameModeListener(manaManager, configManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.RespawnListener(this, elementManager), this);
@@ -71,9 +83,18 @@ public final class ElementPlugin extends JavaPlugin {
         // Register recipes with delay to ensure server is fully loaded
         Bukkit.getScheduler().runTaskLater(this, () -> {
             getLogger().info("Registering recipes...");
-            hs.elementPlugin.items.Upgrader1Item.registerRecipe(this);
-            hs.elementPlugin.items.Upgrader2Item.registerRecipe(this);
-            hs.elementPlugin.items.RerollerItem.registerRecipe(this);
+            
+            // Register util recipes (upgraders and reroller)
+            hs.elementPlugin.recipes.util.UtilRecipes.registerRecipes(this);
+            
+            // Register element-specific recipes
+            hs.elementPlugin.recipes.air.AirRecipes.registerRecipes(this);
+            hs.elementPlugin.recipes.water.WaterRecipes.registerRecipes(this);
+            hs.elementPlugin.recipes.fire.FireRecipes.registerRecipes(this);
+            hs.elementPlugin.recipes.earth.EarthRecipes.registerRecipes(this);
+            hs.elementPlugin.recipes.life.LifeRecipes.registerRecipes(this);
+            hs.elementPlugin.recipes.death.DeathRecipes.registerRecipes(this);
+            
             getLogger().info("Recipes registered successfully");
         }, 20L); // 1 second delay
 

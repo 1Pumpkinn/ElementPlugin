@@ -13,10 +13,15 @@ commands:
 
   element:
     description: Element admin/self commands
-    usage: /element <reroll|set> [player] <air|water|fire|earth|life>
+    usage: /element <reroll|set|disable|enable|status> [player] [element]
     permission: element.element
 
   mana:
     description: Manage mana (reset or set)
     usage: /mana <reset|set> [player] [amount]
     permission: element.mana
+
+  util:
+    description: Get utility items (upgraders and reroller)
+    usage: /util
+    permission: element.admin
