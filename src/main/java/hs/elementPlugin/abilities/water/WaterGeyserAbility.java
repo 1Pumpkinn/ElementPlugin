@@ -15,8 +15,11 @@ import org.bukkit.util.Vector;
  */
 public class WaterGeyserAbility extends BaseAbility {
 
-    public WaterGeyserAbility() {
-        super("water_geyser", 30, 5, 1); // id, mana cost, cooldown, required level
+    private final hs.elementPlugin.ElementPlugin plugin;
+
+    public WaterGeyserAbility(hs.elementPlugin.ElementPlugin plugin) {
+        super("water_geyser", 30, 5, 1);
+        this.plugin = plugin;
     }
     
     @Override
@@ -91,7 +94,18 @@ public class WaterGeyserAbility extends BaseAbility {
         return true;
     }
     
-    private boolean isValidTarget(ElementContext context, LivingEntity entity) {
+    @Override
+    public String getName() {
+        return "Water Geyser";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Launches nearby enemies upward with a powerful geyser.";
+    }
+    
+    @Override
+    protected boolean isValidTarget(ElementContext context, LivingEntity entity) {
         // Check if entity is a valid target (not a friendly player, etc.)
         if (entity instanceof Player targetPlayer) {
             // Don't target trusted players

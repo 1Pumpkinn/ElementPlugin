@@ -15,6 +15,33 @@ public class PlayerData {
         this.uuid = uuid;
     }
 
+    public PlayerData(UUID uuid, org.bukkit.configuration.ConfigurationSection section) {
+        this.uuid = uuid;
+        if (section != null) {
+            String elem = section.getString("element");
+            if (elem != null) {
+                try {
+                    this.currentElement = ElementType.valueOf(elem);
+                } catch (IllegalArgumentException e) {
+                    // Invalid element, leave as null
+                }
+            }
+            this.mana = section.getInt("mana", 100);
+            this.currentElementUpgradeLevel = section.getInt("currentUpgradeLevel", 0);
+            java.util.List<String> items = section.getStringList("items");
+            if (items != null) {
+                for (String name : items) {
+                    try {
+                        ElementType t = ElementType.valueOf(name);
+                        this.ownedItems.add(t);
+                    } catch (IllegalArgumentException e) {
+                        // skip invalid
+                    }
+                }
+            }
+        }
+    }
+
     public UUID getUuid() { return uuid; }
 
     public int getCurrentElementUpgradeLevel() { return currentElementUpgradeLevel; }
@@ -24,6 +51,8 @@ public class PlayerData {
     }
 
     public ElementType getCurrentElement() { return currentElement; }
+    
+    public ElementType getElementType() { return currentElement; }
 
     public void setCurrentElement(ElementType currentElement) { 
         this.currentElement = currentElement;

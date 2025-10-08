@@ -12,8 +12,21 @@ public abstract class BaseElement implements Element {
     private final java.util.Set<java.util.UUID> activeAbility1 = new java.util.HashSet<>();
     private final java.util.Set<java.util.UUID> activeAbility2 = new java.util.HashSet<>();
     
+    // Abstract methods that must be implemented by subclasses
+    public abstract void clearEffects(Player player);
+    public abstract String getDisplayName();
+    public abstract String getDescription();
+    public abstract String getAbility1Name();
+    public abstract String getAbility1Description();
+    public abstract String getAbility2Name();
+    public abstract String getAbility2Description();
+    
     public BaseElement(ElementPlugin plugin) {
         this.plugin = plugin;
+    }
+    
+    public ElementPlugin getPlugin() {
+        return plugin;
     }
     
     @Override

@@ -1,7 +1,7 @@
 package hs.elementPlugin.listeners;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.elements.impl.FireElement;
+import hs.elementPlugin.abilities.fire.FireSummonAbility;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Blaze;
 import org.bukkit.entity.Mob;
@@ -67,9 +67,9 @@ public class FriendlyMobListener implements Listener {
     public void onTarget(EntityTargetLivingEntityEvent e) {
         // Fire friendly blazes: don't target owner or trusted players
         if (e.getEntity() instanceof Blaze blaze && e.getTarget() instanceof Player target) {
-            if (blaze.hasMetadata(FireElement.META_FRIENDLY_BLAZE_OWNER)) {
+            if (blaze.hasMetadata(FireSummonAbility.META_FRIENDLY_BLAZE_OWNER)) {
                 try {
-                    String ownerStr = blaze.getMetadata(FireElement.META_FRIENDLY_BLAZE_OWNER).get(0).asString();
+                    String ownerStr = blaze.getMetadata(FireSummonAbility.META_FRIENDLY_BLAZE_OWNER).get(0).asString();
                     UUID ownerId = UUID.fromString(ownerStr);
                     
                     // Don't target owner
@@ -163,9 +163,9 @@ public class FriendlyMobListener implements Listener {
 
         // Prevent friendly blazes from damaging their owner or trusted players
         if (e.getDamager() instanceof Blaze blaze && e.getEntity() instanceof Player target) {
-            if (blaze.hasMetadata(FireElement.META_FRIENDLY_BLAZE_OWNER)) {
+            if (blaze.hasMetadata(FireSummonAbility.META_FRIENDLY_BLAZE_OWNER)) {
                 try {
-                    String ownerStr = blaze.getMetadata(FireElement.META_FRIENDLY_BLAZE_OWNER).get(0).asString();
+                    String ownerStr = blaze.getMetadata(FireSummonAbility.META_FRIENDLY_BLAZE_OWNER).get(0).asString();
                     UUID ownerId = UUID.fromString(ownerStr);
                     
                     // Don't damage owner

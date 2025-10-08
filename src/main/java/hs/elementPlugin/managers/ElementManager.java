@@ -6,11 +6,11 @@ import hs.elementPlugin.data.PlayerData;
 import hs.elementPlugin.elements.Element;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
-import hs.elementPlugin.elements.impl.AirElement;
-import hs.elementPlugin.elements.impl.WaterElement;
-import hs.elementPlugin.elements.impl.FireElement;
-import hs.elementPlugin.elements.impl.EarthElement;
-import hs.elementPlugin.elements.impl.LifeElement;
+import hs.elementPlugin.elements.air.AirElement;
+import hs.elementPlugin.elements.water.WaterElement;
+import hs.elementPlugin.elements.fire.FireElement;
+import hs.elementPlugin.elements.earth.EarthElement;
+import hs.elementPlugin.elements.life.LifeElement;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -48,6 +48,11 @@ public class ElementManager {
         register(new FireElement(plugin));
         register(new EarthElement(plugin));
         register(new LifeElement(plugin));
+    }
+    
+    public ElementType getPlayerElement(Player player) {
+        PlayerData data = store.getPlayerData(player.getUniqueId());
+        return data != null ? data.getElementType() : null;
     }
 
     private void register(Element element) {

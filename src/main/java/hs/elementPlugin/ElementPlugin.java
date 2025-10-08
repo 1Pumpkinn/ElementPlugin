@@ -40,7 +40,7 @@ public final class ElementPlugin extends JavaPlugin {
         this.cooldownManager = new CooldownManager();
         
         // Initialize ability system
-        this.abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility());
+        this.abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility(this));
 
         // Register commands
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
@@ -55,7 +55,13 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.CraftListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.ItemRuleListener(this, elementManager, manaManager, itemManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.FriendlyMobListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.EarthListener(elementManager), this);
+        
+        // Register element-specific listeners
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.fire.FireListener(elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.water.WaterListener(elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.air.AirListener(elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.earth.EarthListener(elementManager, this), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.life.LifeListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.QuitListener(this, manaManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.GameModeListener(manaManager, configManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.RespawnListener(this, elementManager), this);

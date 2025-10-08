@@ -65,4 +65,16 @@ public abstract class BaseAbility implements Ability {
             activePlayers.remove(player.getUniqueId());
         }
     }
+
+    public abstract String getName();
+
+    public abstract String getDescription();
+
+    /**
+     * Helper method to check if a target is valid for an ability.
+     * Override in subclasses for more complex logic.
+     */
+    protected boolean isValidTarget(ElementContext context, org.bukkit.entity.LivingEntity target) {
+        return !target.equals(context.getPlayer());
+    }
 }

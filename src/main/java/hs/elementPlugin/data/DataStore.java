@@ -19,6 +19,26 @@ public class DataStore {
     private final FileConfiguration playerCfg;
     private final File serverFile;
     private final FileConfiguration serverCfg;
+    
+    private final Map<UUID, PlayerData> playerDataCache = new HashMap<>();
+    
+    public PlayerData getPlayerData(UUID uuid) {
+        if (playerDataCache.containsKey(uuid)) {
+            return playerDataCache.get(uuid);
+        }
+        
+        PlayerData data = loadPlayerData(uuid);
+        playerDataCache.put(uuid, data);
+        return data;
+    }
+    
+    private PlayerData loadPlayerData(UUID uuid) {
+        ConfigurationSection section = playerCfg.getConfigurationSection("players." + uuid.toString());
+        if (section == null) {
+            return new PlayerData(uuid);
+        }
+        return new PlayerData(uuid, section);
+    }
 
     public DataStore(ElementPlugin plugin) {
         this.plugin = plugin;

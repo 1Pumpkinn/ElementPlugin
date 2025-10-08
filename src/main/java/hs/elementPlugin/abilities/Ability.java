@@ -51,4 +51,16 @@ public interface Ability {
      * @param active Whether the ability is active
      */
     void setActive(Player player, boolean active);
+
+    /**
+     * Get the display name of this ability
+     * @return The name
+     */
+    String getName();
+
+    /**
+     * Get the description of this ability
+     * @return The description
+     */
+    String getDescription();
 }
