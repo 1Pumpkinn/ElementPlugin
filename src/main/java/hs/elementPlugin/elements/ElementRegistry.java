@@ -3,7 +3,7 @@ package hs.elementPlugin.elements;
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.abilities.Ability;
 import hs.elementPlugin.elements.abilities.AbilityManager;
-import hs.elementPlugin.elements.death.DeathElement;
+import hs.elementPlugin.elements.impl.death.DeathElement;
 
 import java.util.HashMap;
 import java.util.Map;

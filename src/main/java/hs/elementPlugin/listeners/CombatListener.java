@@ -30,12 +30,5 @@ public class CombatListener implements Listener {
         if (trust.isTrusted(victim.getUniqueId(), damager.getUniqueId()) || trust.isTrusted(damager.getUniqueId(), victim.getUniqueId())) {
             e.setCancelled(true);
         }
-        // Apply Air Upside 2: 5% chance to give slow falling 5s to victim when hit
-        var pd = elements.data(damager.getUniqueId());
-        if (pd.getCurrentElement() == ElementType.AIR && pd.getUpgradeLevel(ElementType.AIR) >= 2) {
-            if (Math.random() < 0.05) {
-                victim.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOW_FALLING, 5 * 20, 0, true, true, true));
-            }
-        }
     }
 }
