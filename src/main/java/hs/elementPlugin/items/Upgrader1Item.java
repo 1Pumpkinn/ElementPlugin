@@ -22,7 +22,7 @@ public final class Upgrader1Item {
         meta.setDisplayName("§aUpgrader I");
         meta.setLore(List.of("Use by crafting to unlock", "Ability 1 for your element"));
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_UPGRADER_LEVEL), PersistentDataType.INTEGER, 1);
+        pdc.set(ItemKeys.upgraderLevel(plugin), PersistentDataType.INTEGER, 1);
         item.setItemMeta(meta);
         return item;
     }

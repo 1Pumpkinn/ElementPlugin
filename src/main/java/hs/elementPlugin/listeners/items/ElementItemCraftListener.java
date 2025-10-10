@@ -1,4 +1,4 @@
-package hs.elementPlugin.listeners;
+package hs.elementPlugin.listeners.items;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.PlayerData;
@@ -7,7 +7,6 @@ import hs.elementPlugin.items.ItemKeys;
 import hs.elementPlugin.managers.ElementManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,11 +16,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-public class CraftListener implements Listener {
+public class ElementItemCraftListener implements Listener {
     private final ElementPlugin plugin;
     private final ElementManager elements;
 
-    public CraftListener(ElementPlugin plugin, ElementManager elements) {
+    public ElementItemCraftListener(ElementPlugin plugin, ElementManager elements) {
         this.plugin = plugin;
         this.elements = elements;
     }
@@ -35,16 +34,16 @@ public class CraftListener implements Listener {
         if (meta == null) return;
 
         // Upgrader crafting (generic logic)
-        Integer level = meta.getPersistentDataContainer().get(new NamespacedKey(plugin, ItemKeys.KEY_UPGRADER_LEVEL), PersistentDataType.INTEGER);
+        Integer level = meta.getPersistentDataContainer().get(ItemKeys.upgraderLevel(plugin), PersistentDataType.INTEGER);
         if (level != null) {
             handleUpgraderCrafting(e, p, level);
             return;
         }
 
         // Element item crafting - delegate to element-specific listeners
-        Byte isElem = meta.getPersistentDataContainer().get(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE);
+        Byte isElem = meta.getPersistentDataContainer().get(ItemKeys.elementItem(plugin), PersistentDataType.BYTE);
         if (isElem != null && isElem == (byte)1) {
-            String t = meta.getPersistentDataContainer().get(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING);
+            String t = meta.getPersistentDataContainer().get(ItemKeys.elementType(plugin), PersistentDataType.STRING);
             ElementType type;
             try { 
                 type = ElementType.valueOf(t); 

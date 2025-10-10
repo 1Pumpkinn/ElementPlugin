@@ -83,7 +83,7 @@ public class EarthTunnelAbility extends BaseAbility {
                 }
                 breakTunnel(mineLocation, player);
                 
-                player.getWorld().spawnParticle(Particle.BLOCK, mineLocation, 10, 0.5, 0.5, 0.5, 0.1, Material.STONE.createBlockData());
+				player.getWorld().spawnParticle(Particle.BLOCK, mineLocation, 10, 0.5, 0.5, 0.5, 0.1, Material.STONE.createBlockData(), true);
             }
         }.runTaskTimer(plugin, 0L, 2L);
 

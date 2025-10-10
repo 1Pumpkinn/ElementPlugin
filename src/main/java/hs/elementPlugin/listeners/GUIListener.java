@@ -67,36 +67,7 @@ public class GUIListener implements Listener {
         }
     }
 
-    @EventHandler
-    public void onRerollerUse(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
-        ItemStack item = event.getItem();
-
-        if (item == null) return;
-
-        if (item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer()
-                .has(new NamespacedKey(plugin, ItemKeys.KEY_REROLLER), PersistentDataType.BYTE)) {
-            event.setCancelled(true);
-
-            // Check if player is already rolling
-            if (plugin.getElementManager().isCurrentlyRolling(player)) {
-                player.sendMessage(net.kyori.adventure.text.Component.text("You are already rerolling your element!").color(net.kyori.adventure.text.format.NamedTextColor.RED));
-                return;
-            }
-
-            // Remove one reroller item
-            if (item.getAmount() > 1) {
-                item.setAmount(item.getAmount() - 1);
-            } else {
-                player.getInventory().removeItem(item);
-            }
-
-            // Automatically reroll the element instead of opening GUI
-            plugin.getElementManager().rollAndAssign(player);
-            player.sendMessage(net.kyori.adventure.text.Component.text("Your element has been rerolled!").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
-        }
-    }
-
+    
     @EventHandler
     public void onElementItemUse(PlayerInteractEvent event) {
         Player player = event.getPlayer();
@@ -106,9 +77,9 @@ public class GUIListener implements Listener {
 
         // Check if this is a Life or Death core specifically
         boolean isLifeCore = item.getItemMeta().getPersistentDataContainer()
-                .has(new NamespacedKey(plugin, ItemKeys.KEY_LIFE_CORE), PersistentDataType.BYTE);
+                .has(ItemKeys.lifeCore(plugin), PersistentDataType.BYTE);
         boolean isDeathCore = item.getItemMeta().getPersistentDataContainer()
-                .has(new NamespacedKey(plugin, ItemKeys.KEY_DEATH_CORE), PersistentDataType.BYTE);
+                .has(ItemKeys.deathCore(plugin), PersistentDataType.BYTE);
 
         if (isLifeCore || isDeathCore) {
             // Only handle right-click actions
@@ -121,7 +92,7 @@ public class GUIListener implements Listener {
 
             // Get the element type from the item
             String elementTypeString = item.getItemMeta().getPersistentDataContainer()
-                    .get(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING);
+                    .get(ItemKeys.elementType(plugin), PersistentDataType.STRING);
 
             if (elementTypeString == null) {
                 player.sendMessage(net.kyori.adventure.text.Component.text("Invalid element item!").color(net.kyori.adventure.text.format.NamedTextColor.RED));

@@ -48,8 +48,8 @@ public class DeathRecipes {
         meta.setDisplayName(ChatColor.DARK_PURPLE + "Death Element");
 
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING, "DEATH");
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE, (byte) 1);
+        pdc.set(ItemKeys.elementType(plugin), PersistentDataType.STRING, "DEATH");
+        pdc.set(ItemKeys.elementItem(plugin), PersistentDataType.BYTE, (byte) 1);
         item.setItemMeta(meta);
         return item;
     }

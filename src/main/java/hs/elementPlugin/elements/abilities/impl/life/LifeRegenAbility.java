@@ -47,7 +47,7 @@ public class LifeRegenAbility extends BaseAbility {
                         particleLoc.add(0, 1, 0);
                     }
                     
-                    player.getWorld().spawnParticle(Particle.DUST, particleLoc, 1, 0.1, 0.1, 0.1, 0, new Particle.DustOptions(org.bukkit.Color.RED, 1.0f));
+					player.getWorld().spawnParticle(Particle.DUST, particleLoc, 1, 0.1, 0.1, 0.1, 0, new Particle.DustOptions(org.bukkit.Color.RED, 1.0f), true);
                 }
                 tick++;
             }

@@ -47,8 +47,8 @@ public class FireRecipes {
         ItemMeta meta = item.getItemMeta();
 
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING, "FIRE");
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE, (byte) 1);
+        pdc.set(ItemKeys.elementType(plugin), PersistentDataType.STRING, "FIRE");
+        pdc.set(ItemKeys.elementItem(plugin), PersistentDataType.BYTE, (byte) 1);
         item.setItemMeta(meta);
         return item;
     }

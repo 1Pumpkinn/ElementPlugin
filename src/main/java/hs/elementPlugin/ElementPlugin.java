@@ -8,9 +8,8 @@ import hs.elementPlugin.commands.TrustCommand;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.elements.ElementRegistry;
 import hs.elementPlugin.elements.ElementType;
-import hs.elementPlugin.listeners.CombatListener;
-import hs.elementPlugin.listeners.DeathListener;
-import hs.elementPlugin.listeners.JoinListener;
+import hs.elementPlugin.listeners.player.*;
+import hs.elementPlugin.listeners.items.listeners.*;
 import hs.elementPlugin.managers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -55,10 +54,15 @@ public final class ElementPlugin extends JavaPlugin {
         // Register listeners
         Bukkit.getPluginManager().registerEvents(new JoinListener(this, elementManager, manaManager), this);
         Bukkit.getPluginManager().registerEvents(new CombatListener(trustManager, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new DeathListener(this, elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.ElementItemDeathListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.AbilityListener(this, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.CraftListener(this, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.ItemRuleListener(this, elementManager, manaManager, itemManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.ElementItemCraftListener(this, elementManager), this);
+        // Item rules split into dedicated listeners for clarity
+        Bukkit.getPluginManager().registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);
+        Bukkit.getPluginManager().registerEvents(new ElementInventoryProtectionListener(this, elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new ElementItemDropListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new ElementItemPickupListener(this, elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new ElementCombatProjectileListener(itemManager), this);
         
         // Register Air element listeners
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.air.listeners.AirFallDamageListener(elementManager), this);
@@ -100,11 +104,12 @@ public final class ElementPlugin extends JavaPlugin {
         
         // Register Life element crafting listener
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.LifeElementCraftListener(this, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.QuitListener(this, manaManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.GameModeListener(manaManager, configManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.RespawnListener(this, elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new QuitListener(this, manaManager), this);
+        Bukkit.getPluginManager().registerEvents(new GameModeListener(manaManager, configManager), this);
+        Bukkit.getPluginManager().registerEvents(new RespawnListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.GUIListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.UpgraderListener(this, elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
 
         // Register recipes with delay to ensure server is fully loaded
         Bukkit.getScheduler().runTaskLater(this, () -> {

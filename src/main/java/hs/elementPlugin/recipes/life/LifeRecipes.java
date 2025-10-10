@@ -49,8 +49,8 @@ public class LifeRecipes {
         meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Life Element");
 
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING, "LIFE");
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE, (byte) 1);
+        pdc.set(ItemKeys.elementType(plugin), PersistentDataType.STRING, "LIFE");
+        pdc.set(ItemKeys.elementItem(plugin), PersistentDataType.BYTE, (byte) 1);
         item.setItemMeta(meta);
         return item;
     }

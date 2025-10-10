@@ -1,6 +1,5 @@
-package hs.elementPlugin.listeners;
+package hs.elementPlugin.listeners.player;
 
-import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
 import hs.elementPlugin.managers.TrustManager;
 import org.bukkit.event.EventHandler;

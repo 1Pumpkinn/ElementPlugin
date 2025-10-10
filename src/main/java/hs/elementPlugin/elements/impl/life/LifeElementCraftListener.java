@@ -40,7 +40,7 @@ public class LifeElementCraftListener implements Listener {
 
         // Check for Life core specifically using the unique key
         Byte isLifeCore = meta.getPersistentDataContainer().get(
-                new NamespacedKey(plugin, ItemKeys.KEY_LIFE_CORE),
+                ItemKeys.lifeCore(plugin),
                 PersistentDataType.BYTE
         );
 

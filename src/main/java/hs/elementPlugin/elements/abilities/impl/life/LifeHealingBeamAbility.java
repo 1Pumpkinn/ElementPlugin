@@ -44,8 +44,8 @@ public class LifeHealingBeamAbility extends BaseAbility {
                                 double newHealth = Math.min(targetPlayer.getMaxHealth(), targetPlayer.getHealth() + 2.0);
                                 targetPlayer.setHealth(newHealth);
                                 
-                                Location hitLoc = rt.getHitPosition().toLocation(player.getWorld());
-                                player.getWorld().spawnParticle(Particle.HEART, hitLoc, 3, 0.2, 0.2, 0.2, 0.0);
+							Location hitLoc = rt.getHitPosition().toLocation(player.getWorld());
+							player.getWorld().spawnParticle(Particle.HEART, hitLoc, 3, 0.2, 0.2, 0.2, 0.0, null, true);
                             }
                         }
                     }
@@ -55,9 +55,9 @@ public class LifeHealingBeamAbility extends BaseAbility {
                 // Start beam 2 blocks away from player to avoid vision obstruction
                 Vector dir = player.getLocation().getDirection().normalize();
                 Location eye = player.getEyeLocation();
-                for (double d = 2.0; d <= 20; d += 1.0) {
+				for (double d = 2.0; d <= 20; d += 1.0) {
                     Location pt = eye.clone().add(dir.clone().multiply(d));
-                    player.getWorld().spawnParticle(Particle.HEART, pt, 1, 0.05, 0.05, 0.05, 0);
+					player.getWorld().spawnParticle(Particle.HEART, pt, 1, 0.05, 0.05, 0.05, 0, null, true);
                 }
                 
                 ticks++;

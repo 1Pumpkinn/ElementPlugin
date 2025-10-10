@@ -26,7 +26,7 @@ public final class RerollerItem {
             ChatColor.YELLOW + "Right-click to randomly reroll your element"
         ));
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_REROLLER), PersistentDataType.BYTE, (byte)1);
+        pdc.set(ItemKeys.reroller(plugin), PersistentDataType.BYTE, (byte)1);
         item.setItemMeta(meta);
         return item;
     }

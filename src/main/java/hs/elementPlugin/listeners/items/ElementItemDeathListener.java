@@ -1,18 +1,16 @@
-package hs.elementPlugin.listeners;
+package hs.elementPlugin.listeners.items;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.PlayerData;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
-import hs.elementPlugin.util.ItemUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
-import java.util.Iterator;
 
-public record DeathListener(ElementPlugin plugin, ElementManager elements) implements Listener {
+public record ElementItemDeathListener(ElementPlugin plugin, ElementManager elements) implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent e) {
@@ -45,10 +43,15 @@ public record DeathListener(ElementPlugin plugin, ElementManager elements) imple
         }
         // For life/death elements: reroll player to new element and drop the core
         if (shouldDropCore(currentElement)) {
+            plugin.getLogger().info("Player " + e.getEntity().getName() + " died with " + currentElement + " element - dropping core");
+            
             // Create and drop the core item
             ItemStack coreItem = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, currentElement);
             if (coreItem != null) {
                 e.getDrops().add(coreItem);
+                plugin.getLogger().info("Added " + currentElement + " core to death drops");
+            } else {
+                plugin.getLogger().warning("Failed to create " + currentElement + " core item");
             }
 
             // Remove the element item flag so they don't have it anymore
@@ -58,6 +61,8 @@ public record DeathListener(ElementPlugin plugin, ElementManager elements) imple
             // Reroll a new element for the player
             elements.assignRandomWithTitle(e.getEntity());
             e.getEntity().sendMessage(ChatColor.YELLOW + "Your core dropped and you rolled a new element!");
+        } else {
+            plugin.getLogger().info("Player " + e.getEntity().getName() + " died with " + currentElement + " element - no core drop");
         }
     }
 

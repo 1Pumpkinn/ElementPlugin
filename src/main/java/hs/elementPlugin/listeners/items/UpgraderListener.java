@@ -1,4 +1,4 @@
-package hs.elementPlugin.listeners;
+package hs.elementPlugin.listeners.items;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.items.ItemKeys;
@@ -45,7 +45,7 @@ public class UpgraderListener implements Listener {
         }
 
         PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
-        NamespacedKey upgraderKey = new NamespacedKey(plugin, ItemKeys.KEY_UPGRADER_LEVEL);
+        NamespacedKey upgraderKey = ItemKeys.upgraderLevel(plugin);
 
         // Check if this is an upgrader item
         if (!pdc.has(upgraderKey, PersistentDataType.INTEGER)) {

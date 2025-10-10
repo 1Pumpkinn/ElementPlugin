@@ -21,32 +21,33 @@ public class WaterGeyserAbility extends BaseAbility {
         super("water_geyser", 30, 5, 1);
         this.plugin = plugin;
     }
-    
+
     @Override
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
         Location playerLoc = player.getLocation();
         boolean foundTargets = false;
-        
+
         for (LivingEntity entity : playerLoc.getNearbyLivingEntities(5.0)) {
             if (entity.equals(player)) continue;
             if (!isValidTarget(context, entity)) continue;
-            
+
             foundTargets = true;
             final LivingEntity target = entity;
             final double startY = target.getLocation().getY();
 
             Location targetLoc = target.getLocation();
             Location groundLoc = new Location(targetLoc.getWorld(), targetLoc.getX(), startY, targetLoc.getZ());
-            
+
             targetLoc.getWorld().playSound(groundLoc, Sound.BLOCK_WATER_AMBIENT, 1.0f, 0.5f);
-            targetLoc.getWorld().spawnParticle(Particle.SPLASH, groundLoc, 30, 0.5, 0.1, 0.5, 0.3);
-            
+            // Use force=true to ensure particles are visible at longer distances
+            targetLoc.getWorld().spawnParticle(Particle.SPLASH, groundLoc, 30, 0.5, 0.1, 0.5, 0.3, null, true);
+
             new BukkitRunnable() {
                 int ticks = 0;
                 double geyserHeight = 0;
                 double lastGeyserHeight = 0;
-                
+
                 @Override
                 public void run() {
                     if (target.isDead() || !target.isValid()) { cancel(); return; }
@@ -58,32 +59,33 @@ public class WaterGeyserAbility extends BaseAbility {
                     } else {
                         target.setVelocity(new Vector(0, 0, 0)); // Stop upward movement at 20 blocks
                     }
-                    
-                    target.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, loc.getX(), loc.getY() - 0.01, loc.getZ(), 5, 0.2, 0.0, 0.2, 0.01);
-                    
+
+                    // Force particles to be visible
+                    target.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, loc.getX(), loc.getY() - 0.01, loc.getZ(), 5, 0.2, 0.0, 0.2, 0.01, null, true);
+
                     Location groundLoc = new Location(loc.getWorld(), loc.getX(), startY, loc.getZ());
-                    
+
                     // Smooth height transition logic - launch to 20 blocks
                     double targetHeight = Math.min(loc.getY() - startY, 20);
                     double heightDiff = targetHeight - lastGeyserHeight;
                     geyserHeight = lastGeyserHeight + Math.min(heightDiff, 0.5);
                     lastGeyserHeight = geyserHeight;
-                    
-                    // Create particles along the geyser column
+
+                    // Create particles along the geyser column with force=true
                     for (double y = 0; y <= geyserHeight; y += 0.25) {
                         if (y % 0.5 != 0 && y > 1) continue;
-                        
+
                         Location particleLoc = groundLoc.clone().add(0, y, 0);
                         // Wider spread at bottom, narrower at top
                         double spread = 0.15 * (1 - (y / Math.max(geyserHeight, 1)));
-                        
-                        target.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, particleLoc, 1, spread, 0.05, spread, 0.01);
-                        
+
+                        target.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, particleLoc, 1, spread, 0.05, spread, 0.01, null, true);
+
                         if (y % 1.5 < 0.25 && y > 0.5) {
-                            target.getWorld().spawnParticle(Particle.UNDERWATER, particleLoc, 1, spread, 0.05, spread, 0.01);
+                            target.getWorld().spawnParticle(Particle.UNDERWATER, particleLoc, 1, spread, 0.05, spread, 0.01, null, true);
                         }
                     }
-                    
+
                     ticks++;
                     if (ticks >= 40) {
                         cancel();
@@ -91,15 +93,15 @@ public class WaterGeyserAbility extends BaseAbility {
                 }
             }.runTaskTimer(context.getPlugin(), 0L, 1L);
         }
-        
+
         if (!foundTargets) {
             player.sendMessage("§cNo valid targets found!");
             return false;
         }
-        
+
         return true;
     }
-    
+
     @Override
     public String getName() {
         return "Water Geyser";
@@ -109,7 +111,7 @@ public class WaterGeyserAbility extends BaseAbility {
     public String getDescription() {
         return "Launches nearby enemies upward with a powerful geyser.";
     }
-    
+
     @Override
     protected boolean isValidTarget(ElementContext context, LivingEntity entity) {
         // Check if entity is a valid target (not a friendly player, etc.)

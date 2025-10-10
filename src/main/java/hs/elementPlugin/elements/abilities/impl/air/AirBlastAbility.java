@@ -36,11 +36,11 @@ public class AirBlastAbility extends BaseAbility {
         Location center = player.getLocation();
 
         // Particle ring
-        for (int i = 0; i < 360; i += 10) {
+		for (int i = 0; i < 360; i += 10) {
             double rad = Math.toRadians(i);
             double x = Math.cos(rad) * 1.5;
             double z = Math.sin(rad) * 1.5;
-            w.spawnParticle(Particle.CLOUD, center.clone().add(x, 0.2, z), 2, 0.0, 0.0, 0.0, 0.0);
+			w.spawnParticle(Particle.CLOUD, center.clone().add(x, 0.2, z), 2, 0.0, 0.0, 0.0, 0.0, null, true);
         }
         // Animated particle ring that shoots outward
         new BukkitRunnable() {
@@ -60,8 +60,8 @@ public class AirBlastAbility extends BaseAbility {
                     double z = Math.sin(rad) * currentRadius;
 
                     // Particles shrink as they move outward
-                    int count = Math.max(1, 3 - tick/2);
-                    w.spawnParticle(Particle.CLOUD, center.clone().add(x, 0.2, z), count, 0.0, 0.0, 0.0, 0.0);
+					int count = Math.max(1, 3 - tick/2);
+					w.spawnParticle(Particle.CLOUD, center.clone().add(x, 0.2, z), count, 0.0, 0.0, 0.0, 0.0, null, true);
                 }
                 tick++;
             }

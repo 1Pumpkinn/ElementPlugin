@@ -32,8 +32,8 @@ public class AirDashAbility extends BaseAbility {
                     return;
                 }
 
-                Location loc = player.getLocation();
-                player.getWorld().spawnParticle(Particle.CLOUD, loc, 5, 0.3, 0.3, 0.3, 0.05);
+				Location loc = player.getLocation();
+				player.getWorld().spawnParticle(Particle.CLOUD, loc, 5, 0.3, 0.3, 0.3, 0.05, null, true);
 
                 if (ticks % 5 == 0) {
                     for (LivingEntity entity : loc.getNearbyLivingEntities(3.0)) {
@@ -42,8 +42,8 @@ public class AirDashAbility extends BaseAbility {
 
                         Vector knockback = entity.getLocation().toVector().subtract(loc.toVector()).normalize();
                         knockback.setY(0.2);
-                        entity.setVelocity(knockback.multiply(1.0));
-                        entity.getWorld().spawnParticle(Particle.CLOUD, entity.getLocation(), 10, 0.3, 0.3, 0.3, 0.05);
+						entity.setVelocity(knockback.multiply(1.0));
+						entity.getWorld().spawnParticle(Particle.CLOUD, entity.getLocation(), 10, 0.3, 0.3, 0.3, 0.05, null, true);
                     }
                 }
 

@@ -1,12 +1,9 @@
-package hs.elementPlugin.listeners;
+package hs.elementPlugin.listeners.player;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.gui.ElementSelectionGUI;
 import hs.elementPlugin.managers.ElementManager;
 import hs.elementPlugin.managers.ManaManager;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

@@ -52,8 +52,8 @@ public class FireSummonAbility extends BaseAbility {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    if (blaze.isValid()) {
-                        blaze.getWorld().spawnParticle(Particle.FLAME, blaze.getLocation(), 8, 0.3, 0.3, 0.3, 0.05);
+					if (blaze.isValid()) {
+						blaze.getWorld().spawnParticle(Particle.FLAME, blaze.getLocation(), 8, 0.3, 0.3, 0.3, 0.05, null, true);
                         blaze.remove();
                         player.sendMessage(ChatColor.GOLD + "Your blaze has despawned.");
                     }

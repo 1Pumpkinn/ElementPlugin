@@ -48,8 +48,8 @@ public class AirRecipes {
         meta.setDisplayName(ChatColor.WHITE + "Air Element");
 
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING, "AIR");
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE, (byte) 1);
+        pdc.set(ItemKeys.elementType(plugin), PersistentDataType.STRING, "AIR");
+        pdc.set(ItemKeys.elementItem(plugin), PersistentDataType.BYTE, (byte) 1);
         item.setItemMeta(meta);
         return item;
     }

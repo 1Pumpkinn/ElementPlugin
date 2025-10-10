@@ -86,20 +86,20 @@ public class WaterBeamAbility extends BaseAbility {
                                 Location hit = r.getHitPosition().toLocation(player.getWorld());
 
                                 try {
-                                    if (le instanceof Player) {
-                                        player.getWorld().spawnParticle(Particle.SPLASH, hit, 15, 0.3, 0.3, 0.3, 0.2);
-                                        player.getWorld().spawnParticle(Particle.BUBBLE_POP, hit, 10, 0.2, 0.2, 0.2, 0.1);
+									if (le instanceof Player) {
+										player.getWorld().spawnParticle(Particle.SPLASH, hit, 15, 0.3, 0.3, 0.3, 0.2, null, true);
+										player.getWorld().spawnParticle(Particle.BUBBLE_POP, hit, 10, 0.2, 0.2, 0.2, 0.1, null, true);
                                         player.getWorld().playSound(hit, Sound.ENTITY_PLAYER_SPLASH, 0.8f, 1.5f);
 
                                         // Create circular water ring effect
                                         for (double angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
                                             double x = Math.cos(angle) * 0.5;
                                             double z = Math.sin(angle) * 0.5;
-                                            Location ringLoc = hit.clone().add(x, 0.1, z);
-                                            player.getWorld().spawnParticle(Particle.BUBBLE, ringLoc, 1, 0.05, 0.05, 0.05, 0.0);
+											Location ringLoc = hit.clone().add(x, 0.1, z);
+											player.getWorld().spawnParticle(Particle.BUBBLE, ringLoc, 1, 0.05, 0.05, 0.05, 0.0, null, true);
                                         }
-                                    } else {
-                                        player.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, hit, 3, 0.1, 0.1, 0.1, 0.0);
+									} else {
+										player.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, hit, 3, 0.1, 0.1, 0.1, 0.0, null, true);
                                     }
                                 } catch (Exception e) {
                                     // Ignore particle errors
@@ -122,12 +122,12 @@ public class WaterBeamAbility extends BaseAbility {
                         break;
                     }
                     
-                    if (ticks % 2 == 0) {
-                        player.getWorld().spawnParticle(Particle.SPLASH, particleLoc, 1, 0.05, 0.05, 0.05, 0.01);
-                        
-                        if (d % 2 < 0.5) {
-                            player.getWorld().spawnParticle(Particle.BUBBLE_POP, particleLoc, 1, 0.05, 0.05, 0.05, 0.01);
-                        }
+						if (ticks % 2 == 0) {
+							player.getWorld().spawnParticle(Particle.SPLASH, particleLoc, 1, 0.05, 0.05, 0.05, 0.01, null, true);
+							
+							if (d % 2 < 0.5) {
+								player.getWorld().spawnParticle(Particle.BUBBLE_POP, particleLoc, 1, 0.05, 0.05, 0.05, 0.01, null, true);
+							}
                     }
                 }
                 

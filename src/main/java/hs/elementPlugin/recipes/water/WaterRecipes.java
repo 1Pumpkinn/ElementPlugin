@@ -48,8 +48,8 @@ public class WaterRecipes {
         meta.setDisplayName(ChatColor.BLUE + "Water Element");
 
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING, "WATER");
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE, (byte) 1);
+        pdc.set(ItemKeys.elementType(plugin), PersistentDataType.STRING, "WATER");
+        pdc.set(ItemKeys.elementItem(plugin), PersistentDataType.BYTE, (byte) 1);
         item.setItemMeta(meta);
         return item;
     }

@@ -40,7 +40,7 @@ public class DeathElementCraftListener implements Listener {
 
         // Check for Death core specifically using the unique key
         Byte isDeathCore = meta.getPersistentDataContainer().get(
-                new NamespacedKey(plugin, ItemKeys.KEY_DEATH_CORE),
+                ItemKeys.deathCore(plugin),
                 PersistentDataType.BYTE
         );
 
