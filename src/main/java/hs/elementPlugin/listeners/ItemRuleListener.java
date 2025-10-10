@@ -86,7 +86,6 @@ public class ItemRuleListener implements Listener {
     public void onDrop(PlayerDropItemEvent e) {
         ItemStack stack = e.getItemDrop().getItemStack();
         if (isElementItem(stack)) {
-            // Allow drops if player is dead/dying
             Player p = e.getPlayer();
             if (p.isDead() || p.getHealth() <= 0) {
                 return; // Allow the drop
