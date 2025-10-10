@@ -12,14 +12,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import java.util.Iterator;
 
-public class DeathListener implements Listener {
-    private final ElementPlugin plugin;
-    private final ElementManager elements;
-
-    public DeathListener(ElementPlugin plugin, ElementManager elements) {
-        this.plugin = plugin;
-        this.elements = elements;
-    }
+public record DeathListener(ElementPlugin plugin, ElementManager elements) implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent e) {
@@ -48,24 +41,22 @@ public class DeathListener implements Listener {
                 // Reapply upsides to remove any upgrade benefits
                 elements.applyUpsides(e.getEntity());
                 
-                e.getEntity().sendMessage(ChatColor.RED + "Your upgraders dropped upon death!");
             }
         }
-        // Drop core for Life/Death elements if player holds it
-        if (currentElement == ElementType.LIFE || currentElement == ElementType.DEATH) {
-            Iterator<ItemStack> iter = e.getEntity().getInventory().iterator();
-            while (iter.hasNext()) {
-                ItemStack item = iter.next();
-                if (ItemUtil.isElementItem(plugin, item)
-                    && ItemUtil.getElementType(plugin, item) == currentElement) {
-                    e.getDrops().add(item.clone());
-                    iter.remove(); // Remove from player's inventory
-                    break;
-                }
+        // Always drop a new core for life/death when player dies
+        if (shouldDropCore(currentElement)) {
+            ItemStack core = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, currentElement);
+            if (core != null) {
+                e.getDrops().add(core);
             }
             // Reroll a new element for the player
             elements.assignRandomWithTitle(e.getEntity());
-            e.getEntity().sendMessage(ChatColor.YELLOW + "Your core dropped and you have been attuned to a new element!");
+            e.getEntity().sendMessage(ChatColor.YELLOW + "Your core dropped and you rolled a new element!");
         }
+    }
+
+    // Utility: easily add more elements that drop cores in the future
+    private boolean shouldDropCore(ElementType t) {
+        return t == ElementType.LIFE || t == ElementType.DEATH;
     }
 }

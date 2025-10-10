@@ -26,7 +26,7 @@ public class FireSummonAbility extends BaseAbility {
         Player player = context.getPlayer();
         
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BLAZE_AMBIENT, 1f, 0.8f);
-        player.sendMessage(ChatColor.GOLD + "Summoning friendly blaze...");
+        player.sendMessage(ChatColor.GOLD + "Summoned Blazes");
 
         Location spawnLoc = player.getLocation().add(player.getLocation().getDirection().multiply(3));
         spawnLoc.setY(player.getLocation().getY());
@@ -45,7 +45,7 @@ public class FireSummonAbility extends BaseAbility {
             blaze.setHealth(40.0);
             
             // Set custom name
-            blaze.setCustomName(ChatColor.GOLD + player.getName() + "'s Blaze " + (i + 1));
+            blaze.setCustomName(ChatColor.GOLD + player.getName() + "'s Blaze");
             blaze.setCustomNameVisible(true);
             
             // Remove the blaze after 30 seconds
@@ -55,7 +55,7 @@ public class FireSummonAbility extends BaseAbility {
                     if (blaze.isValid()) {
                         blaze.getWorld().spawnParticle(Particle.FLAME, blaze.getLocation(), 8, 0.3, 0.3, 0.3, 0.05);
                         blaze.remove();
-                        player.sendMessage(ChatColor.GOLD + "Your blaze has returned to the Nether.");
+                        player.sendMessage(ChatColor.GOLD + "Your blaze has despawned.");
                     }
                 }
             }.runTaskLater(context.getPlugin(), 30 * 20L);

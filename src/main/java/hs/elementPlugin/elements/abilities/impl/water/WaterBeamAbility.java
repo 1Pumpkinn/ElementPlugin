@@ -31,7 +31,6 @@ public class WaterBeamAbility extends BaseAbility {
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
 
-        player.sendMessage(ChatColor.AQUA + "Water beam active for 10s...");
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_3, 1f, 1.2f);
 
         setActive(player, true);
@@ -110,7 +109,6 @@ public class WaterBeamAbility extends BaseAbility {
                     }
                 }
 
-                // Visualize the beam
                 Location eyeLoc = player.getEyeLocation();
                 Vector direction = eyeLoc.getDirection();
                 
@@ -120,16 +118,13 @@ public class WaterBeamAbility extends BaseAbility {
                 for (double d = 0; d <= maxBeamDistance; d += particleDistance) {
                     Location particleLoc = eyeLoc.clone().add(direction.clone().multiply(d));
                     
-                    // Stop if we hit a non-passable block
                     if (!isPassableBlock(particleLoc.getBlock())) {
                         break;
                     }
                     
-                    // Spawn water particles along the beam
                     if (ticks % 2 == 0) {
                         player.getWorld().spawnParticle(Particle.SPLASH, particleLoc, 1, 0.05, 0.05, 0.05, 0.01);
                         
-                        // Add some bubble particles occasionally
                         if (d % 2 < 0.5) {
                             player.getWorld().spawnParticle(Particle.BUBBLE_POP, particleLoc, 1, 0.05, 0.05, 0.05, 0.01);
                         }
@@ -171,25 +166,20 @@ public class WaterBeamAbility extends BaseAbility {
          return ChatColor.GRAY + "Fire a continuous beam of water that damages and pushes back enemies. (40 mana)"; 
      }
     
-    // Helper method to check if an entity is a valid target
     @Override
     protected boolean isValidTarget(ElementContext context, LivingEntity entity) {
-        // Add your target validation logic here
         return true;
     }
     
-    // Helper method to check if a block should be passable for the water beam
     private boolean isPassableBlock(Block block) {
         if (block == null) return true;
         
         Material type = block.getType();
         
-        // Allow passage through air and void
         if (type == Material.AIR || type == Material.VOID_AIR || type == Material.CAVE_AIR) {
             return true;
         }
         
-        // Allow passage through small plants, flowers, and decorative blocks
         return type == Material.SHORT_GRASS ||
                type == Material.TALL_GRASS ||
                 type == Material.SHORT_DRY_GRASS ||

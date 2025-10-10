@@ -143,6 +143,17 @@ public class GUIListener implements Listener {
                 
                 // Apply the element
                 plugin.getElementManager().assignElement(player, elementType);
+                
+                // Consume the element core
+                if (item.getAmount() > 1) {
+                    item.setAmount(item.getAmount() - 1);
+                } else {
+                    player.getInventory().setItemInMainHand(null);
+                }
+
+                // Give a new matching core immediately after user consumes one
+                plugin.getElementManager().giveElementItem(player, elementType);
+                
                 player.sendMessage(
                     net.kyori.adventure.text.Component.text("You have chosen ")
                         .color(net.kyori.adventure.text.format.NamedTextColor.GREEN)

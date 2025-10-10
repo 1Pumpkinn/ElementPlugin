@@ -223,52 +223,11 @@ public class ElementManager {
         return e.ability2(context);
     }
     
-    private void giveElementItem(Player player, ElementType elementType) {
-        ItemStack item = createElementItem(elementType);
-        player.getInventory().addItem(item);
-        player.sendMessage(ChatColor.GREEN + "You received a " + getElementDisplayName(elementType) + " item!");
-    }
-    
-    private ItemStack createElementItem(ElementType elementType) {
-        Material material;
-        ChatColor color;
-        String displayName;
-        
-        switch (elementType) {
-            case LIFE:
-                material = Material.TOTEM_OF_UNDYING;
-                color = ChatColor.LIGHT_PURPLE;
-                displayName = "Life Element";
-                break;
-            case DEATH:
-                material = Material.WITHER_SKELETON_SKULL;
-                color = ChatColor.DARK_PURPLE;
-                displayName = "Death Element";
-                break;
-            default:
-                return null;
-        }
-        
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(color + displayName);
-        
-        PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING, elementType.name());
-        pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE, (byte) 1);
-        
-        item.setItemMeta(meta);
-        return item;
-    }
-    
-    private String getElementDisplayName(ElementType elementType) {
-        switch (elementType) {
-            case LIFE:
-                return ChatColor.LIGHT_PURPLE + "Life Element";
-            case DEATH:
-                return ChatColor.DARK_PURPLE + "Death Element";
-            default:
-                return elementType.name();
+    public void giveElementItem(Player player, ElementType elementType) {
+        ItemStack item = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, elementType);
+        if (item != null) {
+            player.getInventory().addItem(item);
+            player.sendMessage(org.bukkit.ChatColor.GREEN + "You received a " + hs.elementPlugin.items.ElementCoreItem.getDisplayName(elementType) + " item!");
         }
     }
 }

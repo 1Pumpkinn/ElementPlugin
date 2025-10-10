@@ -24,33 +24,26 @@ public class LifeHealingBeamAbility extends BaseAbility {
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
         
-        player.sendMessage(ChatColor.GREEN + "Healing beam active...");
         setActive(player, true);
         
-        // Shoot a healing beam that heals allies 1 heart per second
         new BukkitRunnable() {
             int ticks = 0;
             @Override
             public void run() {
-                if (!player.isOnline() || ticks >= 100) { // Run for 5 seconds (100 ticks)
+                if (!player.isOnline() || ticks >= 100) {
                     setActive(player, false);
                     cancel();
                     return;
                 }
                 
-                // Only heal every 20 ticks (1 second) to avoid spam
                 if (ticks % 20 == 0) {
-                    // Ray trace to find target
                     RayTraceResult rt = player.rayTraceEntities(20);
                     if (rt != null && rt.getHitEntity() instanceof LivingEntity target) {
-                        // Check if target is an ally (player or trusted)
                         if (target instanceof Player targetPlayer) {
                             if (targetPlayer.equals(player) || context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {
-                                // Heal 1 heart (2 HP)
                                 double newHealth = Math.min(targetPlayer.getMaxHealth(), targetPlayer.getHealth() + 2.0);
                                 targetPlayer.setHealth(newHealth);
                                 
-                                // Show healing particles
                                 Location hitLoc = rt.getHitPosition().toLocation(player.getWorld());
                                 player.getWorld().spawnParticle(Particle.HEART, hitLoc, 3, 0.2, 0.2, 0.2, 0.0);
                             }

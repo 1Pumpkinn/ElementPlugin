@@ -51,7 +51,13 @@ public class WaterGeyserAbility extends BaseAbility {
                 public void run() {
                     if (target.isDead() || !target.isValid()) { cancel(); return; }
                     Location loc = target.getLocation();
-                    target.setVelocity(new Vector(0, 2.0, 0)); // Increased velocity to launch 20 blocks high
+                    // Limit height to 20 blocks maximum
+                    double currentHeight = target.getLocation().getY() - startY;
+                    if (currentHeight < 20) {
+                        target.setVelocity(new Vector(0, 0.8, 0));
+                    } else {
+                        target.setVelocity(new Vector(0, 0, 0)); // Stop upward movement at 20 blocks
+                    }
                     
                     target.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, loc.getX(), loc.getY() - 0.01, loc.getZ(), 5, 0.2, 0.0, 0.2, 0.01);
                     

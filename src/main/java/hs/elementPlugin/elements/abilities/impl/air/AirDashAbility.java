@@ -52,7 +52,6 @@ public class AirDashAbility extends BaseAbility {
         }.runTaskTimer(plugin, 0L, 1L);
 
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BAT_TAKEOFF, 1.0f, 1.5f);
-        player.sendMessage(ChatColor.WHITE + "Air Dash activated!");
         return true;
     }
 
