@@ -43,8 +43,14 @@ public record DeathListener(ElementPlugin plugin, ElementManager elements) imple
 
             }
         }
-        // For life/death elements: reroll player to new element (core drops naturally from inventory)
+        // For life/death elements: reroll player to new element and drop the core
         if (shouldDropCore(currentElement)) {
+            // Create and drop the core item
+            ItemStack coreItem = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, currentElement);
+            if (coreItem != null) {
+                e.getDrops().add(coreItem);
+            }
+
             // Remove the element item flag so they don't have it anymore
             pd.removeElementItem(currentElement);
             plugin.getDataStore().save(pd);

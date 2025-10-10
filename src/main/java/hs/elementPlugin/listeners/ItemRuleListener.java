@@ -44,7 +44,6 @@ public class ItemRuleListener implements Listener {
         return ItemUtil.getElementType(plugin, stack);
     }
 
-    // Use handling: allow element items to process their own use
     @EventHandler(priority = EventPriority.HIGH)
     public void onInteract(PlayerInteractEvent e) {
         // Let ItemManager delegate to specific element items
@@ -52,6 +51,31 @@ public class ItemRuleListener implements Listener {
         ItemStack inHand = e.getItem();
 
         if (inHand != null && isElementItem(inHand)) {
+            ElementType type = getElementType(inHand);
+
+            // Handle Life and Death core consumption
+            if (type == ElementType.LIFE || type == ElementType.DEATH) {
+                if (e.getAction().toString().contains("RIGHT")) {
+                    PlayerData pd = elements.data(p.getUniqueId());
+
+                    // Switch to the core's element
+                    elements.setElement(p, type);
+
+                    // Mark that they have consumed this core
+                    pd.addElementItem(type);
+                    plugin.getDataStore().save(pd);
+
+                    // Consume the item
+                    inHand.setAmount(inHand.getAmount() - 1);
+
+                    p.sendMessage(ChatColor.GREEN + "You consumed the " +
+                            hs.elementPlugin.items.ElementCoreItem.getDisplayName(type) + ChatColor.GREEN + "!");
+
+                    e.setCancelled(true);
+                    return;
+                }
+            }
+
             // Element items handle their own interactions
             itemManager.handleUse(e);
         }
@@ -62,6 +86,12 @@ public class ItemRuleListener implements Listener {
     public void onDrop(PlayerDropItemEvent e) {
         ItemStack stack = e.getItemDrop().getItemStack();
         if (isElementItem(stack)) {
+            // Allow drops if player is dead/dying
+            Player p = e.getPlayer();
+            if (p.isDead() || p.getHealth() <= 0) {
+                return; // Allow the drop
+            }
+
             e.setCancelled(true);
             e.getPlayer().sendMessage(ChatColor.RED + "You cannot drop this item.");
         }
@@ -113,6 +143,11 @@ public class ItemRuleListener implements Listener {
         if (!isElementItem(stack)) return;
         ElementType type = getElementType(stack);
         if (type == null) return;
+
+        // Life and Death cores need to be consumed (right-clicked), not auto-equipped
+        if (type == ElementType.LIFE || type == ElementType.DEATH) {
+            return; // Allow pickup but don't auto-switch
+        }
 
         PlayerData pd = elements.data(p.getUniqueId());
         ElementType oldElement = pd.getCurrentElement();
