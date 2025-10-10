@@ -27,7 +27,7 @@ public final class ElementCoreItem {
         switch (type) {
             case LIFE:
                 return new ElementCoreProperties(
-                        Material.REDSTONE,
+                        Material.REDSTONE_BLOCK,
                         ChatColor.RED,
                         "Life Element"
                 );

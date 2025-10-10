@@ -53,11 +53,36 @@ public class ItemRuleListener implements Listener {
         if (inHand != null && isElementItem(inHand)) {
             ElementType type = getElementType(inHand);
 
-            // Handle Life and Death core consumption - now handled in GUIListener
-            // This prevents double-handling
+            // Handle Life and Death core consumption
             if (type == ElementType.LIFE || type == ElementType.DEATH) {
-                // Skip - let GUIListener handle it
-                return;
+                if (e.getAction().toString().contains("RIGHT")) {
+                    PlayerData pd = elements.data(p.getUniqueId());
+
+                    // Switch to the core's element
+                    elements.setElement(p, type);
+
+                    // Mark that they have consumed this core
+                    pd.addElementItem(type);
+                    plugin.getDataStore().save(pd);
+
+                    // Consume the item - use the actual item in hand
+                    ItemStack itemInHand = p.getInventory().getItemInMainHand();
+                    if (itemInHand.equals(inHand)) {
+                        itemInHand.setAmount(itemInHand.getAmount() - 1);
+                    } else {
+                        // Try off-hand
+                        itemInHand = p.getInventory().getItemInOffHand();
+                        if (itemInHand.equals(inHand)) {
+                            itemInHand.setAmount(itemInHand.getAmount() - 1);
+                        }
+                    }
+
+                    p.sendMessage(ChatColor.GREEN + "You consumed the " +
+                            hs.elementPlugin.items.ElementCoreItem.getDisplayName(type) + ChatColor.GREEN + "!");
+
+                    e.setCancelled(true);
+                    return; // Return early, don't call handleUse
+                }
             }
 
             // Element items handle their own interactions
