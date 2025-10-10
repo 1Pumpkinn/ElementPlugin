@@ -102,7 +102,6 @@ public class FireBreathAbility extends BaseAbility {
                                 .count(1)
                                 .offset(0, 0, 0)
                                 .extra(0)
-                                .receivers(player)
                                 .spawn();
                     }
                 }
