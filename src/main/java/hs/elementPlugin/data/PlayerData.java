@@ -45,23 +45,23 @@ public class PlayerData {
     public UUID getUuid() { return uuid; }
 
     public int getCurrentElementUpgradeLevel() { return currentElementUpgradeLevel; }
-    
-    public void setCurrentElementUpgradeLevel(int level) { 
-        this.currentElementUpgradeLevel = Math.max(0, Math.min(2, level)); 
+
+    public void setCurrentElementUpgradeLevel(int level) {
+        this.currentElementUpgradeLevel = Math.max(0, Math.min(2, level));
     }
 
     public ElementType getCurrentElement() { return currentElement; }
-    
+
     public ElementType getElementType() { return currentElement; }
 
-    public void setCurrentElement(ElementType currentElement) { 
+    public void setCurrentElement(ElementType currentElement) {
         this.currentElement = currentElement;
         // Reset upgrade level when switching elements (except when loading from save)
         if (currentElement != null) {
             this.currentElementUpgradeLevel = 0;
         }
     }
-    
+
     public void setCurrentElementWithoutReset(ElementType currentElement) {
         // Used when loading from save - doesn't reset upgrade level
         this.currentElement = currentElement;
@@ -82,7 +82,7 @@ public class PlayerData {
         }
     }
 
-    public java.util.Map<ElementType, Integer> getUpgradesView() { 
+    public java.util.Map<ElementType, Integer> getUpgradesView() {
         java.util.Map<ElementType, Integer> map = new java.util.EnumMap<>(ElementType.class);
         if (currentElement != null) {
             map.put(currentElement, currentElementUpgradeLevel);
@@ -95,6 +95,8 @@ public class PlayerData {
     public boolean hasElementItem(ElementType type) { return ownedItems.contains(type); }
 
     public void addElementItem(ElementType type) { ownedItems.add(type); }
+
+    public void removeElementItem(ElementType type) { ownedItems.remove(type); }
 
     public int getMana() { return mana; }
 

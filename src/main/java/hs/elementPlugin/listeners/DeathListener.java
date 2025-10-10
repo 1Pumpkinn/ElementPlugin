@@ -18,10 +18,10 @@ public record DeathListener(ElementPlugin plugin, ElementManager elements) imple
     public void onPlayerDeath(PlayerDeathEvent e) {
         PlayerData pd = elements.data(e.getEntity().getUniqueId());
         ElementType currentElement = pd.getCurrentElement();
-        
+
         if (currentElement != null) {
             int currentLevel = pd.getUpgradeLevel(currentElement);
-            
+
             if (currentLevel > 0) {
                 // Drop upgraders based on level
                 for (int i = 0; i < currentLevel; i++) {
@@ -33,22 +33,22 @@ public record DeathListener(ElementPlugin plugin, ElementManager elements) imple
                         e.getDrops().add(plugin.getItemManager().createUpgrader2());
                     }
                 }
-                
+
                 // Reset upgrade level to 0
                 pd.setUpgradeLevel(currentElement, 0);
                 plugin.getDataStore().save(pd);
-                
+
                 // Reapply upsides to remove any upgrade benefits
                 elements.applyUpsides(e.getEntity());
-                
+
             }
         }
-        // Always drop a new core for life/death when player dies
+        // For life/death elements: reroll player to new element (core drops naturally from inventory)
         if (shouldDropCore(currentElement)) {
-            ItemStack core = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, currentElement);
-            if (core != null) {
-                e.getDrops().add(core);
-            }
+            // Remove the element item flag so they don't have it anymore
+            pd.removeElementItem(currentElement);
+            plugin.getDataStore().save(pd);
+
             // Reroll a new element for the player
             elements.assignRandomWithTitle(e.getEntity());
             e.getEntity().sendMessage(ChatColor.YELLOW + "Your core dropped and you rolled a new element!");
