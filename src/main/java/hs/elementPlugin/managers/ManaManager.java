@@ -59,7 +59,7 @@ public class ManaManager {
                 // Action bar display with mana emoji
                 String manaDisplay = p.getGameMode() == GameMode.CREATIVE ? "∞" : String.valueOf(pd.getMana());
                 p.sendActionBar(
-                    net.kyori.adventure.text.Component.text("♋ Mana: ")
+                    net.kyori.adventure.text.Component.text("♻ Mana: ")
                         .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
                         .append(net.kyori.adventure.text.Component.text(manaDisplay, net.kyori.adventure.text.format.NamedTextColor.WHITE))
                         .append(net.kyori.adventure.text.Component.text("/" + maxMana, net.kyori.adventure.text.format.NamedTextColor.GRAY))
