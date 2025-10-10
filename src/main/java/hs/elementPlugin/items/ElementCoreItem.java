@@ -57,6 +57,14 @@ public final class ElementCoreItem {
             PersistentDataContainer pdc = meta.getPersistentDataContainer();
             pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING, type.name());
             pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_ITEM), PersistentDataType.BYTE, (byte) 1);
+
+            // Add specific core identifier based on type
+            if (type == ElementType.LIFE) {
+                pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_LIFE_CORE), PersistentDataType.BYTE, (byte) 1);
+            } else if (type == ElementType.DEATH) {
+                pdc.set(new NamespacedKey(plugin, ItemKeys.KEY_DEATH_CORE), PersistentDataType.BYTE, (byte) 1);
+            }
+
             item.setItemMeta(meta);
         }
         return item;

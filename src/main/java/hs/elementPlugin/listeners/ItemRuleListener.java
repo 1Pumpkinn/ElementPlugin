@@ -53,27 +53,11 @@ public class ItemRuleListener implements Listener {
         if (inHand != null && isElementItem(inHand)) {
             ElementType type = getElementType(inHand);
 
-            // Handle Life and Death core consumption
+            // Handle Life and Death core consumption - now handled in GUIListener
+            // This prevents double-handling
             if (type == ElementType.LIFE || type == ElementType.DEATH) {
-                if (e.getAction().toString().contains("RIGHT")) {
-                    PlayerData pd = elements.data(p.getUniqueId());
-
-                    // Switch to the core's element
-                    elements.setElement(p, type);
-
-                    // Mark that they have consumed this core
-                    pd.addElementItem(type);
-                    plugin.getDataStore().save(pd);
-
-                    // Consume the item
-                    inHand.setAmount(inHand.getAmount() - 1);
-
-                    p.sendMessage(ChatColor.GREEN + "You consumed the " +
-                            hs.elementPlugin.items.ElementCoreItem.getDisplayName(type) + ChatColor.GREEN + "!");
-
-                    e.setCancelled(true);
-                    return;
-                }
+                // Skip - let GUIListener handle it
+                return;
             }
 
             // Element items handle their own interactions
@@ -104,7 +88,7 @@ public class ItemRuleListener implements Listener {
         ItemStack current = e.getCurrentItem();
         Inventory top = e.getView().getTopInventory();
         boolean isContainer = top != null && top.getType() != InventoryType.CRAFTING && top.getType() != InventoryType.PLAYER;
-        
+
         // Prevent elytra removal during Air ability 2
         PlayerData pd = elements.data(p.getUniqueId());
         if (pd.getCurrentElement() == ElementType.AIR && elements.get(ElementType.AIR) instanceof hs.elementPlugin.elements.BaseElement airElement && airElement.isAbility2Active(p)) {
@@ -114,7 +98,7 @@ public class ItemRuleListener implements Listener {
                 return;
             }
         }
-        
+
         if (!isContainer) return;
         if ((cursor != null && isElementItem(cursor)) || (current != null && isElementItem(current))) {
             e.setCancelled(true);
