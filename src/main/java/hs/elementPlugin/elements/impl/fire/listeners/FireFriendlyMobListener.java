@@ -60,7 +60,7 @@ public class FireFriendlyMobListener implements Listener {
 
     @EventHandler
     public void onTarget(EntityTargetLivingEntityEvent e) {
-        // Fire friendly blazes: don't target owner or trusted players
+        // Fire friendly blazes: only prevent targeting owner or trusted players, allow targeting enemies
         if (e.getEntity() instanceof Mob mob && e.getTarget() instanceof Player target) {
             if (mob.hasMetadata(FireSummonAbility.META_FRIENDLY_BLAZE_OWNER)) {
                 try {
@@ -78,6 +78,8 @@ public class FireFriendlyMobListener implements Listener {
                         e.setCancelled(true);
                         return;
                     }
+                    
+                    // Allow targeting other players (enemies) - don't cancel the event
                 } catch (Exception ignored) {}
             }
         }

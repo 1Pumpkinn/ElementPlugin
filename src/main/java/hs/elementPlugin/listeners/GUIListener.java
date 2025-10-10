@@ -16,6 +16,8 @@ import org.bukkit.persistence.PersistentDataType;
 
 public class GUIListener implements Listener {
     private final ElementPlugin plugin;
+    // Prevent rapid re-open loops when inventories transition
+    private final java.util.Set<java.util.UUID> suppressReopen = new java.util.HashSet<>();
 
     public GUIListener(ElementPlugin plugin) {
         this.plugin = plugin;
@@ -43,6 +45,25 @@ public class GUIListener implements Listener {
         String title = event.getView().getTitle();
         if (title.contains("Select Your Element")) {
             ElementSelectionGUI.removeGUI(player.getUniqueId());
+            // Capture close reason to avoid reopening during inventory transitions
+            org.bukkit.event.inventory.InventoryCloseEvent.Reason reason = event.getReason();
+            // Delay the check to the next tick so element assignment can complete
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                // Skip if we just opened, or if a new inventory is opening/closed by plugin
+                if (suppressReopen.contains(player.getUniqueId())) return;
+                if (reason == org.bukkit.event.inventory.InventoryCloseEvent.Reason.OPEN_NEW ||
+                    reason == org.bukkit.event.inventory.InventoryCloseEvent.Reason.PLUGIN) {
+                    return;
+                }
+                hs.elementPlugin.managers.ElementManager em = plugin.getElementManager();
+                if (em.data(player.getUniqueId()).getCurrentElement() == null) {
+                player.sendMessage(net.kyori.adventure.text.Component.text("You must choose an element to play!").color(net.kyori.adventure.text.format.NamedTextColor.RED));
+                    suppressReopen.add(player.getUniqueId());
+                    new hs.elementPlugin.gui.ElementSelectionGUI(plugin, player, false).open();
+                    // Remove suppression shortly after to allow future legitimate closes to trigger reopen
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> suppressReopen.remove(player.getUniqueId()), 2L);
+                }
+            });
         }
     }
     
@@ -59,7 +80,7 @@ public class GUIListener implements Listener {
             
             // Check if player is already rolling
             if (plugin.getElementManager().isCurrentlyRolling(player)) {
-                player.sendMessage(ChatColor.RED + "You are already rerolling your element!");
+                player.sendMessage(net.kyori.adventure.text.Component.text("You are already rerolling your element!").color(net.kyori.adventure.text.format.NamedTextColor.RED));
                 return;
             }
             
@@ -72,7 +93,7 @@ public class GUIListener implements Listener {
             
             // Automatically reroll the element instead of opening GUI
             plugin.getElementManager().rollAndAssign(player);
-            player.sendMessage(ChatColor.GREEN + "Your element has been rerolled!");
+            player.sendMessage(net.kyori.adventure.text.Component.text("Your element has been rerolled!").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
         }
     }
     
@@ -100,7 +121,7 @@ public class GUIListener implements Listener {
                     .get(new NamespacedKey(plugin, ItemKeys.KEY_ELEMENT_TYPE), PersistentDataType.STRING);
             
             if (elementTypeString == null) {
-                player.sendMessage(ChatColor.RED + "Invalid element item!");
+                player.sendMessage(net.kyori.adventure.text.Component.text("Invalid element item!").color(net.kyori.adventure.text.format.NamedTextColor.RED));
                 return;
             }
             
@@ -111,16 +132,26 @@ public class GUIListener implements Listener {
                 // Check if player already has this element
                 hs.elementPlugin.data.PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
                 if (pd.getCurrentElement() == elementType) {
-                    player.sendMessage(ChatColor.YELLOW + "You are already attuned to " + elementType.name() + "!");
+                    player.sendMessage(
+                        net.kyori.adventure.text.Component.text("You already have ")
+                            .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW)
+                            .append(net.kyori.adventure.text.Component.text(elementType.name(), net.kyori.adventure.text.format.NamedTextColor.GOLD))
+                            .append(net.kyori.adventure.text.Component.text(" as your element!", net.kyori.adventure.text.format.NamedTextColor.YELLOW))
+                    );
                     return;
                 }
                 
                 // Apply the element
                 plugin.getElementManager().assignElement(player, elementType);
-                player.sendMessage(ChatColor.GREEN + "You have attuned to " + ChatColor.AQUA + elementType.name() + ChatColor.GREEN + "!");
+                player.sendMessage(
+                    net.kyori.adventure.text.Component.text("You have chosen ")
+                        .color(net.kyori.adventure.text.format.NamedTextColor.GREEN)
+                        .append(net.kyori.adventure.text.Component.text(elementType.name(), net.kyori.adventure.text.format.NamedTextColor.AQUA))
+                        .append(net.kyori.adventure.text.Component.text(" as your element!", net.kyori.adventure.text.format.NamedTextColor.GREEN))
+                );
                 
             } catch (IllegalArgumentException e) {
-                player.sendMessage(ChatColor.RED + "Invalid element type!");
+                player.sendMessage(net.kyori.adventure.text.Component.text("Invalid element type!").color(net.kyori.adventure.text.format.NamedTextColor.RED));
             }
         }
     }

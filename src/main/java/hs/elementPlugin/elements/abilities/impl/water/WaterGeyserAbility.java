@@ -51,13 +51,13 @@ public class WaterGeyserAbility extends BaseAbility {
                 public void run() {
                     if (target.isDead() || !target.isValid()) { cancel(); return; }
                     Location loc = target.getLocation();
-                    target.setVelocity(new Vector(0, 1.2, 0));
+                    target.setVelocity(new Vector(0, 2.0, 0)); // Increased velocity to launch 20 blocks high
                     
                     target.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, loc.getX(), loc.getY() - 0.01, loc.getZ(), 5, 0.2, 0.0, 0.2, 0.01);
                     
                     Location groundLoc = new Location(loc.getWorld(), loc.getX(), startY, loc.getZ());
                     
-                    // Smooth height transition logic
+                    // Smooth height transition logic - launch to 20 blocks
                     double targetHeight = Math.min(loc.getY() - startY, 20);
                     double heightDiff = targetHeight - lastGeyserHeight;
                     geyserHeight = lastGeyserHeight + Math.min(heightDiff, 0.5);

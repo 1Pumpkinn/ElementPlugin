@@ -42,52 +42,28 @@ public class ElementSelectionGUI {
         ItemStack fireItem = new ItemStack(Material.FIRE_CHARGE);
         ItemMeta fireMeta = fireItem.getItemMeta();
         fireMeta.setDisplayName(ChatColor.RED + "Fire Element");
-        fireMeta.setLore(Arrays.asList(
-            ChatColor.GRAY + "Select the Fire element",
-            ChatColor.YELLOW + "Upside 1: Fire resistance",
-            ChatColor.YELLOW + "Ability 1: Fire breath",
-            ChatColor.YELLOW + "Ability 2: Fireball",
-            ChatColor.YELLOW + "Upside 2: Auto-smelt items"
-        ));
+
         fireItem.setItemMeta(fireMeta);
         
         // Water element item
         ItemStack waterItem = new ItemStack(Material.WATER_BUCKET);
         ItemMeta waterMeta = waterItem.getItemMeta();
         waterMeta.setDisplayName(ChatColor.BLUE + "Water Element");
-        waterMeta.setLore(Arrays.asList(
-            ChatColor.GRAY + "Select the Water element",
-            ChatColor.YELLOW + "Upside 1: Water breathing",
-            ChatColor.YELLOW + "Ability 1: Water shield",
-            ChatColor.YELLOW + "Ability 2: Water beam",
-            ChatColor.YELLOW + "Upside 2: Swim speed boost"
-        ));
+
         waterItem.setItemMeta(waterMeta);
         
         // Earth element item
         ItemStack earthItem = new ItemStack(Material.GRASS_BLOCK);
         ItemMeta earthMeta = earthItem.getItemMeta();
         earthMeta.setDisplayName(ChatColor.GREEN + "Earth Element");
-        earthMeta.setLore(Arrays.asList(
-            ChatColor.GRAY + "Select the Earth element",
-            ChatColor.YELLOW + "Upside 1: Haste I",
-            ChatColor.YELLOW + "Ability 1: Stomp",
-            ChatColor.YELLOW + "Ability 2: Rock wall",
-            ChatColor.YELLOW + "Upside 2: Crops grow faster"
-        ));
+
         earthItem.setItemMeta(earthMeta);
         
         // Air element item
         ItemStack airItem = new ItemStack(Material.FEATHER);
         ItemMeta airMeta = airItem.getItemMeta();
         airMeta.setDisplayName(ChatColor.WHITE + "Air Element");
-        airMeta.setLore(Arrays.asList(
-            ChatColor.GRAY + "Select the Air element",
-            ChatColor.YELLOW + "Upside 1: No fall damage",
-            ChatColor.YELLOW + "Ability 1: Dash",
-            ChatColor.YELLOW + "Ability 2: Flight",
-            ChatColor.YELLOW + "Upside 2: Speed boost"
-        ));
+
         airItem.setItemMeta(airMeta);
         
         // Place items in inventory

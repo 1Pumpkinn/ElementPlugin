@@ -26,7 +26,9 @@ public class EarthTunnelAbility extends BaseAbility {
             Material.DIAMOND_ORE, Material.DEEPSLATE_DIAMOND_ORE,
             Material.EMERALD_ORE, Material.DEEPSLATE_EMERALD_ORE,
             Material.GRAVEL, Material.SAND, Material.RED_SAND, Material.SANDSTONE,
-            Material.TUFF, Material.CALCITE, Material.DRIPSTONE_BLOCK
+            Material.TUFF, Material.CALCITE, Material.DRIPSTONE_BLOCK, Material.NETHERRACK,
+            Material.BLACKSTONE, Material.ANCIENT_DEBRIS, Material.CRIMSON_NYLIUM, Material.WARPED_HYPHAE,
+            Material.SOUL_SAND, Material.SOUL_SOIL
     );
 
     private final hs.elementPlugin.ElementPlugin plugin;

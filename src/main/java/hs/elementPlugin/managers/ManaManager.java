@@ -58,7 +58,12 @@ public class ManaManager {
 
                 // Action bar display with mana emoji
                 String manaDisplay = p.getGameMode() == GameMode.CREATIVE ? "∞" : String.valueOf(pd.getMana());
-                p.sendActionBar(ChatColor.AQUA + "♋ Mana: " + ChatColor.WHITE + manaDisplay + ChatColor.GRAY + "/" + maxMana);
+                p.sendActionBar(
+                    net.kyori.adventure.text.Component.text("♋ Mana: ")
+                        .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
+                        .append(net.kyori.adventure.text.Component.text(manaDisplay, net.kyori.adventure.text.format.NamedTextColor.WHITE))
+                        .append(net.kyori.adventure.text.Component.text("/" + maxMana, net.kyori.adventure.text.format.NamedTextColor.GRAY))
+                );
             }
         }, 20L, 20L);
     }
@@ -110,14 +115,25 @@ public class ManaManager {
         if (pd.getCurrentElement() != hs.elementPlugin.elements.ElementType.FIRE) return;
         if (pd.getUpgradeLevel(hs.elementPlugin.elements.ElementType.FIRE) < 2) return;
         var inv = p.getInventory();
+        
+        // Use a map to track smelted items and stack them properly
+        java.util.Map<org.bukkit.Material, Integer> smeltedItems = new java.util.HashMap<>();
+        
         for (int i = 0; i < inv.getSize(); i++) {
             var it = inv.getItem(i);
             if (it == null) continue;
             var out = mapSmeltOutput(it.getType());
             if (out != null) {
                 int amount = it.getAmount();
-                inv.setItem(i, new org.bukkit.inventory.ItemStack(out, amount));
+                smeltedItems.merge(out, amount, Integer::sum);
+                inv.setItem(i, null); // Remove the original item
             }
+        }
+        
+        // Add the smelted items back to inventory, stacking properly
+        for (var entry : smeltedItems.entrySet()) {
+            org.bukkit.inventory.ItemStack smelted = new org.bukkit.inventory.ItemStack(entry.getKey(), entry.getValue());
+            inv.addItem(smelted);
         }
     }
 

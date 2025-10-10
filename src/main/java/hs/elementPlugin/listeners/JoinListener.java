@@ -30,7 +30,10 @@ public class JoinListener implements Listener {
         // Check if player has an element
         boolean first = (elements.data(p.getUniqueId()).getCurrentElement() == null);
         
+        plugin.getLogger().info("Player " + p.getName() + " joined. Has element: " + !first);
+        
         if (first) {
+            plugin.getLogger().info("Opening element selection GUI for " + p.getName());
             // Open element selection GUI after a short delay
             new BukkitRunnable() {
                 @Override
@@ -38,7 +41,8 @@ public class JoinListener implements Listener {
                     if (p.isOnline()) {
                         ElementSelectionGUI gui = new ElementSelectionGUI(plugin, p, false);
                         gui.open();
-                        p.sendMessage(ChatColor.GREEN + "Welcome! Please select your element.");
+                        p.sendMessage(net.kyori.adventure.text.Component.text("Welcome! Please select your element.").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
+                        plugin.getLogger().info("GUI opened for " + p.getName());
                     }
                 }
             }.runTaskLater(plugin, 20L); // 1 second delay

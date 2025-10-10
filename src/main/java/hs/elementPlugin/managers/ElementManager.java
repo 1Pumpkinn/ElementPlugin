@@ -139,19 +139,17 @@ public class ElementManager {
         ElementType pick = choices[random.nextInt(choices.length)];
         PlayerData pd = data(player.getUniqueId());
 
-        ElementType previousElement = pd.getCurrentElement();
-        
         clearAllEffects(player);
 
         pd.setCurrentElement(pick);
         store.save(pd);
-        player.sendTitle(ChatColor.GOLD + "Attuned!", ChatColor.AQUA + pick.name(), 10, 40, 10);
+        player.showTitle(net.kyori.adventure.title.Title.title(
+                net.kyori.adventure.text.Component.text("Element Chosen!").color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
+                net.kyori.adventure.text.Component.text(pick.name()).color(net.kyori.adventure.text.format.NamedTextColor.AQUA),
+                net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(500), java.time.Duration.ofMillis(2000), java.time.Duration.ofMillis(500))
+        ));
         applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-        
-        if (previousElement == ElementType.LIFE || previousElement == ElementType.DEATH) {
-            giveElementItem(player, previousElement);
-        }
     }
     
     public void assignElement(Player player, ElementType type) {
@@ -162,7 +160,11 @@ public class ElementManager {
 
         pd.setCurrentElement(type); // This automatically resets upgrade level
         store.save(pd);
-        player.sendTitle(ChatColor.GOLD + "Attuned!", ChatColor.AQUA + type.name(), 10, 40, 10);
+        player.showTitle(net.kyori.adventure.title.Title.title(
+                net.kyori.adventure.text.Component.text("Element Chosen!").color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
+                net.kyori.adventure.text.Component.text(type.name()).color(net.kyori.adventure.text.format.NamedTextColor.AQUA),
+                net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(500), java.time.Duration.ofMillis(2000), java.time.Duration.ofMillis(500))
+        ));
         applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
@@ -175,7 +177,11 @@ public class ElementManager {
 
         pd.setCurrentElement(type);
         store.save(pd);
-        player.sendMessage(ChatColor.GOLD + "Your element is now " + ChatColor.AQUA + type.name());
+        player.sendMessage(
+                net.kyori.adventure.text.Component.text("Your element is now ")
+                        .color(net.kyori.adventure.text.format.NamedTextColor.GOLD)
+                        .append(net.kyori.adventure.text.Component.text(type.name(), net.kyori.adventure.text.format.NamedTextColor.AQUA))
+        );
         applyUpsides(player);
     }
 

@@ -4,10 +4,13 @@ import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.PlayerData;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
+import hs.elementPlugin.util.ItemUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.inventory.ItemStack;
+import java.util.Iterator;
 
 public class DeathListener implements Listener {
     private final ElementPlugin plugin;
@@ -47,6 +50,22 @@ public class DeathListener implements Listener {
                 
                 e.getEntity().sendMessage(ChatColor.RED + "Your upgraders dropped upon death!");
             }
+        }
+        // Drop core for Life/Death elements if player holds it
+        if (currentElement == ElementType.LIFE || currentElement == ElementType.DEATH) {
+            Iterator<ItemStack> iter = e.getEntity().getInventory().iterator();
+            while (iter.hasNext()) {
+                ItemStack item = iter.next();
+                if (ItemUtil.isElementItem(plugin, item)
+                    && ItemUtil.getElementType(plugin, item) == currentElement) {
+                    e.getDrops().add(item.clone());
+                    iter.remove(); // Remove from player's inventory
+                    break;
+                }
+            }
+            // Reroll a new element for the player
+            elements.assignRandomWithTitle(e.getEntity());
+            e.getEntity().sendMessage(ChatColor.YELLOW + "Your core dropped and you have been attuned to a new element!");
         }
     }
 }

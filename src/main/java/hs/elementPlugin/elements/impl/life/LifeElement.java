@@ -8,6 +8,7 @@ import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Ageable;
@@ -18,6 +19,7 @@ public class LifeElement extends BaseElement {
     private final ElementPlugin plugin;
     private final Ability ability1;
     private final Ability ability2;
+    private final java.util.Map<java.util.UUID, org.bukkit.scheduler.BukkitTask> passiveTasks = new java.util.HashMap<>();
 
     public LifeElement(ElementPlugin plugin) {
         super(plugin);
@@ -31,6 +33,9 @@ public class LifeElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
+        // Cancel any existing passive task for this player
+        cancelPassiveTask(player);
+        
         // Upside 1: 15 hearts (30 HP)
         var attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null) {
@@ -40,35 +45,54 @@ public class LifeElement extends BaseElement {
         
         // Upside 2: Crops within 5x5 radius instantly grow (passive effect)
         if (upgradeLevel >= 2) {
+            plugin.getLogger().info("Applying Life element upside 2 for " + player.getName() + " with upgrade level " + upgradeLevel);
             // This is a passive effect that triggers automatically
-            new BukkitRunnable() {
+            org.bukkit.scheduler.BukkitTask task = new BukkitRunnable() {
                 @Override
                 public void run() {
                     if (!player.isOnline()) {
                         cancel();
+                        passiveTasks.remove(player.getUniqueId());
                         return;
                     }
                     
-                    // Grow crops in 5x5 around player every 5 seconds
-                    for (int dx = -2; dx <= 2; dx++) {
-                        for (int dz = -2; dz <= 2; dz++) {
-                            Block b = player.getLocation().add(dx, 0, dz).getBlock();
-                            growIfCrop(b);
-                            growIfCrop(b.getRelative(0, 1, 0));
+                    // Grow crops in 5x5 around player every 2 seconds
+                    int radius = 5;
+                    int cropsGrown = 0;
+                    for (int dx = -radius; dx <= radius; dx++) {
+                        for (int dz = -radius; dz <= radius; dz++) {
+                            for (int dy = -1; dy <= 1; dy++) { // Check 3 levels vertically
+                                Block b = player.getLocation().clone().add(dx, dy, dz).getBlock();
+                                if (growIfCrop(b)) {
+                                    cropsGrown++;
+                                }
+                            }
                         }
                     }
+                    if (cropsGrown > 0) {
+                        plugin.getLogger().info("Grew " + cropsGrown + " crops for " + player.getName());
+                    }
                 }
-            }.runTaskTimer(plugin, 0L, 100L); // Every 5 seconds
+            }.runTaskTimer(plugin, 0L, 40L); // Every 2 seconds
+            
+            // Store the task reference
+            passiveTasks.put(player.getUniqueId(), task);
+        } else {
+            plugin.getLogger().info("Life element upgrade level " + upgradeLevel + " is less than 2, not applying crop growth");
         }
     }
 
-    private void growIfCrop(Block block) {
+    private boolean growIfCrop(Block block) {
         if (block.getBlockData() instanceof Ageable ageable) {
             if (ageable.getAge() < ageable.getMaximumAge()) {
                 ageable.setAge(ageable.getMaximumAge());
                 block.setBlockData(ageable);
+                // Debug message to confirm crop growth
+                plugin.getLogger().info("Grew crop at " + block.getLocation());
+                return true;
             }
         }
+        return false;
     }
 
     @Override
@@ -99,6 +123,9 @@ public class LifeElement extends BaseElement {
 
     @Override
     public void clearEffects(Player player) {
+        // Cancel passive task
+        cancelPassiveTask(player);
+        
         // Reset max health to default
         var attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null) {
@@ -107,6 +134,17 @@ public class LifeElement extends BaseElement {
         }
         ability1.setActive(player, false);
         ability2.setActive(player, false);
+    }
+    
+    /**
+     * Cancel the passive task for a player
+     * @param player The player to cancel the task for
+     */
+    private void cancelPassiveTask(Player player) {
+        org.bukkit.scheduler.BukkitTask task = passiveTasks.remove(player.getUniqueId());
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
+        }
     }
 
     @Override

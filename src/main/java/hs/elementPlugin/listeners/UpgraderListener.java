@@ -75,6 +75,9 @@ public class UpgraderListener implements Listener {
             playerData.setUpgradeLevel(currentElement, 1);
             plugin.getDataStore().save(playerData);
             
+            // Reapply upsides to include new upgrade benefits
+            elementManager.applyUpsides(player);
+            
             // Remove one item from hand
             if (item.getAmount() > 1) {
                 item.setAmount(item.getAmount() - 1);
@@ -102,6 +105,9 @@ public class UpgraderListener implements Listener {
             // Apply the upgrade
             playerData.setUpgradeLevel(currentElement, 2);
             plugin.getDataStore().save(playerData);
+            
+            // Reapply upsides to include new upgrade benefits (including Upside 2)
+            elementManager.applyUpsides(player);
             
             // Remove one item from hand
             if (item.getAmount() > 1) {

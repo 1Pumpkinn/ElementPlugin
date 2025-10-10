@@ -43,6 +43,8 @@ public class ElementCommand implements CommandExecutor {
                 return handleStatus(sender);
             case "set":
                 return handleSet(sender, args);
+            case "testcrops":
+                return handleTestCrops(sender, args);
             default:
                 sendHelp(sender);
                 return true;
@@ -142,11 +144,39 @@ public class ElementCommand implements CommandExecutor {
         return true;
     }
 
+    private boolean handleTestCrops(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(ChatColor.RED + "This command can only be used by players.");
+            return true;
+        }
+        
+        // Test crop growth around the player
+        int cropsGrown = 0;
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    org.bukkit.block.Block block = player.getLocation().clone().add(dx, dy, dz).getBlock();
+                    if (block.getBlockData() instanceof org.bukkit.block.data.Ageable ageable) {
+                        if (ageable.getAge() < ageable.getMaximumAge()) {
+                            ageable.setAge(ageable.getMaximumAge());
+                            block.setBlockData(ageable);
+                            cropsGrown++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        sender.sendMessage(ChatColor.GREEN + "Tested crop growth: " + cropsGrown + " crops grown around you.");
+        return true;
+    }
+
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(ChatColor.GOLD + "=== Element Admin Commands ===");
         sender.sendMessage(ChatColor.YELLOW + "/element disable <life|death> - Disable element recipes");
         sender.sendMessage(ChatColor.YELLOW + "/element enable <life|death> - Enable element recipes");
         sender.sendMessage(ChatColor.YELLOW + "/element set <player> <element> - Set player's element");
         sender.sendMessage(ChatColor.YELLOW + "/element status - Check recipe status");
+        sender.sendMessage(ChatColor.YELLOW + "/element testcrops - Test crop growth around you");
     }
 }

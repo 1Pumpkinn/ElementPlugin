@@ -4,8 +4,10 @@ import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -51,11 +53,15 @@ public class WaterBeamAbility extends BaseAbility {
                 if (ticks % 5 == 0) {
                     Location chestLoc = player.getLocation().add(0, 1.2, 0);
                     
-                    // Check for blocks in the way first
-                    RayTraceResult blockResult = player.getWorld().rayTraceBlocks(chestLoc, dir, 20.0);
+                    // Check for blocks in the way first, but allow passage through small blocks
                     double maxDistance = 20.0;
-                    if (blockResult != null && blockResult.getHitBlock() != null) {
-                        maxDistance = blockResult.getHitPosition().distance(chestLoc.toVector());
+                    for (double d = 0; d <= 20.0; d += 0.5) {
+                        Location checkLoc = chestLoc.clone().add(dir.clone().multiply(d));
+                        Block block = checkLoc.getBlock();
+                        if (!isPassableBlock(block)) {
+                            maxDistance = d;
+                            break;
+                        }
                     }
                     
                     // Now trace entities but only up to the nearest block
@@ -74,10 +80,8 @@ public class WaterBeamAbility extends BaseAbility {
                                 if (totalDamageDealt + damageAmount > 10) {
                                     damageAmount = 10 - totalDamageDealt;
                                 }
-
-                                double currentHealth = le.getHealth();
-                                double newHealth = Math.max(0, currentHealth - damageAmount);
-                                le.setHealth(newHealth);
+                                // Instead of just subtracting health, use true Bukkit damage
+                                le.damage(damageAmount, player);
                                 totalDamageDealt += damageAmount;
 
                                 Location hit = r.getHitPosition().toLocation(player.getWorld());
@@ -116,8 +120,8 @@ public class WaterBeamAbility extends BaseAbility {
                 for (double d = 0; d <= maxBeamDistance; d += particleDistance) {
                     Location particleLoc = eyeLoc.clone().add(direction.clone().multiply(d));
                     
-                    // Stop if we hit a block
-                    if (!particleLoc.getBlock().isPassable()) {
+                    // Stop if we hit a non-passable block
+                    if (!isPassableBlock(particleLoc.getBlock())) {
                         break;
                     }
                     
@@ -172,5 +176,96 @@ public class WaterBeamAbility extends BaseAbility {
     protected boolean isValidTarget(ElementContext context, LivingEntity entity) {
         // Add your target validation logic here
         return true;
+    }
+    
+    // Helper method to check if a block should be passable for the water beam
+    private boolean isPassableBlock(Block block) {
+        if (block == null) return true;
+        
+        Material type = block.getType();
+        
+        // Allow passage through air and void
+        if (type == Material.AIR || type == Material.VOID_AIR || type == Material.CAVE_AIR) {
+            return true;
+        }
+        
+        // Allow passage through small plants, flowers, and decorative blocks
+        return type == Material.SHORT_GRASS ||
+               type == Material.TALL_GRASS ||
+                type == Material.SHORT_DRY_GRASS ||
+                type == Material.TALL_DRY_GRASS ||
+                type == Material.FIREFLY_BUSH ||
+                type == Material.FERN ||
+               type == Material.LARGE_FERN ||
+               type == Material.DEAD_BUSH ||
+               type == Material.DANDELION ||
+               type == Material.POPPY ||
+               type == Material.BLUE_ORCHID ||
+               type == Material.ALLIUM ||
+               type == Material.AZURE_BLUET ||
+               type == Material.RED_TULIP ||
+               type == Material.ORANGE_TULIP ||
+               type == Material.WHITE_TULIP ||
+               type == Material.PINK_TULIP ||
+               type == Material.OXEYE_DAISY ||
+               type == Material.CORNFLOWER ||
+               type == Material.LILY_OF_THE_VALLEY ||
+               type == Material.SUNFLOWER ||
+               type == Material.LILAC ||
+               type == Material.ROSE_BUSH ||
+               type == Material.PEONY ||
+               type == Material.SWEET_BERRY_BUSH ||
+               type == Material.BAMBOO ||
+               type == Material.SUGAR_CANE ||
+               type == Material.KELP ||
+               type == Material.SEAGRASS ||
+               type == Material.TALL_SEAGRASS ||
+               type == Material.WHEAT ||
+               type == Material.CARROTS ||
+               type == Material.POTATOES ||
+               type == Material.BEETROOTS ||
+               type == Material.MELON_STEM ||
+               type == Material.PUMPKIN_STEM ||
+               type == Material.TORCH ||
+               type == Material.REDSTONE_TORCH ||
+               type == Material.SOUL_TORCH ||
+               type == Material.REDSTONE_WIRE ||
+               type == Material.TRIPWIRE ||
+               type == Material.TRIPWIRE_HOOK ||
+               type == Material.LEVER ||
+               type == Material.STONE_BUTTON ||
+               type == Material.OAK_BUTTON ||
+               type == Material.SPRUCE_BUTTON ||
+               type == Material.BIRCH_BUTTON ||
+               type == Material.JUNGLE_BUTTON ||
+               type == Material.ACACIA_BUTTON ||
+               type == Material.DARK_OAK_BUTTON ||
+               type == Material.CRIMSON_BUTTON ||
+               type == Material.WARPED_BUTTON ||
+               type == Material.POLISHED_BLACKSTONE_BUTTON ||
+               type == Material.LIGHT_WEIGHTED_PRESSURE_PLATE ||
+               type == Material.HEAVY_WEIGHTED_PRESSURE_PLATE ||
+               type == Material.SPRUCE_PRESSURE_PLATE ||
+               type == Material.BIRCH_PRESSURE_PLATE ||
+               type == Material.JUNGLE_PRESSURE_PLATE ||
+               type == Material.ACACIA_PRESSURE_PLATE ||
+               type == Material.DARK_OAK_PRESSURE_PLATE ||
+               type == Material.CRIMSON_PRESSURE_PLATE ||
+               type == Material.WARPED_PRESSURE_PLATE ||
+               type == Material.POLISHED_BLACKSTONE_PRESSURE_PLATE ||
+               type == Material.STONE_PRESSURE_PLATE ||
+               type == Material.RAIL ||
+               type == Material.POWERED_RAIL ||
+               type == Material.DETECTOR_RAIL ||
+               type == Material.ACTIVATOR_RAIL ||
+               type == Material.COBWEB ||
+               type == Material.VINE ||
+               type == Material.LADDER ||
+               type == Material.SCAFFOLDING ||
+               type == Material.SNOW ||
+               type == Material.WATER ||
+               type == Material.LAVA ||
+               type == Material.FIRE ||
+               type == Material.SOUL_FIRE;
     }
 }

@@ -12,6 +12,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Collection;
 
@@ -19,6 +20,7 @@ public class DeathElement extends BaseElement {
     private final ElementPlugin plugin;
     private final Ability ability1;
     private final Ability ability2;
+    private final java.util.Map<java.util.UUID, org.bukkit.scheduler.BukkitTask> passiveTasks = new java.util.HashMap<>();
 
     public DeathElement(ElementPlugin plugin) {
         super(plugin);
@@ -34,19 +36,34 @@ public class DeathElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
+        // Cancel any existing passive task for this player
+        cancelPassiveTask(player);
+        
         // Upside 1: Any raw or undead foods act as golden apples (handled in a listener)
         // Upside 2: Nearby enemies get hunger 1 in a 5x5 radius (if upgradeLevel >= 2)
         if (upgradeLevel >= 2) {
-            applyHungerToNearbyEnemies(player);
-        }
-    }
-
-    private void applyHungerToNearbyEnemies(Player player) {
-        Collection<LivingEntity> nearby = player.getLocation().getNearbyLivingEntities(5.0);
-        for (LivingEntity entity : nearby) {
-            if (entity instanceof Player target && !target.equals(player)) {
-                target.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 60, 0, true, true, true)); // 3 seconds
-            }
+            // Start a repeating task to continuously apply hunger to nearby enemies
+            org.bukkit.scheduler.BukkitTask task = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (!player.isOnline()) {
+                        cancel();
+                        passiveTasks.remove(player.getUniqueId());
+                        return;
+                    }
+                    
+                    // Apply hunger to nearby players and mobs in 5x5 radius
+                    int radius = 5;
+                    for (Player other : player.getWorld().getNearbyPlayers(player.getLocation(), radius)) {
+                        if (!other.equals(player)) {
+                            other.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 40, 0, true, true, true)); // 2 seconds
+                        }
+                    }
+                }
+            }.runTaskTimer(plugin, 0L, 20L); // Every second
+            
+            // Store the task reference
+            passiveTasks.put(player.getUniqueId(), task);
         }
     }
 
@@ -62,8 +79,22 @@ public class DeathElement extends BaseElement {
 
     @Override
     public void clearEffects(Player player) {
+        // Cancel passive task
+        cancelPassiveTask(player);
+        
         ability1.setActive(player, false);
         ability2.setActive(player, false);
+    }
+    
+    /**
+     * Cancel the passive task for a player
+     * @param player The player to cancel the task for
+     */
+    private void cancelPassiveTask(Player player) {
+        org.bukkit.scheduler.BukkitTask task = passiveTasks.remove(player.getUniqueId());
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
+        }
     }
 
     @Override
