@@ -18,7 +18,7 @@ public final class RerollerItem {
     public static final String KEY = "element_reroller";
 
     public static ItemStack make(ElementPlugin plugin) {
-        ItemStack item = new ItemStack(Material.ECHO_SHARD);
+        ItemStack item = new ItemStack(Material.HEART_OF_THE_SEA);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Element Reroller");
         meta.setLore(List.of(

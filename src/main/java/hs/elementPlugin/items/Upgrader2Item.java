@@ -17,7 +17,7 @@ public final class Upgrader2Item {
     public static final String KEY = "upgrader_2";
 
     public static ItemStack make(ElementPlugin plugin) {
-        ItemStack item = new ItemStack(Material.NETHER_STAR);
+        ItemStack item = new ItemStack(Material.ECHO_SHARD);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName("§bUpgrader II");
         meta.setLore(List.of("Use by crafting to unlock", "Ability 2 + Upside 2 for your element"));
