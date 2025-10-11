@@ -45,10 +45,30 @@ public class FireFriendlyMobListener implements Listener {
                                 // If too far, teleport closer
                                 if (distance > 30) {
                                     mob.teleport(owner.getLocation());
-                                } else if (distance > 3) {
-                                    // Follow the owner
-                                    mob.setTarget(null);
-                                    mob.getPathfinder().moveTo(owner.getLocation(), 1.2);
+                                } else {
+                                    // Look for enemies to attack first
+                                    Player nearestEnemy = null;
+                                    double bestDistance = Double.MAX_VALUE;
+                                    
+                                    for (Player player : mob.getWorld().getPlayers()) {
+                                        if (player.getUniqueId().equals(ownerId)) continue;
+                                        if (trustManager.isTrusted(ownerId, player.getUniqueId())) continue;
+                                        
+                                        double playerDistance = mob.getLocation().distanceSquared(player.getLocation());
+                                        if (playerDistance < bestDistance && playerDistance < 20*20) { // 20 block range for blazes
+                                            bestDistance = playerDistance;
+                                            nearestEnemy = player;
+                                        }
+                                    }
+                                    
+                                    if (nearestEnemy != null) {
+                                        // Attack the nearest enemy
+                                        mob.setTarget(nearestEnemy);
+                                    } else if (distance > 3) {
+                                        // No enemies nearby, follow the owner
+                                        mob.setTarget(null);
+                                        mob.getPathfinder().moveTo(owner.getLocation(), 1.2);
+                                    }
                                 }
                             }
                         } catch (Exception ignored) {}
