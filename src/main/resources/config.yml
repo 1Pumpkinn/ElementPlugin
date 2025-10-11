@@ -27,3 +27,7 @@ costs:
     ability1: 50
     ability2: 75
     item_use: 75
+  death:
+    ability1: 50
+    ability2: 75
+    item_use: 75

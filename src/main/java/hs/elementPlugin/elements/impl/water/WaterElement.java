@@ -40,27 +40,11 @@ public class WaterElement extends BaseElement {
 
     @Override
     protected boolean executeAbility1(ElementContext context) {
-        Player player = context.getPlayer();
-
-        if (!context.getManaManager().hasMana(player, ability1.getManaCost())) {
-            player.sendMessage(ChatColor.RED + "Not enough mana! (" + ability1.getManaCost() + " required)");
-            return false;
-        }
-
-        context.getManaManager().spend(player, ability1.getManaCost());
         return ability1.execute(context);
     }
 
     @Override
     protected boolean executeAbility2(ElementContext context) {
-        Player player = context.getPlayer();
-        
-        if (!context.getManaManager().hasMana(player, ability2.getManaCost())) {
-            player.sendMessage(ChatColor.RED + "Not enough mana! (" + ability2.getManaCost() + " required)");
-            return false;
-        }
-
-        context.getManaManager().spend(player, ability2.getManaCost());
         return ability2.execute(context);
     }
     
