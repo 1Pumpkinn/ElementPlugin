@@ -35,7 +35,7 @@ public class UpgraderListener implements Listener {
         ItemStack item = event.getItem();
 
         // Check if the item is valid (either Upgrader 1 or Upgrader 2)
-        if (item == null || (item.getType() != Material.AMETHYST_SHARD && item.getType() != Material.NETHER_STAR)) {
+        if (item == null || (item.getType() != Material.AMETHYST_SHARD && item.getType() != Material.ECHO_SHARD)) {
             return;
         }
 
