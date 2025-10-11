@@ -9,8 +9,6 @@ import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
 public class AirElement extends BaseElement {
     private final ElementPlugin plugin;
@@ -31,7 +29,8 @@ public class AirElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, true, false));
+        // Upside 1: No fall damage (handled in FallDamageListener)
+        // No potion effects needed
     }
 
     @Override
@@ -50,7 +49,7 @@ public class AirElement extends BaseElement {
     @Override
     protected boolean executeAbility2(ElementContext context) {
         Player player = context.getPlayer();
-        
+
         if (!context.getManaManager().hasMana(player, ability2.getManaCost())) {
             player.sendMessage(ChatColor.RED + "Not enough mana! (" + ability2.getManaCost() + " required)");
             return false;
@@ -59,38 +58,38 @@ public class AirElement extends BaseElement {
         context.getManaManager().spend(player, ability2.getManaCost());
         return ability2.execute(context);
     }
-    
+
     @Override
     public void clearEffects(Player player) {
         ability1.setActive(player, false);
         ability2.setActive(player, false);
     }
-    
+
     @Override
     public String getDisplayName() {
         return ChatColor.WHITE + "Air";
     }
-    
+
     @Override
     public String getDescription() {
         return "Master the swift and agile power of air to control movement and push enemies.";
     }
-    
+
     @Override
     public String getAbility1Name() {
         return ability1.getName();
     }
-    
+
     @Override
     public String getAbility1Description() {
         return ability1.getDescription();
     }
-    
+
     @Override
     public String getAbility2Name() {
         return ability2.getName();
     }
-    
+
     @Override
     public String getAbility2Description() {
         return ability2.getDescription();

@@ -66,8 +66,7 @@ public class UpgraderListener implements Listener {
         // Handle Upgrader 1
         if (upgraderLevel == 1) {
             if (currentUpgradeLevel >= 1) {
-                player.sendMessage(ChatColor.RED + "You already have Upgrade I for your " + 
-                    ChatColor.YELLOW + currentElement.toString() + ChatColor.RED + " element!");
+                player.sendMessage(ChatColor.RED + "You already have Upgrade I");
                 return;
             }
             
@@ -85,9 +84,8 @@ public class UpgraderListener implements Listener {
                 player.getInventory().setItemInMainHand(null);
             }
             
-            player.sendMessage(ChatColor.GREEN + "You have unlocked " + ChatColor.GOLD + "Upgrade I" + 
-                ChatColor.GREEN + " for your " + ChatColor.YELLOW + currentElement.toString() + 
-                ChatColor.GREEN + " element!");
+            player.sendMessage(ChatColor.GREEN + "You have unlocked " + ChatColor.GOLD +
+                    "Upgrade I");
         }
         // Handle Upgrader 2
         else if (upgraderLevel == 2) {
@@ -97,8 +95,7 @@ public class UpgraderListener implements Listener {
             }
             
             if (currentUpgradeLevel >= 2) {
-                player.sendMessage(ChatColor.RED + "You already have Upgrade II for your " + 
-                    ChatColor.YELLOW + currentElement.toString() + ChatColor.RED + " element!");
+                player.sendMessage(ChatColor.RED + "You already have Upgrade II");
                 return;
             }
             
@@ -116,9 +113,8 @@ public class UpgraderListener implements Listener {
                 player.getInventory().setItemInMainHand(null);
             }
             
-            player.sendMessage(ChatColor.GREEN + "You have unlocked " + ChatColor.GOLD + "Upgrade II" + 
-                ChatColor.GREEN + " for your " + ChatColor.YELLOW + currentElement.toString() + 
-                ChatColor.GREEN + " element!");
+            player.sendMessage(ChatColor.GREEN + "You have unlocked " + ChatColor.GOLD +
+                    "Upgrade II");
         }
     }
 }
