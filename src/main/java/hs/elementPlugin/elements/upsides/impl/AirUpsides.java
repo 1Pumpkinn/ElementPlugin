@@ -20,16 +20,18 @@ public class AirUpsides extends BaseUpsides {
 
     /**
      * Apply all Air element upsides to a player
-     * @param player The player to apply upsides to
+     *
+     * @param player       The player to apply upsides to
      * @param upgradeLevel The player's upgrade level for Air element
      */
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: Permanent Speed 1 effect
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, true, false));
+        // Upside 1: No fall damage (handled in FallDamageListener)
+        // No potion effects needed for this upside
     }
 
     /**
      * Check if player should apply slow falling to victim when hitting them
+     *
      * @param player The Air element player
      * @return true if slow falling should be applied (5% chance at upgrade level 2+)
      */
@@ -42,6 +44,7 @@ public class AirUpsides extends BaseUpsides {
 
     /**
      * Apply slow falling effect to a victim
+     *
      * @param victim The player to apply slow falling to
      */
     public void applySlowFallingToVictim(Player victim) {
