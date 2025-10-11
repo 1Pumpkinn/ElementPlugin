@@ -78,7 +78,6 @@ public class AirBlastAbility extends BaseAbility {
         }
 
         w.playSound(center, Sound.ENTITY_ENDER_DRAGON_FLAP, 1f, 1.5f);
-        player.sendMessage(ChatColor.WHITE + "Air Blast unleashed!");
         return true;
     }
 
