@@ -20,8 +20,7 @@ public class AirJoinListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (elementManager.getPlayerElement(player) == ElementType.AIR) {
-            // Apply permanent speed effect for Air element users
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, true, false));
+
         }
     }
 }
