@@ -4,6 +4,7 @@ import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.upsides.BaseUpsides;
 import hs.elementPlugin.managers.ElementManager;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -53,7 +54,22 @@ public class EarthUpsides extends BaseUpsides {
         if (!hasElement(player) || getUpgradeLevel(player) < 2) {
             return false;
         }
+
+        // Only double drops if NOT using silk touch
+        if (player.getInventory().getItemInMainHand().getEnchantments().containsKey(Enchantment.SILK_TOUCH)) {
+            return false;
+        }
+
         return ORES.contains(oreType);
+    }
+
+    /**
+     * Check if the player is using silk touch
+     * @param player The player to check
+     * @return true if the player has silk touch on their main hand item
+     */
+    public boolean isUsingSilkTouch(Player player) {
+        return player.getInventory().getItemInMainHand().getEnchantments().containsKey(Enchantment.SILK_TOUCH);
     }
 
     /**

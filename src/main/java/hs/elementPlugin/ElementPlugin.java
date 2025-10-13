@@ -8,6 +8,7 @@ import hs.elementPlugin.commands.TrustCommand;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.elements.ElementRegistry;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.elements.upsides.impl.EarthUpsides;
 import hs.elementPlugin.listeners.player.*;
 import hs.elementPlugin.listeners.items.listeners.*;
 import hs.elementPlugin.managers.*;
@@ -126,7 +127,11 @@ public final class ElementPlugin extends JavaPlugin {
             hs.elementPlugin.recipes.earth.EarthRecipes.registerRecipes(this);
             hs.elementPlugin.recipes.life.LifeRecipes.registerRecipes(this);
             hs.elementPlugin.recipes.death.DeathRecipes.registerRecipes(this);
-            
+
+            // In your main plugin class onEnable() method:
+            EarthUpsides earthUpsides = new EarthUpsides(elementManager);
+            getServer().getPluginManager().registerEvents(new EarthOreListener(elementManager, earthUpsides), this);
+
             getLogger().info("Recipes registered successfully");
         }, 20L); // 1 second delay
 
