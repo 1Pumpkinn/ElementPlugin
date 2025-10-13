@@ -11,7 +11,7 @@ commands:
   trust:
     description: Manage trust relationships
     usage: /trust <list|add|remove|accept|deny> [player]
-    permission: element.trust
+    permission: default
 
   element:
     description: Element admin/self commands
