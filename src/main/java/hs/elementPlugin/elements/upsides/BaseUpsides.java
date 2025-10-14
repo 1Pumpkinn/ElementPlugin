@@ -33,7 +33,7 @@ public abstract class BaseUpsides {
      * @param player The player to check
      * @return true if the player has this element
      */
-    protected boolean hasElement(Player player) {
+    public boolean hasElement(Player player) {
         return elementManager.getPlayerElement(player) == getElementType();
     }
 

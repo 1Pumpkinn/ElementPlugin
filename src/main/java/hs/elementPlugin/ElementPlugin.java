@@ -9,6 +9,7 @@ import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.elements.ElementRegistry;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.upsides.impl.EarthUpsides;
+import hs.elementPlugin.elements.impl.earth.listeners.EarthOreDoubleDropListener;
 import hs.elementPlugin.listeners.player.*;
 import hs.elementPlugin.listeners.items.listeners.*;
 import hs.elementPlugin.managers.*;
@@ -31,7 +32,7 @@ public final class ElementPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
 
-        // Initialize core services
+        // Initialize core systems
         this.configManager = new ConfigManager(this);
         this.dataStore = new DataStore(this);
         this.trustManager = new TrustManager(this);
@@ -40,8 +41,11 @@ public final class ElementPlugin extends JavaPlugin {
         this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager, configManager);
         this.itemManager = new ItemManager(this, manaManager, configManager);
         this.cooldownManager = new CooldownManager();
-        
-        // Initialize ability system
+
+        // Initialize EarthUpsides
+        EarthUpsides earthUpsides = new EarthUpsides(elementManager);
+
+        // Register abilities
         this.abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility(this));
         this.abilityManager.registerAbility(ElementType.DEATH, 1, new DeathWitherSkullAbility(this));
         this.abilityManager.registerAbility(ElementType.DEATH, 2, new DeathSummonUndeadAbility(this));
@@ -52,60 +56,62 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("mana").setExecutor(new hs.elementPlugin.commands.ManaCommand(manaManager, configManager));
         getCommand("util").setExecutor(new hs.elementPlugin.commands.UtilCommand(this));
 
-        // Register listeners
+        // ========== Register Core Listeners ==========
         Bukkit.getPluginManager().registerEvents(new JoinListener(this, elementManager, manaManager), this);
         Bukkit.getPluginManager().registerEvents(new CombatListener(trustManager, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.ElementItemDeathListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.AbilityListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.ElementItemCraftListener(this, elementManager), this);
-        // Item rules split into dedicated listeners for clarity
+
+        // Item listeners
         Bukkit.getPluginManager().registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);
         Bukkit.getPluginManager().registerEvents(new ElementInventoryProtectionListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new ElementItemDropListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ElementItemPickupListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new ElementCombatProjectileListener(itemManager), this);
-        
-        // Register Air element listeners
+
+        // ========== Air Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.air.listeners.FallDamageListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.air.listeners.AirJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.air.listeners.AirAbilityListener(elementManager, cooldownManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.air.listeners.AirCombatListener(elementManager), this);
 
-
-        // Register Water element listeners
+        // ========== Water Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterDrowningImmunityListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterAbilityListener(elementManager, cooldownManager), this);
-        
-        // Register Fire element listeners
+
+        // ========== Fire Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireImmunityListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireAbilityListener(elementManager, cooldownManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireFriendlyMobListener(this, trustManager), this);
-        
-        // Register Earth element listeners
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthOreDropListener(elementManager), this);
+
+        // ========== Earth Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthCharmListener(elementManager, this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthAbilityListener(elementManager, cooldownManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthFriendlyMobListener(this, trustManager), this);
-        
-        // Register Life element listeners
+
+        // ✅ Our custom listener for double ore drops
+        Bukkit.getPluginManager().registerEvents(new EarthOreDoubleDropListener(elementManager, earthUpsides), this);
+
+        // ========== Life Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeRegenListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeAbilityListener(elementManager, cooldownManager), this);
-        
-        // Register Death element listeners
+
+        // ========== Death Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathRawFoodListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathAbilityListener(elementManager, cooldownManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathFriendlyMobListener(this, trustManager), this);
-        
-        // Register Death element craft listener
+
+        // Craft listeners
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.DeathElementCraftListener(this, elementManager), this);
-        
-        // Register Life element crafting listener
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.LifeElementCraftListener(this, elementManager), this);
+
+        // Misc listeners
         Bukkit.getPluginManager().registerEvents(new QuitListener(this, manaManager), this);
         Bukkit.getPluginManager().registerEvents(new GameModeListener(manaManager, configManager), this);
         Bukkit.getPluginManager().registerEvents(new RespawnListener(this, elementManager), this);
@@ -113,14 +119,14 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
 
-        // Register recipes with delay to ensure server is fully loaded
+        // ========== Register Recipes ==========
         Bukkit.getScheduler().runTaskLater(this, () -> {
             getLogger().info("Registering recipes...");
-            
-            // Register util recipes (upgraders and reroller)
+
+            // Utility recipes
             hs.elementPlugin.recipes.util.UtilRecipes.registerRecipes(this);
-            
-            // Register element-specific recipes
+
+            // Element recipes
             hs.elementPlugin.recipes.air.AirRecipes.registerRecipes(this);
             hs.elementPlugin.recipes.water.WaterRecipes.registerRecipes(this);
             hs.elementPlugin.recipes.fire.FireRecipes.registerRecipes(this);
@@ -128,20 +134,16 @@ public final class ElementPlugin extends JavaPlugin {
             hs.elementPlugin.recipes.life.LifeRecipes.registerRecipes(this);
             hs.elementPlugin.recipes.death.DeathRecipes.registerRecipes(this);
 
-            // In your main plugin class onEnable() method:
-            EarthUpsides earthUpsides = new EarthUpsides(elementManager);
-            getServer().getPluginManager().registerEvents(new EarthOreListener(elementManager, earthUpsides), this);
-
             getLogger().info("Recipes registered successfully");
-        }, 20L); // 1 second delay
+        }, 20L); // 1-second delay
 
-        // Start repeating tasks
+        // Start mana system
         this.manaManager.start();
     }
-    
+
     @Override
     public void onDisable() {
-        // Save data
+        // Save data and stop background tasks
         if (dataStore != null) {
             dataStore.flushAll();
         }
@@ -151,6 +153,7 @@ public final class ElementPlugin extends JavaPlugin {
         }
     }
 
+    // ====== Getters ======
     public DataStore getDataStore() { return dataStore; }
     public ConfigManager getConfigManager() { return configManager; }
     public ElementManager getElementManager() { return elementManager; }
