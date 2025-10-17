@@ -11,7 +11,7 @@ public abstract class BaseElement implements Element {
     protected final ElementPlugin plugin;
     private final java.util.Set<java.util.UUID> activeAbility1 = new java.util.HashSet<>();
     private final java.util.Set<java.util.UUID> activeAbility2 = new java.util.HashSet<>();
-    
+
     // Abstract methods that must be implemented by subclasses
     public abstract void clearEffects(Player player);
     public abstract String getDisplayName();
@@ -20,34 +20,39 @@ public abstract class BaseElement implements Element {
     public abstract String getAbility1Description();
     public abstract String getAbility2Name();
     public abstract String getAbility2Description();
-    
+
     public BaseElement(ElementPlugin plugin) {
         this.plugin = plugin;
     }
-    
+
     public ElementPlugin getPlugin() {
         return plugin;
     }
-    
+
     @Override
     public boolean ability1(ElementContext context) {
         if (!checkUpgradeLevel(context.getPlayer(), context.getUpgradeLevel(), 1)) return false;
-        
-        // Check if ability is already active
-        if (isAbility1Active(context.getPlayer())) {
-            context.getPlayer().sendMessage(ChatColor.YELLOW + "Ability 1 is already active!");
-            return false;
+
+        // First, try to execute the ability - it will check if it should cancel
+        // This allows the ability to check its own metadata/state
+        boolean shouldCheckCostsAndCooldowns = !canCancelAbility1(context);
+
+
+        if (!shouldCheckCostsAndCooldowns) {
+            executeAbility1(context);
+            return true;
         }
-        
-        // Check cooldown
+
+        // Normal activation flow - check cooldown
         String cooldownKey = getType().toString().toLowerCase() + "_ability1";
         if (!plugin.getCooldownManager().tryUseAbility(context.getPlayer(), cooldownKey, 3)) {
             return false;
         }
 
+        // Check mana
         int cost = context.getConfigManager().getAbility1Cost(getType());
         if (!hasMana(context.getPlayer(), context.getManaManager(), cost)) return false;
-        
+
         // Execute ability first, only consume mana if successful
         if (executeAbility1(context)) {
             context.getManaManager().spend(context.getPlayer(), cost);
@@ -55,7 +60,7 @@ public abstract class BaseElement implements Element {
         }
         return false;
     }
-    
+
     @Override
     public boolean ability2(ElementContext context) {
         // Require upgrade level 1 before allowing upgrade level 2
@@ -63,24 +68,28 @@ public abstract class BaseElement implements Element {
             context.getPlayer().sendMessage(ChatColor.RED + "You need Upgrade I before you can use Upgrade II abilities.");
             return false;
         }
-        
+
         if (!checkUpgradeLevel(context.getPlayer(), context.getUpgradeLevel(), 2)) return false;
-        
-        // Check if ability is already active
-        if (isAbility2Active(context.getPlayer())) {
-            context.getPlayer().sendMessage(ChatColor.YELLOW + "Ability 2 is already active!");
-            return false;
+
+        // First, try to execute the ability - it will check if it should cancel
+        boolean shouldCheckCostsAndCooldowns = !canCancelAbility2(context);
+
+        if (!shouldCheckCostsAndCooldowns) {
+            // This is a cancellation - no costs or cooldowns
+            executeAbility2(context);
+            return true;
         }
-        
-        // Check cooldown
+
+        // Normal activation flow - check cooldown
         String cooldownKey = getType().toString().toLowerCase() + "_ability2";
         if (!plugin.getCooldownManager().tryUseAbility(context.getPlayer(), cooldownKey, 3)) {
             return false;
         }
-        
+
+        // Check mana
         int cost = context.getConfigManager().getAbility2Cost(getType());
         if (!hasMana(context.getPlayer(), context.getManaManager(), cost)) return false;
-        
+
         // Execute ability first, only consume mana if successful
         if (executeAbility2(context)) {
             context.getManaManager().spend(context.getPlayer(), cost);
@@ -88,19 +97,19 @@ public abstract class BaseElement implements Element {
         }
         return false;
     }
-    
+
     /**
      * Check if player has required upgrade level for ability
      */
     protected boolean checkUpgradeLevel(Player player, int upgradeLevel, int requiredLevel) {
         if (upgradeLevel < requiredLevel) {
-            player.sendMessage(ChatColor.RED + "You need Upgrade " + 
-                (requiredLevel == 1 ? "I" : "II") + " to use this ability.");
+            player.sendMessage(ChatColor.RED + "You need Upgrade " +
+                    (requiredLevel == 1 ? "I" : "II") + " to use this ability.");
             return false;
         }
         return true;
     }
-    
+
     /**
      * Check if player has enough mana (without spending it)
      */
@@ -111,7 +120,7 @@ public abstract class BaseElement implements Element {
         }
         return true;
     }
-    
+
     /**
      * Check if player has enough mana and spend it (deprecated - use hasMana instead)
      */
@@ -123,14 +132,30 @@ public abstract class BaseElement implements Element {
         }
         return true;
     }
-    
+
     /**
      * Template methods to be implemented by concrete elements
      */
     protected abstract boolean executeAbility1(ElementContext context);
-    
+
     protected abstract boolean executeAbility2(ElementContext context);
-    
+
+    /**
+     * Check if ability1 can be cancelled (override in subclasses if needed)
+     * @return true if the ability is active and can be cancelled
+     */
+    protected boolean canCancelAbility1(ElementContext context) {
+        return false; // Default: no cancellation support
+    }
+
+    /**
+     * Check if ability2 can be cancelled (override in subclasses if needed)
+     * @return true if the ability is active and can be cancelled
+     */
+    protected boolean canCancelAbility2(ElementContext context) {
+        return false; // Default: no cancellation support
+    }
+
     /**
      * Helper method to check if target is valid (not player or not trusted)
      */
@@ -141,25 +166,25 @@ public abstract class BaseElement implements Element {
         }
         return true;
     }
-    
+
     /**
      * Helper method to check if target is valid using ElementContext
      */
     protected boolean isValidTarget(ElementContext context, org.bukkit.entity.LivingEntity target) {
         return isValidTarget(context.getPlayer(), target, context.getTrustManager());
     }
-    
+
     /**
      * Ability cooldown management methods
      */
     protected boolean isAbility1Active(Player player) {
         return activeAbility1.contains(player.getUniqueId());
     }
-    
+
     public boolean isAbility2Active(Player player) {
         return activeAbility2.contains(player.getUniqueId());
     }
-    
+
     protected void setAbility1Active(Player player, boolean active) {
         if (active) {
             activeAbility1.add(player.getUniqueId());
@@ -167,7 +192,7 @@ public abstract class BaseElement implements Element {
             activeAbility1.remove(player.getUniqueId());
         }
     }
-    
+
     protected void setAbility2Active(Player player, boolean active) {
         if (active) {
             activeAbility2.add(player.getUniqueId());

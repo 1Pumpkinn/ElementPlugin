@@ -32,7 +32,7 @@ public class EarthTunnelAbility extends BaseAbility {
     );
 
     private final hs.elementPlugin.ElementPlugin plugin;
-    
+
     public EarthTunnelAbility(hs.elementPlugin.ElementPlugin plugin) {
         super("earth_tunnel", 20, 10, 1);
         this.plugin = plugin;
@@ -42,18 +42,22 @@ public class EarthTunnelAbility extends BaseAbility {
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
 
+        // If ability is already active (check metadata), cancel it WITHOUT consuming mana
         if (player.hasMetadata(EarthElement.META_TUNNELING)) {
             player.removeMetadata(EarthElement.META_TUNNELING, plugin);
             player.sendMessage(ChatColor.YELLOW + "Tunneling cancelled");
             setActive(player, false);
+            // Don't start a new tunnel - just cancel and return
             return true;
         }
 
+        // Start the tunneling ability
         player.setMetadata(EarthElement.META_TUNNELING, new FixedMetadataValue(plugin, System.currentTimeMillis() + 20_000L));
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_STONE_BREAK, 1f, 0.8f);
+        player.sendMessage(ChatColor.GOLD + "Tunneling started Press again to cancel.");
 
         setActive(player, true);
-        
+
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -73,7 +77,7 @@ public class EarthTunnelAbility extends BaseAbility {
                 }
 
                 Vector direction = player.getLocation().getDirection().normalize();
-                
+
                 // Adjust mine location based on look direction
                 Location mineLocation;
                 if (direction.getY() < -0.5) {
@@ -82,24 +86,24 @@ public class EarthTunnelAbility extends BaseAbility {
                     mineLocation = player.getEyeLocation().add(direction.multiply(1.5));
                 }
                 breakTunnel(mineLocation, player);
-                
-				player.getWorld().spawnParticle(Particle.BLOCK, mineLocation, 10, 0.5, 0.5, 0.5, 0.1, Material.STONE.createBlockData(), true);
+
+                player.getWorld().spawnParticle(Particle.BLOCK, mineLocation, 10, 0.5, 0.5, 0.5, 0.1, Material.STONE.createBlockData(), true);
             }
         }.runTaskTimer(plugin, 0L, 2L);
 
         return true;
     }
-    
+
     private void breakTunnel(Location center, Player player) {
         World world = center.getWorld();
         if (world == null) return;
-        
+
         for (int x = -1; x <= 1; x++) {
             for (int y = -1; y <= 1; y++) {
                 for (int z = -1; z <= 1; z++) {
                     Location blockLoc = center.clone().add(x, y, z);
                     Block block = blockLoc.getBlock();
-                    
+
                     if (TUNNELABLE.contains(block.getType())) {
                         block.breakNaturally();
                         world.playSound(blockLoc, Sound.BLOCK_STONE_BREAK, 0.3f, 1.0f);
@@ -116,6 +120,6 @@ public class EarthTunnelAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return "Create a tunnel through earth and stone by looking in the direction you want to dig.";
+        return "Create a tunnel through earth and stone by looking in the direction you want to dig. Press again to cancel.";
     }
 }
