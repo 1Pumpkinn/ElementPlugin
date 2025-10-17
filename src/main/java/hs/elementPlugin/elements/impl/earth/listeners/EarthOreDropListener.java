@@ -3,10 +3,13 @@ package hs.elementPlugin.elements.impl.earth.listeners;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDropItemEvent;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -30,12 +33,28 @@ public class EarthOreDropListener implements Listener {
         this.elements = elements;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDrop(BlockDropItemEvent e) {
         Player p = e.getPlayer();
         var pd = elements.data(p.getUniqueId());
-        if (pd.getCurrentElement() != ElementType.EARTH || pd.getUpgradeLevel(ElementType.EARTH) < 2) return;
-        if (!ORES.contains(e.getBlockState().getType())) return;
+
+        // Check element and upgrade level
+        if (pd.getCurrentElement() != ElementType.EARTH || pd.getUpgradeLevel(ElementType.EARTH) < 2) {
+            return;
+        }
+
+        // Check if it's an ore
+        if (!ORES.contains(e.getBlockState().getType())) {
+            return;
+        }
+
+        // Don't double drops if using Silk Touch
+        ItemStack tool = p.getInventory().getItemInMainHand();
+        if (tool.containsEnchantment(Enchantment.SILK_TOUCH)) {
+            return;
+        }
+
+        // Double all dropped items (Fortune is already calculated at this point)
         e.getItems().forEach(item -> item.getItemStack().setAmount(item.getItemStack().getAmount() * 2));
     }
 }

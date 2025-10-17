@@ -8,8 +8,8 @@ import hs.elementPlugin.commands.TrustCommand;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.elements.ElementRegistry;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.elements.impl.earth.listeners.EarthOreDropListener;
 import hs.elementPlugin.elements.upsides.impl.EarthUpsides;
-import hs.elementPlugin.elements.impl.earth.listeners.EarthOreDoubleDropListener;
 import hs.elementPlugin.listeners.player.*;
 import hs.elementPlugin.listeners.items.listeners.*;
 import hs.elementPlugin.managers.*;
@@ -42,8 +42,6 @@ public final class ElementPlugin extends JavaPlugin {
         this.itemManager = new ItemManager(this, manaManager, configManager);
         this.cooldownManager = new CooldownManager();
 
-        // Initialize EarthUpsides
-        EarthUpsides earthUpsides = new EarthUpsides(elementManager);
 
         // Register abilities
         this.abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility(this));
@@ -92,11 +90,11 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthAbilityListener(elementManager, cooldownManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthFriendlyMobListener(this, trustManager), this);
+        Bukkit.getPluginManager().registerEvents(new EarthOreDropListener(elementManager), this);
+
 
         // ✅ Our custom listener for double ore drops
-        Bukkit.getPluginManager().registerEvents(new EarthOreDoubleDropListener(elementManager, earthUpsides), this);
-
-        // ========== Life Element ==========
+        Bukkit.getPluginManager().registerEvents(new EarthOreDropListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeRegenListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeAbilityListener(elementManager, cooldownManager), this);
