@@ -114,7 +114,7 @@ public final class ElementPlugin extends JavaPlugin {
         // Misc listeners
         Bukkit.getPluginManager().registerEvents(new QuitListener(this, manaManager), this);
         Bukkit.getPluginManager().registerEvents(new GameModeListener(manaManager, configManager), this);
-        Bukkit.getPluginManager().registerEvents(new RespawnListener(this, elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.GUIListener(this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
