@@ -29,7 +29,7 @@ public class PointScoreboard {
         Objective objective = scoreboard.registerNewObjective(
                 "lifedeath",
                 Criteria.DUMMY,
-                ChatColor.GOLD + "" + ChatColor.BOLD + "⚔ LIFE vs DEATH ⚔"
+                ChatColor.GOLD + "" + ChatColor.BOLD + "❤️ LIFE & DEATH 💀"
         );
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
