@@ -10,9 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Manages scoreboard display for the Life/Death event
- */
 public class PointScoreboard {
     private final Plugin plugin;
     private final PointSystem pointSystem;
@@ -24,11 +21,7 @@ public class PointScoreboard {
         this.pointSystem = pointSystem;
     }
 
-    /**
-     * Show scoreboard to a player
-     */
     public void showScoreboard(Player player) {
-        // Create new scoreboard
         ScoreboardManager manager = Bukkit.getScoreboardManager();
         if (manager == null) return;
 
@@ -36,45 +29,34 @@ public class PointScoreboard {
         Objective objective = scoreboard.registerNewObjective(
                 "lifedeath",
                 Criteria.DUMMY,
-                ChatColor.GOLD + "" + ChatColor.BOLD + "LIFE vs DEATH"
+                ChatColor.GOLD + "" + ChatColor.BOLD + "⚔ LIFE vs DEATH ⚔"
         );
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        // Store scoreboard
         playerScoreboards.put(player.getUniqueId(), scoreboard);
         player.setScoreboard(scoreboard);
 
-        // Update immediately
         updateScoreboard(player);
 
-        // Start update task if not running
         if (taskId == -1) {
             startUpdateTask();
         }
     }
 
-    /**
-     * Hide scoreboard from a player
-     */
     public void hideScoreboard(Player player) {
         playerScoreboards.remove(player.getUniqueId());
 
-        // Reset to default scoreboard
         ScoreboardManager manager = Bukkit.getScoreboardManager();
         if (manager != null) {
             player.setScoreboard(manager.getMainScoreboard());
         }
 
-        // Stop update task if no players have scoreboards
         if (playerScoreboards.isEmpty() && taskId != -1) {
             Bukkit.getScheduler().cancelTask(taskId);
             taskId = -1;
         }
     }
 
-    /**
-     * Update scoreboard for a player
-     */
     private void updateScoreboard(Player player) {
         Scoreboard scoreboard = playerScoreboards.get(player.getUniqueId());
         if (scoreboard == null) return;
@@ -82,16 +64,14 @@ public class PointScoreboard {
         Objective objective = scoreboard.getObjective("lifedeath");
         if (objective == null) return;
 
-        // Clear existing scores
+        // Clear old entries
         for (String entry : scoreboard.getEntries()) {
             scoreboard.resetScores(entry);
         }
 
-        // Get player's stats
         int passiveKills = pointSystem.getPassiveKills(player.getUniqueId());
         int hostileKills = pointSystem.getHostileKills(player.getUniqueId());
 
-        // Get top players
         UUID topPassive = pointSystem.getTopPassivePlayer();
         UUID topHostile = pointSystem.getTopHostilePlayer();
 
@@ -104,45 +84,70 @@ public class PointScoreboard {
         if (topPassive != null) {
             Player topPassivePlayer = Bukkit.getPlayer(topPassive);
             topPassiveName = topPassivePlayer != null ? topPassivePlayer.getName() : "Offline";
-            if (topPassiveName.length() > 10) {
-                topPassiveName = topPassiveName.substring(0, 10);
+            if (topPassiveName.length() > 12) {
+                topPassiveName = topPassiveName.substring(0, 12);
             }
         }
 
         if (topHostile != null) {
             Player topHostilePlayer = Bukkit.getPlayer(topHostile);
             topHostileName = topHostilePlayer != null ? topHostilePlayer.getName() : "Offline";
-            if (topHostileName.length() > 10) {
-                topHostileName = topHostileName.substring(0, 10);
+            if (topHostileName.length() > 12) {
+                topHostileName = topHostileName.substring(0, 12);
             }
         }
 
-        // Build scoreboard (bottom to top)
-        int line = 15;
+        // Define lines top to bottom
+        String[] lines = new String[]{
+                ChatColor.GOLD + "━━━━━━━━━━━━━━━",
+                "",
+                ChatColor.YELLOW + "" + ChatColor.BOLD + "YOUR STATS",
+                ChatColor.GREEN + "🌿 " + ChatColor.WHITE + passiveKills + " passive",
+                ChatColor.DARK_PURPLE + "💀 " + ChatColor.WHITE + hostileKills + " hostile",
+                "",
+                ChatColor.YELLOW + "" + ChatColor.BOLD + "TOP PLAYERS",
+                ChatColor.GREEN + "🌿 " + ChatColor.WHITE + topPassiveName,
+                ChatColor.GRAY + "   " + topPassiveKills + " kills",
+                ChatColor.DARK_PURPLE + "💀 " + ChatColor.WHITE + topHostileName,
+                ChatColor.GRAY + "   " + topHostileKills + " kills",
+                "",
+                ChatColor.GOLD + "━━━━━━━━━━━━━━━"
+        };
 
-        objective.getScore(ChatColor.GOLD + "═══════════════").setScore(line--);
-        objective.getScore(" ").setScore(line--);
+        int lineScore = lines.length;
+        for (String line : lines) {
+            String entry = getUniqueEntry(lineScore);
 
-        // Your stats
-        objective.getScore(ChatColor.YELLOW + "Your Stats:").setScore(line--);
-        objective.getScore(ChatColor.GREEN + "🌿 Passive: " + ChatColor.WHITE + passiveKills).setScore(line--);
-        objective.getScore(ChatColor.DARK_PURPLE + "💀 Hostile: " + ChatColor.WHITE + hostileKills).setScore(line--);
-        objective.getScore("  ").setScore(line--);
+            // Register team
+            Team team = scoreboard.getTeam("line" + lineScore);
+            if (team == null) {
+                team = scoreboard.registerNewTeam("line" + lineScore);
+            }
 
-        // Leaders
-        objective.getScore(ChatColor.YELLOW + "Leaders:").setScore(line--);
-        objective.getScore(ChatColor.GREEN + "🌿 " + topPassiveName).setScore(line--);
-        objective.getScore(ChatColor.WHITE + "   " + topPassiveKills + " kills").setScore(line--);
-        objective.getScore(ChatColor.DARK_PURPLE + "💀 " + topHostileName).setScore(line--);
-        objective.getScore(ChatColor.WHITE + "   " + topHostileKills + " kills").setScore(line--);
-        objective.getScore("   ").setScore(line--);
+            if (!team.hasEntry(entry)) {
+                team.addEntry(entry);
+            }
 
-        objective.getScore(ChatColor.GOLD + "═══════════════").setScore(line--);
+            // Set text split if needed
+            if (line.length() <= 16) {
+                team.setPrefix(line);
+                team.setSuffix("");
+            } else {
+                team.setPrefix(line.substring(0, 16));
+                team.setSuffix(line.substring(16));
+            }
+
+            // Use unique descending scores to hide the number column
+            objective.getScore(entry).setScore(lineScore);
+            lineScore--;
+        }
     }
 
-    /**
-     * Start the update task
-     */
+    private String getUniqueEntry(int index) {
+        // Use different ChatColors for invisible unique lines
+        return ChatColor.values()[index % ChatColor.values().length].toString();
+    }
+
     private void startUpdateTask() {
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             for (UUID uuid : playerScoreboards.keySet()) {
@@ -151,12 +156,9 @@ public class PointScoreboard {
                     updateScoreboard(player);
                 }
             }
-        }, 0L, 20L); // Update every second
+        }, 0L, 40L); // update every 2 seconds
     }
 
-    /**
-     * Stop the update task
-     */
     public void stopUpdateTask() {
         if (taskId != -1) {
             Bukkit.getScheduler().cancelTask(taskId);
@@ -164,9 +166,6 @@ public class PointScoreboard {
         }
     }
 
-    /**
-     * Hide all scoreboards and stop updates
-     */
     public void cleanup() {
         for (UUID uuid : new HashMap<>(playerScoreboards).keySet()) {
             Player player = Bukkit.getPlayer(uuid);
