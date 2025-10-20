@@ -27,4 +27,10 @@ commands:
     usage: /util
     permission: element.admin
 
+  lifedeath:
+    description: Manage the Life vs Death event
+    usage: /lifedeath <start|end|status|leaderboard|reset>
+    permission: element.admin
+    aliases: [ lde, lifedeathevent ]
+
 

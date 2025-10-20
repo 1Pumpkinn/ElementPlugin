@@ -27,6 +27,7 @@ public final class ElementPlugin extends JavaPlugin {
     private CooldownManager cooldownManager;
     private AbilityManager abilityManager;
     private ElementRegistry elementRegistry;
+    private hs.event.LifeDeathEvent.EventManager eventManager;
 
     @Override
     public void onEnable() {
@@ -117,6 +118,10 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
 
+        // ========== Life/Death Event System ==========
+        this.eventManager = new hs.event.LifeDeathEvent.EventManager(this);
+        getLogger().info("Life vs Death event system loaded");
+
         // ========== Register Recipes ==========
         Bukkit.getScheduler().runTaskLater(this, () -> {
             getLogger().info("Registering recipes...");
@@ -129,8 +134,6 @@ public final class ElementPlugin extends JavaPlugin {
             hs.elementPlugin.recipes.water.WaterRecipes.registerRecipes(this);
             hs.elementPlugin.recipes.fire.FireRecipes.registerRecipes(this);
             hs.elementPlugin.recipes.earth.EarthRecipes.registerRecipes(this);
-            hs.elementPlugin.recipes.life.LifeRecipes.registerRecipes(this);
-            hs.elementPlugin.recipes.death.DeathRecipes.registerRecipes(this);
 
             getLogger().info("Recipes registered successfully");
         }, 20L); // 1-second delay
@@ -149,7 +152,12 @@ public final class ElementPlugin extends JavaPlugin {
         if (manaManager != null) {
             manaManager.stop();
         }
+        // Cleanup event system
+        if (eventManager != null) {
+            eventManager.cleanup(); // for Life And Death Event DELETE WHEN DONE
+        }
     }
+
 
     // ====== Getters ======
     public DataStore getDataStore() { return dataStore; }
