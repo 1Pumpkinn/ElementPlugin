@@ -116,9 +116,10 @@ public class PointScoreboard {
 
         int lineScore = lines.length;
         for (String line : lines) {
-            String entry = getUniqueEntry(lineScore);
+            // Create unique blank entry using different amounts of invisible characters
+            String entry = createBlankEntry(lineScore);
 
-            // Register team
+            // Register team for this line
             Team team = scoreboard.getTeam("line" + lineScore);
             if (team == null) {
                 team = scoreboard.registerNewTeam("line" + lineScore);
@@ -128,7 +129,7 @@ public class PointScoreboard {
                 team.addEntry(entry);
             }
 
-            // Set text split if needed
+            // Set the line text using team prefix/suffix to avoid 16 character limit
             if (line.length() <= 16) {
                 team.setPrefix(line);
                 team.setSuffix("");
@@ -137,15 +138,27 @@ public class PointScoreboard {
                 team.setSuffix(line.substring(16));
             }
 
-            // Use unique descending scores to hide the number column
+            // Set score to maintain order (higher = higher on board)
             objective.getScore(entry).setScore(lineScore);
             lineScore--;
         }
     }
 
-    private String getUniqueEntry(int index) {
-        // Use different ChatColors for invisible unique lines
-        return ChatColor.values()[index % ChatColor.values().length].toString();
+    /**
+     * Creates a unique blank entry using invisible characters
+     * This prevents the red numbers from showing on the scoreboard
+     */
+    private String createBlankEntry(int index) {
+        // Use color codes as invisible unique identifiers
+        // Each line gets a unique combination of color codes that render as blank
+        StringBuilder blank = new StringBuilder();
+
+        // Create unique blank string by repeating color reset codes
+        for (int i = 0; i < index; i++) {
+            blank.append(ChatColor.RESET);
+        }
+
+        return blank.toString();
     }
 
     private void startUpdateTask() {
