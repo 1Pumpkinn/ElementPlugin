@@ -82,37 +82,48 @@ public class MessageSystem {
      * Broadcast event end and winners
      */
     public void broadcastEventEnd(UUID lifeWinner, int lifeKills, UUID deathWinner, int deathKills) {
-        Player lifePlayer = Bukkit.getPlayer(lifeWinner);
-        Player deathPlayer = Bukkit.getPlayer(deathWinner);
+        Player lifePlayer = lifeWinner != null ? Bukkit.getPlayer(lifeWinner) : null;
+        Player deathPlayer = deathWinner != null ? Bukkit.getPlayer(deathWinner) : null;
 
-        String lifeName = lifePlayer != null ? lifePlayer.getName() : "Unknown";
-        String deathName = deathPlayer != null ? deathPlayer.getName() : "Unknown";
+        String lifeName = lifePlayer != null ? lifePlayer.getName() : (lifeWinner != null ? "Offline Player" : "None");
+        String deathName = deathPlayer != null ? deathPlayer.getName() : (deathWinner != null ? "Offline Player" : "None");
 
-        Component message = Component.text()
+        Component.Builder messageBuilder = Component.text()
                 .append(Component.text("═══════════════════════════════", NamedTextColor.GOLD, TextDecoration.BOLD))
                 .append(Component.newline())
                 .append(Component.text("⚔ LIFE vs DEATH EVENT ENDED ⚔", NamedTextColor.YELLOW, TextDecoration.BOLD))
                 .append(Component.newline())
                 .append(Component.text("═══════════════════════════════", NamedTextColor.GOLD, TextDecoration.BOLD))
                 .append(Component.newline())
-                .append(Component.newline())
-                .append(Component.text("🌿 LIFE WINNER: ", NamedTextColor.GREEN, TextDecoration.BOLD))
-                .append(Component.text(lifeName, NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD))
-                .append(Component.text(" with ", NamedTextColor.WHITE))
-                .append(Component.text(lifeKills + " kills", NamedTextColor.GREEN))
-                .append(Component.newline())
-                .append(Component.text("💀 DEATH WINNER: ", NamedTextColor.DARK_PURPLE, TextDecoration.BOLD))
-                .append(Component.text(deathName, NamedTextColor.DARK_PURPLE, TextDecoration.BOLD))
-                .append(Component.text(" with ", NamedTextColor.WHITE))
-                .append(Component.text(deathKills + " kills", NamedTextColor.RED))
-                .append(Component.newline())
-                .append(Component.newline())
-                .append(Component.text("═══════════════════════════════", NamedTextColor.GOLD, TextDecoration.BOLD))
-                .build();
+                .append(Component.newline());
 
-        Bukkit.broadcast(message);
+        // Only show Life winner if there is one
+        if (lifeWinner != null) {
+            messageBuilder
+                    .append(Component.text("🌿 LIFE WINNER: ", NamedTextColor.GREEN, TextDecoration.BOLD))
+                    .append(Component.text(lifeName, NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD))
+                    .append(Component.text(" with ", NamedTextColor.WHITE))
+                    .append(Component.text(lifeKills + " kills", NamedTextColor.GREEN))
+                    .append(Component.newline());
+        }
 
-        // Show title to winners
+        // Only show Death winner if there is one
+        if (deathWinner != null) {
+            messageBuilder
+                    .append(Component.text("💀 DEATH WINNER: ", NamedTextColor.DARK_PURPLE, TextDecoration.BOLD))
+                    .append(Component.text(deathName, NamedTextColor.DARK_PURPLE, TextDecoration.BOLD))
+                    .append(Component.text(" with ", NamedTextColor.WHITE))
+                    .append(Component.text(deathKills + " kills", NamedTextColor.RED))
+                    .append(Component.newline());
+        }
+
+        messageBuilder
+                .append(Component.newline())
+                .append(Component.text("═══════════════════════════════", NamedTextColor.GOLD, TextDecoration.BOLD));
+
+        Bukkit.broadcast(messageBuilder.build());
+
+        // Show title to Life winner if they exist
         if (lifePlayer != null) {
             Title lifeTitle = Title.title(
                     Component.text("🌿 LIFE ELEMENT 🌿", NamedTextColor.GREEN, TextDecoration.BOLD),
@@ -123,7 +134,8 @@ public class MessageSystem {
             lifePlayer.playSound(lifePlayer.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
         }
 
-        if (deathPlayer != null) {
+        // Show title to Death winner if they exist (and they're different from Life winner)
+        if (deathPlayer != null && !deathPlayer.equals(lifePlayer)) {
             Title deathTitle = Title.title(
                     Component.text("💀 DEATH ELEMENT 💀", NamedTextColor.DARK_PURPLE, TextDecoration.BOLD),
                     Component.text("You are the champion!", NamedTextColor.RED),
@@ -131,6 +143,16 @@ public class MessageSystem {
             );
             deathPlayer.showTitle(deathTitle);
             deathPlayer.playSound(deathPlayer.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+        }
+
+        // If the same player won both, show a special title
+        if (lifePlayer != null && lifePlayer.equals(deathPlayer)) {
+            Title doubleTitle = Title.title(
+                    Component.text("🌿 LIFE & DEATH 💀", NamedTextColor.GOLD, TextDecoration.BOLD),
+                    Component.text("You mastered both elements!", NamedTextColor.YELLOW),
+                    Title.Times.times(Duration.ofMillis(500), Duration.ofMillis(3000), Duration.ofMillis(500))
+            );
+            lifePlayer.showTitle(doubleTitle);
         }
     }
 

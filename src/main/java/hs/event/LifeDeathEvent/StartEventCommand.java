@@ -92,17 +92,20 @@ public class StartEventCommand implements CommandExecutor, TabCompleter {
         UUID lifeWinner = pointSystem.getTopPassivePlayer();
         UUID deathWinner = pointSystem.getTopHostilePlayer();
 
-        if (lifeWinner == null) {
-            messageSystem.sendNoKillsRecorded((Player) sender, "passive");
+        if (lifeWinner == null && deathWinner == null) {
+            sender.sendMessage(Component.text("No kills were recorded during this event!", NamedTextColor.RED));
+            pointSystem.endEvent();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                scoreboard.hideScoreboard(player);
+            }
+            return true;
         }
 
-        if (deathWinner == null) {
-            messageSystem.sendNoKillsRecorded((Player) sender, "hostile");
-        }
+        int lifeKills = lifeWinner != null ? pointSystem.getPassiveKills(lifeWinner) : 0;
+        int deathKills = deathWinner != null ? pointSystem.getHostileKills(deathWinner) : 0;
 
-        // Award elements if winners exist
+        // Award Life element if there's a winner
         if (lifeWinner != null) {
-            int lifeKills = pointSystem.getPassiveKills(lifeWinner);
             Player lifePlayer = Bukkit.getPlayer(lifeWinner);
 
             if (lifePlayer != null && lifePlayer.isOnline()) {
@@ -115,12 +118,9 @@ public class StartEventCommand implements CommandExecutor, TabCompleter {
                 // Mark that they've crafted Life element
                 plugin.getDataStore().setLifeElementCrafted(true);
             }
-
-            // Broadcast winners
-            int deathKills = deathWinner != null ? pointSystem.getHostileKills(deathWinner) : 0;
-            messageSystem.broadcastEventEnd(lifeWinner, lifeKills, deathWinner != null ? deathWinner : lifeWinner, deathKills);
         }
 
+        // Award Death element if there's a winner
         if (deathWinner != null) {
             Player deathPlayer = Bukkit.getPlayer(deathWinner);
 
@@ -135,6 +135,9 @@ public class StartEventCommand implements CommandExecutor, TabCompleter {
                 plugin.getDataStore().setDeathElementCrafted(true);
             }
         }
+
+        // Broadcast winners (now happens AFTER awarding elements)
+        messageSystem.broadcastEventEnd(lifeWinner, lifeKills, deathWinner, deathKills);
 
         // End event
         pointSystem.endEvent();

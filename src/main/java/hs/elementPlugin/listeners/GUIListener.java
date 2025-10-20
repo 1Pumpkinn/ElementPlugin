@@ -67,7 +67,7 @@ public class GUIListener implements Listener {
         }
     }
 
-    
+
     @EventHandler
     public void onElementItemUse(PlayerInteractEvent event) {
         Player player = event.getPlayer();
@@ -105,12 +105,12 @@ public class GUIListener implements Listener {
 
                 // Check if player already has this element
                 hs.elementPlugin.data.PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
-                if (pd.getCurrentElement() == elementType) {
+                if (pd.hasElementItem(elementType)) {
                     player.sendMessage(
-                            net.kyori.adventure.text.Component.text("You already have ")
+                            net.kyori.adventure.text.Component.text("You already have the ")
                                     .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW)
                                     .append(net.kyori.adventure.text.Component.text(elementType.name(), net.kyori.adventure.text.format.NamedTextColor.GOLD))
-                                    .append(net.kyori.adventure.text.Component.text(" as your element!", net.kyori.adventure.text.format.NamedTextColor.YELLOW))
+                                    .append(net.kyori.adventure.text.Component.text(" core! You cannot consume it again.", net.kyori.adventure.text.format.NamedTextColor.YELLOW))
                     );
                     return;
                 }
