@@ -1,6 +1,7 @@
 package hs.event.LifeDeathEvent;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.title.Title;
@@ -88,7 +89,7 @@ public class MessageSystem {
         String lifeName = lifePlayer != null ? lifePlayer.getName() : (lifeWinner != null ? "Offline Player" : "None");
         String deathName = deathPlayer != null ? deathPlayer.getName() : (deathWinner != null ? "Offline Player" : "None");
 
-        Component.Builder messageBuilder = Component.text()
+        TextComponent.Builder messageBuilder = Component.text()
                 .append(Component.text("═══════════════════════════════", NamedTextColor.GOLD, TextDecoration.BOLD))
                 .append(Component.newline())
                 .append(Component.text("⚔ LIFE vs DEATH EVENT ENDED ⚔", NamedTextColor.YELLOW, TextDecoration.BOLD))
@@ -122,38 +123,6 @@ public class MessageSystem {
                 .append(Component.text("═══════════════════════════════", NamedTextColor.GOLD, TextDecoration.BOLD));
 
         Bukkit.broadcast(messageBuilder.build());
-
-        // Show title to Life winner if they exist
-        if (lifePlayer != null) {
-            Title lifeTitle = Title.title(
-                    Component.text("🌿 LIFE ELEMENT 🌿", NamedTextColor.GREEN, TextDecoration.BOLD),
-                    Component.text("You are the champion!", NamedTextColor.LIGHT_PURPLE),
-                    Title.Times.times(Duration.ofMillis(500), Duration.ofMillis(3000), Duration.ofMillis(500))
-            );
-            lifePlayer.showTitle(lifeTitle);
-            lifePlayer.playSound(lifePlayer.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-        }
-
-        // Show title to Death winner if they exist (and they're different from Life winner)
-        if (deathPlayer != null && !deathPlayer.equals(lifePlayer)) {
-            Title deathTitle = Title.title(
-                    Component.text("💀 DEATH ELEMENT 💀", NamedTextColor.DARK_PURPLE, TextDecoration.BOLD),
-                    Component.text("You are the champion!", NamedTextColor.RED),
-                    Title.Times.times(Duration.ofMillis(500), Duration.ofMillis(3000), Duration.ofMillis(500))
-            );
-            deathPlayer.showTitle(deathTitle);
-            deathPlayer.playSound(deathPlayer.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-        }
-
-        // If the same player won both, show a special title
-        if (lifePlayer != null && lifePlayer.equals(deathPlayer)) {
-            Title doubleTitle = Title.title(
-                    Component.text("🌿 LIFE & DEATH 💀", NamedTextColor.GOLD, TextDecoration.BOLD),
-                    Component.text("You mastered both elements!", NamedTextColor.YELLOW),
-                    Title.Times.times(Duration.ofMillis(500), Duration.ofMillis(3000), Duration.ofMillis(500))
-            );
-            lifePlayer.showTitle(doubleTitle);
-        }
     }
 
     /**

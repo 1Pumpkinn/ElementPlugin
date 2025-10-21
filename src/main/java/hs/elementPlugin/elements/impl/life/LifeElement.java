@@ -45,8 +45,6 @@ public class LifeElement extends BaseElement {
         
         // Upside 2: Crops within 5x5 radius instantly grow (passive effect)
         if (upgradeLevel >= 2) {
-            plugin.getLogger().info("Applying Life element upside 2 for " + player.getName() + " with upgrade level " + upgradeLevel);
-            // This is a passive effect that triggers automatically
             org.bukkit.scheduler.BukkitTask task = new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -70,7 +68,6 @@ public class LifeElement extends BaseElement {
                         }
                     }
                     if (cropsGrown > 0) {
-                        plugin.getLogger().info("Grew " + cropsGrown + " crops for " + player.getName());
                     }
                 }
             }.runTaskTimer(plugin, 0L, 40L); // Every 2 seconds
@@ -78,7 +75,6 @@ public class LifeElement extends BaseElement {
             // Store the task reference
             passiveTasks.put(player.getUniqueId(), task);
         } else {
-            plugin.getLogger().info("Life element upgrade level " + upgradeLevel + " is less than 2, not applying crop growth");
         }
     }
 
