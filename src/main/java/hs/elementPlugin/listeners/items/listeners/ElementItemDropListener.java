@@ -26,10 +26,7 @@ public ElementItemDropListener(ElementPlugin plugin) {
 		if (isElementItem(stack)) {
 			Player player = event.getPlayer();
 			if (player.isDead() || player.getHealth() <= 0) {
-				return;
 			}
-			event.setCancelled(true);
-			player.sendMessage(ChatColor.RED + "You cannot drop this item.");
 		}
 	}
 }
