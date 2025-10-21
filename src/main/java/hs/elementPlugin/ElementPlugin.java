@@ -46,9 +46,8 @@ public final class ElementPlugin extends JavaPlugin {
 
         // Register abilities
         this.abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility(this));
-        this.abilityManager.registerAbility(ElementType.DEATH, 1, new DeathWitherSkullAbility(this));
-        this.abilityManager.registerAbility(ElementType.DEATH, 2, new DeathSummonUndeadAbility(this));
-
+        this.abilityManager.registerAbility(ElementType.DEATH, 1, new DeathSummonUndeadAbility(this));
+        this.abilityManager.registerAbility(ElementType.DEATH, 2, new DeathWitherSkullAbility(this));
         // Register commands
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
         getCommand("element").setExecutor(new hs.elementPlugin.commands.ElementCommand(this));

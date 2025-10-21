@@ -13,7 +13,7 @@ public class DeathWitherSkullAbility extends BaseAbility {
     private final ElementPlugin plugin;
 
     public DeathWitherSkullAbility(ElementPlugin plugin) {
-        super("death_wither_skull", 50, 10, 1);
+        super("death_wither_skull", 75, 10, 1);
         this.plugin = plugin;
     }
 
