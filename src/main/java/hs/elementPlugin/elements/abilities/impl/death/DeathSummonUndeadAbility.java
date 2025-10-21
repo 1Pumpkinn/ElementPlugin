@@ -43,7 +43,6 @@ public class DeathSummonUndeadAbility extends BaseAbility {
         mob.setMetadata(META_FRIENDLY_UNDEAD_OWNER, new FixedMetadataValue(plugin, player.getUniqueId().toString()));
         mob.setRemoveWhenFarAway(false);
         player.getWorld().playSound(spawnLoc, Sound.ENTITY_ZOMBIE_AMBIENT, 1f, 0.7f);
-        player.sendMessage(ChatColor.DARK_PURPLE + "Undead ally summoned!");
 
         // Remove after 30 seconds
         new BukkitRunnable() {
@@ -51,7 +50,7 @@ public class DeathSummonUndeadAbility extends BaseAbility {
             public void run() {
                 if (mob.isValid()) {
                     mob.remove();
-                    player.sendMessage(ChatColor.DARK_PURPLE + "Your undead ally has returned to the grave.");
+                    player.sendMessage(ChatColor.DARK_PURPLE + "Your undead ally has despawned.");
                 }
             }
         }.runTaskLater(plugin, 30 * 20L);

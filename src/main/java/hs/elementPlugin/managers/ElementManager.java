@@ -59,7 +59,7 @@ public class ElementManager {
         register(new LifeElement(plugin));
         register(new DeathElement(plugin));
     }
-    
+
     public ElementType getPlayerElement(Player player) {
         PlayerData data = store.getPlayerData(player.getUniqueId());
         return data != null ? data.getElementType() : null;
@@ -105,17 +105,17 @@ public class ElementManager {
     public boolean isCurrentlyRolling(Player player) {
         return currentlyRolling.contains(player.getUniqueId());
     }
-    
+
     public void rollAndAssign(Player player) {
         // Check if player is already rolling
         if (isCurrentlyRolling(player)) {
             player.sendMessage(ChatColor.RED + "You are already rerolling your element!");
             return;
         }
-        
+
         // Add player to currently rolling set
         currentlyRolling.add(player.getUniqueId());
-        
+
         // Slowing title roll animation, then assign
         String[] names = {"AIR", "WATER", "FIRE", "EARTH"};
         player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
@@ -139,6 +139,9 @@ public class ElementManager {
         ElementType pick = choices[random.nextInt(choices.length)];
         PlayerData pd = data(player.getUniqueId());
 
+        // Return Life/Death core if player had one
+        returnLifeOrDeathCore(player, pd.getCurrentElement());
+
         clearAllEffects(player);
 
         pd.setCurrentElement(pick);
@@ -151,9 +154,15 @@ public class ElementManager {
         applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
-    
+
     public void assignElement(Player player, ElementType type) {
         PlayerData pd = data(player.getUniqueId());
+
+        // Return Life/Death core if player had one (and it's different from new element)
+        ElementType oldElement = pd.getCurrentElement();
+        if (oldElement != type) {
+            returnLifeOrDeathCore(player, oldElement);
+        }
 
         // Clear effects from previous element
         clearAllEffects(player);
@@ -168,9 +177,15 @@ public class ElementManager {
         applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
-    
+
     public void setElement(Player player, ElementType type) {
         PlayerData pd = data(player.getUniqueId());
+
+        // Return Life/Death core if player had one (and it's different from new element)
+        ElementType oldElement = pd.getCurrentElement();
+        if (oldElement != type) {
+            returnLifeOrDeathCore(player, oldElement);
+        }
 
         // Clear effects from previous element
         clearAllEffects(player);
@@ -183,6 +198,33 @@ public class ElementManager {
                         .append(net.kyori.adventure.text.Component.text(type.name(), net.kyori.adventure.text.format.NamedTextColor.AQUA))
         );
         applyUpsides(player);
+    }
+
+    /**
+     * Returns a Life or Death core to the player if they had one
+     * @param player The player to return the core to
+     * @param oldElement The element the player had before switching
+     */
+    private void returnLifeOrDeathCore(Player player, ElementType oldElement) {
+        if (oldElement == null) return;
+
+        // Only return if it was Life or Death
+        if (oldElement != ElementType.LIFE && oldElement != ElementType.DEATH) return;
+
+        PlayerData pd = data(player.getUniqueId());
+
+        // Only return if they still have the element item flag
+        // (if they died, this flag would have been removed)
+        if (!pd.hasElementItem(oldElement)) return;
+
+        // Create and give the core back
+        ItemStack core = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, oldElement);
+        if (core != null) {
+            player.getInventory().addItem(core);
+            player.sendMessage(ChatColor.YELLOW + "Your " +
+                    hs.elementPlugin.items.ElementCoreItem.getDisplayName(oldElement) +
+                    ChatColor.YELLOW + " has been returned to you!");
+        }
     }
 
     public boolean useAbility1(Player player) {
@@ -222,7 +264,7 @@ public class ElementManager {
         );
         return e.ability2(context);
     }
-    
+
     public void giveElementItem(Player player, ElementType elementType) {
         ItemStack item = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, elementType);
         if (item != null) {

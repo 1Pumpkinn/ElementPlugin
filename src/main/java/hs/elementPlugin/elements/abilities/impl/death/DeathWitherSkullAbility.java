@@ -26,7 +26,6 @@ public class DeathWitherSkullAbility extends BaseAbility {
         skull.setYield(1.5f); // Explosion power
         skull.setIsIncendiary(false);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WITHER_SHOOT, 1f, 1f);
-        player.sendMessage(ChatColor.DARK_PURPLE + "Wither Skull launched!");
         return true;
     }
 
