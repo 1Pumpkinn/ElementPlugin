@@ -1,0 +1,24 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "minecraft:item/generated",
+    "textures": {
+      "layer0": "minecraft:block/stone"
+    }
+  },
+  "overrides": [
+    {
+      "type": "minecraft:select",
+      "property": "minecraft:custom_model_data",
+      "cases": [
+        {
+          "when": 1,
+          "model": {
+            "type": "minecraft:model",
+            "model": "elementsmp:block/pedistol"
+          }
+        }
+      ]
+    }
+  ]
+}
