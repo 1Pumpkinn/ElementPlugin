@@ -1,8 +1,8 @@
 {
   "texture_size": [32, 32],
   "textures": {
-    "1": "element:block/pedistol",
-    "particle": "element:block/pedistol"
+    "1": "template:block/pedistol",
+    "particle": "template:block/pedistol"
   },
   "elements": [
     {
