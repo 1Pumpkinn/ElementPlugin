@@ -28,7 +28,7 @@ public class ElementItemUseListener implements Listener {
 	@EventHandler(priority = EventPriority.HIGH)
 	public void onInteract(PlayerInteractEvent event) {
 		ItemStack inHand = event.getItem();
-		f (inHand != null && isElementItem(inHand)) {
+		if (inHand != null && isElementItem(inHand)) {
 			if (hs.elementPlugin.items.CoreConsumptionHandler.handleCoreConsume(event, plugin, elements)) return;
 			itemManager.handleUse(event);
 		}
