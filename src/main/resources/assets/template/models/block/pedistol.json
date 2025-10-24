@@ -1,4 +1,5 @@
 {
+  "parent": "minecraft:block/block",
   "texture_size": [32, 32],
   "textures": {
     "1": "template:block/pedistol",
