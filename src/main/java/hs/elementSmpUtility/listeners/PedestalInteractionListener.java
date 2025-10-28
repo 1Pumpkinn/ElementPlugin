@@ -198,16 +198,17 @@ public class PedestalInteractionListener implements Listener {
         ItemStack toPlace = heldItem.clone();
         toPlace.setAmount(1);
 
-        // ALWAYS consume one item from the player's hand (no exceptions)
+        // Save to storage and create display FIRST (before consuming item)
+        pedestalStorage.savePedestalItem(block.getLocation(), toPlace);
+        PedestalBlock.createOrUpdateDisplay(block.getLocation(), toPlace);
+
+        // THEN consume one item from the player's hand
+        // This ensures the item is placed even if something goes wrong
         if (heldItem.getAmount() > 1) {
             heldItem.setAmount(heldItem.getAmount() - 1);
         } else {
             player.getInventory().setItemInMainHand(null);
         }
-
-        // Save to storage and create display
-        pedestalStorage.savePedestalItem(block.getLocation(), toPlace);
-        PedestalBlock.createOrUpdateDisplay(block.getLocation(), toPlace);
 
         player.playSound(block.getLocation(), Sound.BLOCK_STONE_PLACE, 1.0f, 1.5f);
         player.sendActionBar(Component.text("Placed item on pedestal")

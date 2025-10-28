@@ -31,8 +31,23 @@ public final class CoreConsumptionHandler {
 
         if (!isRightClick(e.getAction())) return false;
 
-        PlayerData pd = elements.data(player.getUniqueId());
+        // CRITICAL: Check if clicking on a pedestal - if so, don't consume the core
+        if (e.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
+            org.bukkit.block.Block clickedBlock = e.getClickedBlock();
+            if (clickedBlock != null && clickedBlock.getType() == org.bukkit.Material.LODESTONE) {
+                // Check if it's a custom block (pedestal) using BlockDataStorage
+                hs.elementSmpUtility.storage.BlockDataStorage blockStorage = plugin.getBlockStorage();
+                String blockId = blockStorage.getCustomBlockIdCached(clickedBlock.getLocation());
 
+                if ("pedestal".equals(blockId)) {
+                    // This is a pedestal - don't consume the core here
+                    // The PedestalInteractionListener will handle placing it on the pedestal
+                    return false; // Return false so other handlers can process
+                }
+            }
+        }
+
+        PlayerData pd = elements.data(player.getUniqueId());
         // Switch to the core's element
         elements.setElement(player, type);
 

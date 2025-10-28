@@ -88,6 +88,23 @@ public class GUIListener implements Listener {
                 return;
             }
 
+            // CRITICAL: Check if clicking on a pedestal - if so, don't consume the core
+            if (event.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
+                org.bukkit.block.Block clickedBlock = event.getClickedBlock();
+                if (clickedBlock != null && clickedBlock.getType() == org.bukkit.Material.LODESTONE) {
+                    // Check if it's a custom block (pedestal) using BlockDataStorage
+                    hs.elementSmpUtility.storage.BlockDataStorage blockStorage =
+                            ((hs.elementPlugin.ElementPlugin) plugin).getBlockStorage();
+                    String blockId = blockStorage.getCustomBlockIdCached(clickedBlock.getLocation());
+
+                    if ("pedestal".equals(blockId)) {
+                        // This is a pedestal - don't handle the core consumption here
+                        // The PedestalInteractionListener will handle placing it on the pedestal
+                        return;
+                    }
+                }
+            }
+
             event.setCancelled(true);
 
             // Get the element type from the item
