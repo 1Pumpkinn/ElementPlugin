@@ -8,10 +8,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
-import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,78 +21,71 @@ public class AbilityListener implements Listener {
 
     // Track last offhand key press times for double-tap detection
     private final Map<UUID, Long> lastOffhandPress = new HashMap<>();
-    private static final long DOUBLE_TAP_THRESHOLD = 10000;
+
+    // Tunable constants
+    private static final long DOUBLE_TAP_THRESHOLD = 300; // ms (~6 ticks)
+    private static final long CHECK_DELAY_TICKS = 6;       // wait before confirming single tap
 
     public AbilityListener(hs.elementPlugin.ElementPlugin plugin, ElementManager elements) {
         this.plugin = plugin;
         this.elements = elements;
     }
 
-
-    // Handle abilities using the offhand keybind
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onSwapHands(PlayerSwapHandItemsEvent e) {
         Player player = e.getPlayer();
-        UUID playerId = player.getUniqueId();
-        long currentTime = System.currentTimeMillis();
+        UUID id = player.getUniqueId();
+        long now = System.currentTimeMillis();
 
-        // Check if player has an element
-        PlayerData pd = elements.data(playerId);
-        ElementType currentElement = pd.getCurrentElement();
-        if (currentElement == null) {
-            // No element, allow normal offhand swapping
-            e.setCancelled(false);
+        // Make sure player has an element
+        PlayerData pd = elements.data(id);
+        ElementType element = pd.getCurrentElement();
+        if (element == null) return;
+
+        Long lastPress = lastOffhandPress.get(id);
+
+        // --- Double-tap detection ---
+        if (lastPress != null && (now - lastPress) <= DOUBLE_TAP_THRESHOLD) {
+            // Second press detected within window -> allow normal swap
+            lastOffhandPress.remove(id);
             return;
         }
 
-        // Check for double-tap
-        boolean isDoubleTap = false;
-        if (lastOffhandPress.containsKey(playerId)) {
-            long timeSinceLastPress = currentTime - lastOffhandPress.get(playerId);
-            if (timeSinceLastPress <= DOUBLE_TAP_THRESHOLD) {
-                isDoubleTap = true;
+        // First tap: store timestamp and wait briefly to see if a second tap comes
+        lastOffhandPress.put(id, now);
+
+        // Cancel the hand swap temporarily (we’ll decide later whether to trigger ability)
+        e.setCancelled(true);
+
+        // Delay ability firing to confirm that this was not a double-tap
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Long pressTime = lastOffhandPress.get(id);
+                if (pressTime == null) return; // should not happen
+
+                long elapsed = System.currentTimeMillis() - pressTime;
+
+                // If within threshold, player might still be double-tapping — skip
+                if (elapsed <= DOUBLE_TAP_THRESHOLD) return;
+
+                // Confirmed single tap: trigger ability
+                CooldownManager cooldowns = plugin.getCooldownManager();
+                String base = element.toString().toLowerCase();
+
+                if (player.isSneaking()) {
+                    if (!cooldowns.isOnCooldown(player, base + "_ability2")) {
+                        elements.useAbility2(player);
+                    }
+                } else {
+                    if (!cooldowns.isOnCooldown(player, base + "_ability1")) {
+                        elements.useAbility1(player);
+                    }
+                }
+
+                // Clear the press record so next input is clean
+                lastOffhandPress.remove(id);
             }
-        }
-
-        // If double-tap, allow normal offhand swapping
-        if (isDoubleTap) {
-
-            lastOffhandPress.remove(playerId);
-            e.setCancelled(false);
-            return;
-        }
-
-        // Update last press time AFTER checking for double-tap
-        lastOffhandPress.put(playerId, currentTime);
-
-        // Check for ability cooldowns
-        CooldownManager cooldownManager = plugin.getCooldownManager();
-        String ability1Key = currentElement.toString().toLowerCase() + "_ability1";
-        String ability2Key = currentElement.toString().toLowerCase() + "_ability2";
-
-        boolean ability1OnCooldown = cooldownManager.isOnCooldown(player, ability1Key);
-        boolean ability2OnCooldown = cooldownManager.isOnCooldown(player, ability2Key);
-
-        if (player.isSneaking()) {
-
-            if (ability2OnCooldown) {
-
-                e.setCancelled(false);
-                return;
-            }
-
-            elements.useAbility2(player);
-            e.setCancelled(true);
-        } else {
-
-            if (ability1OnCooldown) {
-                // Ability 1 is on cooldown, allow offhand swap
-                e.setCancelled(false);
-                return;
-            }
-
-            elements.useAbility1(player);
-            e.setCancelled(true);
-        }
+        }.runTaskLater(plugin, CHECK_DELAY_TICKS);
     }
 }
