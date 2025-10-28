@@ -70,15 +70,6 @@ public class PedestalInteractionListener implements Listener {
         Player player = event.getPlayer();
         ItemStack heldItem = player.getInventory().getItemInMainHand();
 
-        // CRITICAL: Prevent special items from being placed on pedestals
-        if (isSpecialItem(heldItem)) {
-            player.sendActionBar(
-                    Component.text("This item cannot be placed on a pedestal!")
-                            .color(TextColor.color(0xFF5555))
-            );
-            return;
-        }
-
         // Get the owner of this pedestal
         UUID ownerUUID = ownerStorage.getOwner(block.getLocation());
 
@@ -126,7 +117,7 @@ public class PedestalInteractionListener implements Listener {
     }
 
     /**
-     * Check if an item is a special item that should not be placed on pedestals
+     * Check if an item is a special item that should be placed WITHOUT consumption
      */
     private boolean isSpecialItem(ItemStack item) {
         if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) {
@@ -193,34 +184,38 @@ public class PedestalInteractionListener implements Listener {
             return;
         }
 
-        // Double-check special items (shouldn't get here but safety check)
-        if (isSpecialItem(heldItem)) {
-            player.sendActionBar(
-                    Component.text("This item cannot be placed on a pedestal!")
-                            .color(TextColor.color(0xFF5555))
-            );
-            return;
-        }
-
         if (currentItem != null) {
             player.sendActionBar(Component.text("Pedestal already has an item! Sneak to remove it first.")
                     .color(TextColor.color(0xFF5555)));
             return;
         }
 
-        // Take one item from player's hand
+        // Check if this is a special item that should NOT be consumed
+        boolean isSpecial = isSpecialItem(heldItem);
+
+        // Take one item from player's hand (only if NOT special)
         ItemStack toPlace = heldItem.clone();
         toPlace.setAmount(1);
 
-        heldItem.setAmount(heldItem.getAmount() - 1);
+        if (!isSpecial) {
+            // Normal items - consume one from hand
+            heldItem.setAmount(heldItem.getAmount() - 1);
+        }
+        // Special items - DON'T consume, just display
 
         // Save to storage and create display
         pedestalStorage.savePedestalItem(block.getLocation(), toPlace);
         PedestalBlock.createOrUpdateDisplay(block.getLocation(), toPlace);
 
         player.playSound(block.getLocation(), Sound.BLOCK_STONE_PLACE, 1.0f, 1.5f);
-        player.sendActionBar(Component.text("Placed item on pedestal")
-                .color(TextColor.color(0x55FF55)));
+
+        if (isSpecial) {
+            player.sendActionBar(Component.text("Displayed item on pedestal (not consumed)")
+                    .color(TextColor.color(0x55FF55)));
+        } else {
+            player.sendActionBar(Component.text("Placed item on pedestal")
+                    .color(TextColor.color(0x55FF55)));
+        }
     }
 
     /**

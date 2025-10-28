@@ -15,16 +15,16 @@ import org.bukkit.util.EulerAngle;
 public class PedestalBlock {
 
     // Different hover heights for items vs blocks
-    private static final double ITEM_HOVER_HEIGHT = 1.2;
-    private static final double BLOCK_HOVER_HEIGHT = 1.3;
+    private static final double ITEM_HOVER_HEIGHT = 0.5;
+    private static final double BLOCK_HOVER_HEIGHT = 0.6;
 
     // Different centering for items vs blocks
     private static final double ITEM_CENTER_X = 0.5;
-    private static final double ITEM_CENTER_Y = 0.0;
-    private static final double ITEM_CENTER_Z = 0.5;
+    private static final double ITEM_CENTER_Y = -0.4;
+    private static final double ITEM_CENTER_Z = 0.7;
 
     private static final double BLOCK_CENTER_X = 0.5;
-    private static final double BLOCK_CENTER_Y = 0.0;
+    private static final double BLOCK_CENTER_Y = -0.2;
     private static final double BLOCK_CENTER_Z = 0.5;
 
     private static final String METADATA_KEY = "pedestal_display";
