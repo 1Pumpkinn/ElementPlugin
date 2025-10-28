@@ -66,7 +66,10 @@ public class PedestalInteractionListener implements Listener {
             return;
         }
 
+        // CRITICAL: Always cancel the event when interacting with a pedestal
+        // This prevents item consumption BEFORE we check what to do
         event.setCancelled(true);
+
         Player player = event.getPlayer();
         ItemStack heldItem = player.getInventory().getItemInMainHand();
 
@@ -117,9 +120,10 @@ public class PedestalInteractionListener implements Listener {
     }
 
     /**
-     * Check if an item is a special item that should be placed WITHOUT consumption
+     * Check if an item has special behavior that should be blocked when interacting with pedestals
+     * (but the item should still be consumed when placed)
      */
-    private boolean isSpecialItem(ItemStack item) {
+    private boolean hasSpecialBehavior(ItemStack item) {
         if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) {
             return false;
         }
@@ -190,32 +194,24 @@ public class PedestalInteractionListener implements Listener {
             return;
         }
 
-        // Check if this is a special item that should NOT be consumed
-        boolean isSpecial = isSpecialItem(heldItem);
-
-        // Take one item from player's hand (only if NOT special)
+        // Create item to place (always just 1 item)
         ItemStack toPlace = heldItem.clone();
         toPlace.setAmount(1);
 
-        if (!isSpecial) {
-            // Normal items - consume one from hand
+        // ALWAYS consume one item from the player's hand (no exceptions)
+        if (heldItem.getAmount() > 1) {
             heldItem.setAmount(heldItem.getAmount() - 1);
+        } else {
+            player.getInventory().setItemInMainHand(null);
         }
-        // Special items - DON'T consume, just display
 
         // Save to storage and create display
         pedestalStorage.savePedestalItem(block.getLocation(), toPlace);
         PedestalBlock.createOrUpdateDisplay(block.getLocation(), toPlace);
 
         player.playSound(block.getLocation(), Sound.BLOCK_STONE_PLACE, 1.0f, 1.5f);
-
-        if (isSpecial) {
-            player.sendActionBar(Component.text("Displayed item on pedestal (not consumed)")
-                    .color(TextColor.color(0x55FF55)));
-        } else {
-            player.sendActionBar(Component.text("Placed item on pedestal")
-                    .color(TextColor.color(0x55FF55)));
-        }
+        player.sendActionBar(Component.text("Placed item on pedestal")
+                .color(TextColor.color(0x55FF55)));
     }
 
     /**
