@@ -45,7 +45,7 @@ public class PedestalInteractionListener implements Listener {
         this.ownerStorage = ownerStorage;
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPedestalInteract(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;

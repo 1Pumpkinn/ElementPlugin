@@ -27,10 +27,27 @@ commands:
     usage: /util
     permission: element.admin
 
-  lifedeath:
-    description: Manage the Life vs Death event
-    usage: /lifedeath <start|end|status|leaderboard|reset>
-    permission: element.admin
-    aliases: [ lde, lifedeathevent ]
+  customblock:
+    description: Manage custom blocks (pedestals, reinforced blocks, etc.)
+    usage: /customblock <give|list> [block_id] [amount]
+    permission: elementsmp.customblock
+    aliases: [ cb, cblock ]
 
+  pedestal:
+    description: Admin commands for managing pedestals
+    usage: /pedestal <info|reload|check|claim|transfer> [player|uuid]
+    permission: elementsmp.pedestal.admin
+    aliases: [ ped ]
 
+permissions:
+  elementsmp.customblock:
+    description: Allows use of the customblock command
+    default: op
+
+  elementsmp.pedestal.admin:
+    description: Allows full admin control of pedestals
+    default: op
+
+  elementsmp.pedestal.bypass:
+    description: Allows bypassing pedestal ownership checks
+    default: op

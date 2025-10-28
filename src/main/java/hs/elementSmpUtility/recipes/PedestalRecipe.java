@@ -31,7 +31,7 @@ public class PedestalRecipe {
             return;
         }
 
-        NamespacedKey key = new NamespacedKey(plugin, "pedestal");
+        NamespacedKey key = new NamespacedKey(plugin, "pedestal_recipe");
         ShapedRecipe recipe = new ShapedRecipe(key, pedestalItem);
 
         // Recipe pattern:
