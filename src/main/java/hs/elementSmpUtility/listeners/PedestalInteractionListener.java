@@ -8,6 +8,7 @@ import hs.elementSmpUtility.storage.pedestal.PedestalOwnerStorage;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
@@ -20,6 +21,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.UUID;
 
@@ -66,6 +68,16 @@ public class PedestalInteractionListener implements Listener {
 
         event.setCancelled(true);
         Player player = event.getPlayer();
+        ItemStack heldItem = player.getInventory().getItemInMainHand();
+
+        // CRITICAL: Prevent special items from being placed on pedestals
+        if (isSpecialItem(heldItem)) {
+            player.sendActionBar(
+                    Component.text("This item cannot be placed on a pedestal!")
+                            .color(TextColor.color(0xFF5555))
+            );
+            return;
+        }
 
         // Get the owner of this pedestal
         UUID ownerUUID = ownerStorage.getOwner(block.getLocation());
@@ -96,7 +108,6 @@ public class PedestalInteractionListener implements Listener {
         }
 
         // Player is authorized - handle interaction
-        ItemStack heldItem = player.getInventory().getItemInMainHand();
         ItemStack currentItem = pedestalStorage.getPedestalItem(block.getLocation());
 
         // Auto-restore display if missing (failsafe)
@@ -112,6 +123,38 @@ public class PedestalInteractionListener implements Listener {
         } else {
             handlePlaceItem(player, block, heldItem, currentItem);
         }
+    }
+
+    /**
+     * Check if an item is a special item that should not be placed on pedestals
+     */
+    private boolean isSpecialItem(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) {
+            return false;
+        }
+
+        // Check for Life/Death cores
+        NamespacedKey lifeKey = new NamespacedKey(blockManager.getPlugin(), "life_core");
+        NamespacedKey deathKey = new NamespacedKey(blockManager.getPlugin(), "death_core");
+
+        if (item.getItemMeta().getPersistentDataContainer().has(lifeKey, PersistentDataType.BYTE) ||
+                item.getItemMeta().getPersistentDataContainer().has(deathKey, PersistentDataType.BYTE)) {
+            return true;
+        }
+
+        // Check for Upgraders
+        NamespacedKey upgraderKey = new NamespacedKey(blockManager.getPlugin(), "upgrader_level");
+        if (item.getItemMeta().getPersistentDataContainer().has(upgraderKey, PersistentDataType.INTEGER)) {
+            return true;
+        }
+
+        // Check for Reroller
+        NamespacedKey rerollerKey = new NamespacedKey(blockManager.getPlugin(), "element_reroller");
+        if (item.getItemMeta().getPersistentDataContainer().has(rerollerKey, PersistentDataType.BYTE)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -147,6 +190,15 @@ public class PedestalInteractionListener implements Listener {
                 player.sendActionBar(Component.text("Hold an item to place it on the pedestal")
                         .color(TextColor.color(0xFFAA00)));
             }
+            return;
+        }
+
+        // Double-check special items (shouldn't get here but safety check)
+        if (isSpecialItem(heldItem)) {
+            player.sendActionBar(
+                    Component.text("This item cannot be placed on a pedestal!")
+                            .color(TextColor.color(0xFF5555))
+            );
             return;
         }
 

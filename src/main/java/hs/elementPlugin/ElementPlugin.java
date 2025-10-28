@@ -13,6 +13,17 @@ import hs.elementPlugin.elements.upsides.impl.EarthUpsides;
 import hs.elementPlugin.listeners.player.*;
 import hs.elementPlugin.listeners.items.listeners.*;
 import hs.elementPlugin.managers.*;
+import hs.elementSmpUtility.blocks.CustomBlockManager;
+import hs.elementSmpUtility.commands.CustomBlockCommand;
+import hs.elementSmpUtility.commands.PedestalCommand;
+import hs.elementSmpUtility.listeners.ChunkListener;
+import hs.elementSmpUtility.listeners.PedestalInteractionListener;
+import hs.elementSmpUtility.listeners.block.BlockBreakListener;
+import hs.elementSmpUtility.listeners.block.BlockPlacementListener;
+import hs.elementSmpUtility.recipes.PedestalRecipe;
+import hs.elementSmpUtility.storage.BlockDataStorage;
+import hs.elementSmpUtility.storage.pedestal.PedestalDataStorage;
+import hs.elementSmpUtility.storage.pedestal.PedestalOwnerStorage;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -27,7 +38,12 @@ public final class ElementPlugin extends JavaPlugin {
     private CooldownManager cooldownManager;
     private AbilityManager abilityManager;
     private ElementRegistry elementRegistry;
-    private hs.event.LifeDeathEvent.EventManager eventManager;
+
+    // Pedestal/Custom Block System
+    private CustomBlockManager blockManager;
+    private BlockDataStorage blockStorage;
+    private PedestalDataStorage pedestalStorage;
+    private PedestalOwnerStorage ownerStorage;
 
     @Override
     public void onEnable() {
@@ -43,17 +59,63 @@ public final class ElementPlugin extends JavaPlugin {
         this.itemManager = new ItemManager(this, manaManager, configManager);
         this.cooldownManager = new CooldownManager();
 
+        // Initialize pedestal/custom block system
+        this.blockManager = new CustomBlockManager(this);
+        this.blockStorage = new BlockDataStorage(this, blockManager);
+        this.pedestalStorage = new PedestalDataStorage(this);
+        this.ownerStorage = new PedestalOwnerStorage(this);
 
         // Register abilities
         this.abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility(this));
         this.abilityManager.registerAbility(ElementType.DEATH, 1, new DeathSummonUndeadAbility(this));
         this.abilityManager.registerAbility(ElementType.DEATH, 2, new DeathWitherSkullAbility(this));
+
         // Register commands
+        registerCommands();
+
+        // Register listeners
+        registerListeners();
+
+        // ========== Register Recipes ==========
+        registerRecipes();
+
+        // Start mana system
+        this.manaManager.start();
+    }
+
+    @Override
+    public void onDisable() {
+        // Save data and stop background tasks
+        if (dataStore != null) {
+            dataStore.flushAll();
+        }
+
+        if (manaManager != null) {
+            manaManager.stop();
+        }
+    }
+
+    /**
+     * Register all commands
+     */
+    private void registerCommands() {
+        // Element system commands
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
         getCommand("element").setExecutor(new hs.elementPlugin.commands.ElementCommand(this));
         getCommand("mana").setExecutor(new hs.elementPlugin.commands.ManaCommand(manaManager, configManager));
         getCommand("util").setExecutor(new hs.elementPlugin.commands.UtilCommand(this));
 
+        // Pedestal/Custom block commands
+        getCommand("customblock").setExecutor(new CustomBlockCommand(blockManager));
+        getCommand("pedestal").setExecutor(new PedestalCommand(pedestalStorage, ownerStorage));
+
+        getLogger().info("Commands registered successfully");
+    }
+
+    /**
+     * Register all listeners
+     */
+    private void registerListeners() {
         // ========== Register Core Listeners ==========
         Bukkit.getPluginManager().registerEvents(new JoinListener(this, elementManager, manaManager), this);
         Bukkit.getPluginManager().registerEvents(new CombatListener(trustManager, elementManager), this);
@@ -92,9 +154,7 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthFriendlyMobListener(this, trustManager), this);
         Bukkit.getPluginManager().registerEvents(new EarthOreDropListener(elementManager), this);
 
-
-        // ✅ Our custom listener for double ore drops
-        Bukkit.getPluginManager().registerEvents(new EarthOreDropListener(elementManager), this);
+        // ========== Life Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeRegenListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeAbilityListener(elementManager, cooldownManager), this);
@@ -117,46 +177,34 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
 
-        // ========== Life/Death Event System ==========
-        this.eventManager = new hs.event.LifeDeathEvent.EventManager(this);
-        getLogger().info("Life vs Death event system loaded");
+        // ========== Pedestal/Custom Block Listeners ==========
+        Bukkit.getPluginManager().registerEvents(new BlockPlacementListener(blockManager, blockStorage, ownerStorage), this);
+        Bukkit.getPluginManager().registerEvents(new BlockBreakListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
+        Bukkit.getPluginManager().registerEvents(new PedestalInteractionListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
+        Bukkit.getPluginManager().registerEvents(new ChunkListener(blockStorage, pedestalStorage, ownerStorage), this);
 
-        // ========== Register Recipes ==========
+        getLogger().info("Listeners registered successfully");
+    }
+
+    /**
+     * Register all recipes
+     */
+    private void registerRecipes() {
         Bukkit.getScheduler().runTaskLater(this, () -> {
             getLogger().info("Registering recipes...");
+
 
             // Utility recipes
             hs.elementPlugin.recipes.util.UtilRecipes.registerRecipes(this);
 
-            // Element recipes
-            hs.elementPlugin.recipes.air.AirRecipes.registerRecipes(this);
-            hs.elementPlugin.recipes.water.WaterRecipes.registerRecipes(this);
-            hs.elementPlugin.recipes.fire.FireRecipes.registerRecipes(this);
-            hs.elementPlugin.recipes.earth.EarthRecipes.registerRecipes(this);
+
+            // Pedestal recipe
+            PedestalRecipe pedestalRecipe = new PedestalRecipe(this, blockManager);
+            pedestalRecipe.register();
 
             getLogger().info("Recipes registered successfully");
         }, 20L); // 1-second delay
-
-        // Start mana system
-        this.manaManager.start();
     }
-
-    @Override
-    public void onDisable() {
-        // Save data and stop background tasks
-        if (dataStore != null) {
-            dataStore.flushAll();
-        }
-
-        if (manaManager != null) {
-            manaManager.stop();
-        }
-        // Cleanup event system
-        if (eventManager != null) {
-            eventManager.cleanup(); // for Life And Death Event DELETE WHEN DONE
-        }
-    }
-
 
     // ====== Getters ======
     public DataStore getDataStore() { return dataStore; }
@@ -166,4 +214,10 @@ public final class ElementPlugin extends JavaPlugin {
     public TrustManager getTrustManager() { return trustManager; }
     public ItemManager getItemManager() { return itemManager; }
     public CooldownManager getCooldownManager() { return cooldownManager; }
+
+    // Pedestal/Custom Block System Getters
+    public CustomBlockManager getBlockManager() { return blockManager; }
+    public BlockDataStorage getBlockStorage() { return blockStorage; }
+    public PedestalDataStorage getPedestalStorage() { return pedestalStorage; }
+    public PedestalOwnerStorage getOwnerStorage() { return ownerStorage; }
 }
