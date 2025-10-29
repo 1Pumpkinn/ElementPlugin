@@ -69,6 +69,9 @@ public final class ElementPlugin extends JavaPlugin {
         this.abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility(this));
         this.abilityManager.registerAbility(ElementType.DEATH, 1, new DeathSummonUndeadAbility(this));
         this.abilityManager.registerAbility(ElementType.DEATH, 2, new DeathWitherSkullAbility(this));
+        this.abilityManager.registerAbility(ElementType.FIRE, 1, new hs.elementPlugin.elements.abilities.impl.fire.FireballAbility(this));
+        this.abilityManager.registerAbility(ElementType.FIRE, 2, new hs.elementPlugin.elements.abilities.impl.fire.MeteorShowerAbility(this));
+
 
         // Register commands
         registerCommands();
@@ -145,7 +148,8 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireImmunityListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireAbilityListener(elementManager, cooldownManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireFriendlyMobListener(this, trustManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireCombatListener(elementManager, trustManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireballProtectionListener(), this);
 
         // ========== Earth Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthCharmListener(elementManager, this), this);

@@ -2,8 +2,8 @@ package hs.elementPlugin.elements.impl.fire;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.fire.FireBreathAbility;
-import hs.elementPlugin.elements.abilities.impl.fire.FireSummonAbility;
+import hs.elementPlugin.elements.abilities.impl.fire.FireballAbility;
+import hs.elementPlugin.elements.abilities.impl.fire.MeteorShowerAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
@@ -18,16 +18,22 @@ public class FireElement extends BaseElement {
 
     public FireElement(ElementPlugin plugin) {
         super(plugin);
-        this.ability1 = new FireBreathAbility(plugin);
-        this.ability2 = new FireSummonAbility(plugin);
+        this.ability1 = new FireballAbility(plugin);
+        this.ability2 = new MeteorShowerAbility(plugin);
     }
 
     @Override
-    public ElementType getType() { return ElementType.FIRE; }
+    public ElementType getType() {
+        return ElementType.FIRE;
+    }
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
+        // Upside 1: Infinite Fire Resistance
         player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0, true, false));
+
+        // Upside 2: Fire Aspect on hits (handled in listener)
+        // No passive effect needed here
     }
 
     @Override
@@ -54,7 +60,7 @@ public class FireElement extends BaseElement {
 
     @Override
     public String getDescription() {
-        return ChatColor.GRAY + "Masters of flame and heat. Fire users are immune to fire damage and can breathe fire or summon blazes.";
+        return ChatColor.GRAY + "Masters of flame and destruction. Fire users are immune to fire damage and can rain destruction from above.";
     }
 
     @Override
