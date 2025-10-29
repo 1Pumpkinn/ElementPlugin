@@ -72,25 +72,30 @@ public class BlockBreakListener implements Listener {
                     );
                     return;
                 }
-                // Admin can break unclaimed pedestals
-            } else {
-                boolean isOwner = ownerUUID.equals(player.getUniqueId());
-                boolean hasBypass = player.hasPermission("elementsmp.pedestal.bypass");
-
-                // If not owner AND doesn't have bypass permission, deny breaking
-                if (!isOwner && !hasBypass) {
-                    event.setCancelled(true);
-                    String ownerName = ownerStorage.getOwnerName(location);
-                    player.sendActionBar(
-                            Component.text("This pedestal belongs to " + ownerName + "!")
-                                    .color(TextColor.color(0xFF5555))
-                    );
-                    return;
-                }
+                // Admin can break unclaimed pedestals - allow drop
+                handlePedestalBreak(event, true);
+                storage.removeCustomBlock(event.getBlock());
+                return;
             }
 
-            // Ownership check passed, now handle the break
-            handlePedestalBreak(event);
+            // Check ownership
+            boolean isOwner = ownerUUID.equals(player.getUniqueId());
+            boolean hasAdmin = player.hasPermission("elementsmp.pedestal.admin");
+
+            // If not owner and not admin, completely deny breaking
+            if (!isOwner && !hasAdmin) {
+                event.setCancelled(true);
+                String ownerName = ownerStorage.getOwnerName(location);
+                player.sendActionBar(
+                        Component.text("This pedestal belongs to " + ownerName + "!")
+                                .color(TextColor.color(0xFF5555))
+                );
+                return;
+            }
+
+            // Ownership check passed
+            // Owner gets the pedestal back, admin breaks it without drop
+            handlePedestalBreak(event, isOwner);
             storage.removeCustomBlock(event.getBlock());
             return;
         }
@@ -118,9 +123,16 @@ public class BlockBreakListener implements Listener {
 
     /**
      * Handle breaking a pedestal block - properly cleans up ALL armor stands
+     * and drops the correct pedestal item (only if shouldDrop is true)
+     *
+     * @param event The block break event
+     * @param shouldDrop Whether the pedestal item should drop (true for owner, false for admin)
      */
-    private void handlePedestalBreak(BlockBreakEvent event) {
+    private void handlePedestalBreak(BlockBreakEvent event, boolean shouldDrop) {
         Location loc = event.getBlock().getLocation();
+
+        // CRITICAL: Prevent the default lodestone drop
+        event.setDropItems(false);
 
         // Get displayed item from storage
         ItemStack displayedItem = pedestalStorage.getPedestalItem(loc);
@@ -137,7 +149,19 @@ public class BlockBreakListener implements Listener {
             remaining.remove();
         }
 
-        // Drop displayed item if present
+        // Only drop the pedestal item if shouldDrop is true (owner or admin with unclaimed)
+        if (shouldDrop) {
+            ItemStack pedestalItem = blockManager.createCustomBlock("pedestal", 1);
+            if (pedestalItem != null) {
+                event.getBlock().getWorld().dropItemNaturally(loc, pedestalItem);
+            } else {
+                blockManager.getPlugin().getLogger().warning(
+                        "Failed to create pedestal item for drop at " + loc
+                );
+            }
+        }
+
+        // Always drop the displayed item if present (belongs to the owner)
         if (displayedItem != null && displayedItem.getType() != Material.AIR) {
             event.getBlock().getWorld().dropItemNaturally(loc, displayedItem);
         }
