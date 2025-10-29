@@ -1,4 +1,4 @@
-package hs.elementPlugin.elements.abilities.impl.fire;
+/*package hs.elementPlugin.elements.abilities.impl.fire;
 
 import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
@@ -253,4 +253,4 @@ public class FireBreathAbility extends BaseAbility {
                type == Material.FIRE ||
                type == Material.SOUL_FIRE;
     }
-}
+}*/

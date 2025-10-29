@@ -1,4 +1,4 @@
-package hs.elementPlugin.elements.abilities.impl.fire;
+/*package hs.elementPlugin.elements.abilities.impl.fire;
 
 import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
@@ -77,4 +77,4 @@ public class FireSummonAbility extends BaseAbility {
     public String getDescription() {
         return ChatColor.GRAY + "Summon a friendly blaze to fight for you. (100 mana)";
     }
-}
+} */
