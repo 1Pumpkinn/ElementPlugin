@@ -14,6 +14,8 @@ import hs.elementPlugin.listeners.player.*;
 import hs.elementPlugin.listeners.items.listeners.*;
 import hs.elementPlugin.managers.*;
 import hs.elementSmpUtility.blocks.CustomBlockManager;
+// ADD THIS LINE - This is the missing import!
+import hs.elementSmpUtility.blocks.CustomModelBlock;
 import hs.elementSmpUtility.commands.CustomBlockCommand;
 import hs.elementSmpUtility.commands.PedestalCommand;
 import hs.elementSmpUtility.listeners.ChunkListener;

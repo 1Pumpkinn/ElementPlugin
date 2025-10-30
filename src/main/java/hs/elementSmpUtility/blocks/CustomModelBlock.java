@@ -2,6 +2,7 @@ package hs.elementSmpUtility.blocks;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
+import hs.elementSmpUtility.blocks.CustomModelBlock;
 
 /**
  * Extension of CustomBlockType that includes custom model data
