@@ -30,15 +30,13 @@ public class MeteorShowerAbility extends BaseAbility {
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
 
-        // Get target location (where player is looking)
-        Location targetLoc = player.getTargetBlockExact(30) != null
-                ? player.getTargetBlockExact(30).getLocation()
-                : player.getLocation().clone().add(player.getLocation().getDirection().multiply(20));
+        // Use player's current location instead of where they're looking
+        Location targetLoc = player.getLocation();
 
         player.sendMessage(ChatColor.GOLD + "Meteor shower incoming!");
         player.getWorld().playSound(targetLoc, Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
 
-        // Spawn meteors over 5 seconds
+        // Spawn meteors over 8 seconds (longer duration, less spammy)
         new BukkitRunnable() {
             int count = 0;
             final int maxMeteors = 8;
@@ -50,7 +48,7 @@ public class MeteorShowerAbility extends BaseAbility {
                     return;
                 }
 
-                // Random location around target
+                // Random location around player's position
                 double offsetX = (random.nextDouble() - 0.5) * 10;
                 double offsetZ = (random.nextDouble() - 0.5) * 10;
                 Location spawnLoc = targetLoc.clone().add(offsetX, 20, offsetZ);
@@ -59,8 +57,8 @@ public class MeteorShowerAbility extends BaseAbility {
                 Fireball fireball = player.getWorld().spawn(spawnLoc, Fireball.class);
                 fireball.setShooter(player);
                 fireball.setDirection(new Vector(0, -1, 0));
-                fireball.setYield(1.5f);
-                fireball.setIsIncendiary(true);
+                fireball.setYield(0.0f); // No explosion power - won't destroy terrain
+                fireball.setIsIncendiary(false); // Don't set blocks on fire
 
                 // Spawn particles at spawn location
                 player.getWorld().spawnParticle(Particle.FLAME, spawnLoc, 20, 0.5, 0.5, 0.5, 0.1, null, true);
@@ -68,7 +66,7 @@ public class MeteorShowerAbility extends BaseAbility {
 
                 count++;
             }
-        }.runTaskTimer(plugin, 0L, 12L); // Every 0.6 seconds
+        }.runTaskTimer(plugin, 0L, 20L); // Every 1 second (was 12L = 0.6 seconds)
 
         return true;
     }
@@ -80,6 +78,6 @@ public class MeteorShowerAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return ChatColor.GRAY + "Rain down fireballs from the sky on your target area. (100 mana)";
+        return ChatColor.GRAY + "Rain down fireballs from the sky around your position. (100 mana)";
     }
 }

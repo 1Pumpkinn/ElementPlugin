@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 /**
- * Fire element's fireball ability - launches an explosive fireball
+ * Fire element's fireball ability - launches a fireball that damages entities
  */
 public class FireballAbility extends BaseAbility {
     private final ElementPlugin plugin;
@@ -30,8 +30,8 @@ public class FireballAbility extends BaseAbility {
 
         // Set fireball properties
         fireball.setShooter(player);
-        fireball.setYield(2.0f); // Explosion power
-        fireball.setIsIncendiary(true); // Sets blocks on fire
+        fireball.setYield(0.0f); // No explosion power - won't destroy terrain
+        fireball.setIsIncendiary(false); // Don't set blocks on fire
 
         // Play sound
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1.0f, 1.0f);
@@ -46,6 +46,6 @@ public class FireballAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return ChatColor.GRAY + "Launch an explosive fireball that ignites the area. (50 mana)";
+        return ChatColor.GRAY + "Launch a fireball that damages enemies on impact. (50 mana)";
     }
 }
