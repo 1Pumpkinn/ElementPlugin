@@ -36,10 +36,10 @@ public class MeteorShowerAbility extends BaseAbility {
         player.sendMessage(ChatColor.GOLD + "Meteor shower incoming!");
         player.getWorld().playSound(targetLoc, Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
 
-        // Spawn meteors over 8 seconds (longer duration, less spammy)
+        // Spawn meteors over 6 seconds - MUCH more meteors, faster spawn rate
         new BukkitRunnable() {
             int count = 0;
-            final int maxMeteors = 8;
+            final int maxMeteors = 24; // Tripled from 8 to 24
 
             @Override
             public void run() {
@@ -48,25 +48,32 @@ public class MeteorShowerAbility extends BaseAbility {
                     return;
                 }
 
-                // Random location around player's position
-                double offsetX = (random.nextDouble() - 0.5) * 10;
-                double offsetZ = (random.nextDouble() - 0.5) * 10;
-                Location spawnLoc = targetLoc.clone().add(offsetX, 20, offsetZ);
+                // Random location around player's position (slightly larger area)
+                double offsetX = (random.nextDouble() - 0.5) * 12;
+                double offsetZ = (random.nextDouble() - 0.5) * 12;
+                Location spawnLoc = targetLoc.clone().add(offsetX, 25, offsetZ);
 
-                // Spawn fireball falling downward
+                // Spawn fireball falling downward with slight angle variation for realism
                 Fireball fireball = player.getWorld().spawn(spawnLoc, Fireball.class);
                 fireball.setShooter(player);
-                fireball.setDirection(new Vector(0, -1, 0));
-                fireball.setYield(0.0f); // No explosion power - won't destroy terrain
+
+                // Add slight random horizontal velocity for more natural meteor fall
+                double randomX = (random.nextDouble() - 0.5) * 0.3;
+                double randomZ = (random.nextDouble() - 0.5) * 0.3;
+                fireball.setDirection(new Vector(randomX, -1, randomZ));
+
+                fireball.setYield(0.0f);
                 fireball.setIsIncendiary(false); // Don't set blocks on fire
 
-                // Spawn particles at spawn location
-                player.getWorld().spawnParticle(Particle.FLAME, spawnLoc, 20, 0.5, 0.5, 0.5, 0.1, null, true);
-                player.getWorld().playSound(spawnLoc, Sound.ENTITY_BLAZE_SHOOT, 0.5f, 0.8f);
+
+                // Spawn more dramatic particles at spawn location
+                player.getWorld().spawnParticle(Particle.FLAME, spawnLoc, 30, 0.8, 0.8, 0.8, 0.15, null, true);
+                player.getWorld().spawnParticle(Particle.LAVA, spawnLoc, 5, 0.5, 0.5, 0.5, 0.0, null, true);
+                player.getWorld().playSound(spawnLoc, Sound.ENTITY_BLAZE_SHOOT, 0.6f, 0.7f);
 
                 count++;
             }
-        }.runTaskTimer(plugin, 0L, 20L); // Every 1 second (was 12L = 0.6 seconds)
+        }.runTaskTimer(plugin, 0L, 5L); // Every 0.25 seconds (5 ticks) - much faster spawn rate
 
         return true;
     }
