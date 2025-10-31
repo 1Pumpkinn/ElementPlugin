@@ -1,9 +1,18 @@
 package hs.elementPlugin;
 
 import hs.elementPlugin.elements.abilities.AbilityManager;
+import hs.elementPlugin.elements.abilities.impl.air.AirBlastAbility;
+import hs.elementPlugin.elements.abilities.impl.air.AirDashAbility;
+import hs.elementPlugin.elements.abilities.impl.water.WaterBeamAbility;
 import hs.elementPlugin.elements.abilities.impl.water.WaterGeyserAbility;
-import hs.elementPlugin.elements.abilities.impl.death.DeathWitherSkullAbility;
 import hs.elementPlugin.elements.abilities.impl.death.DeathSummonUndeadAbility;
+import hs.elementPlugin.elements.abilities.impl.death.DeathWitherSkullAbility;
+import hs.elementPlugin.elements.abilities.impl.fire.FireballAbility;
+import hs.elementPlugin.elements.abilities.impl.fire.MeteorShowerAbility;
+import hs.elementPlugin.elements.abilities.impl.earth.EarthTunnelAbility;
+import hs.elementPlugin.elements.abilities.impl.earth.EarthCharmAbility;
+import hs.elementPlugin.elements.abilities.impl.life.LifeRegenAbility;
+import hs.elementPlugin.elements.abilities.impl.life.LifeHealingBeamAbility;
 import hs.elementPlugin.commands.TrustCommand;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.elements.ElementRegistry;
@@ -14,7 +23,6 @@ import hs.elementPlugin.listeners.player.*;
 import hs.elementPlugin.listeners.items.listeners.*;
 import hs.elementPlugin.managers.*;
 import hs.elementSmpUtility.blocks.CustomBlockManager;
-// ADD THIS LINE - This is the missing import!
 import hs.elementSmpUtility.blocks.CustomModelBlock;
 import hs.elementSmpUtility.commands.CustomBlockCommand;
 import hs.elementSmpUtility.commands.PedestalCommand;
@@ -67,20 +75,33 @@ public final class ElementPlugin extends JavaPlugin {
         this.pedestalStorage = new PedestalDataStorage(this);
         this.ownerStorage = new PedestalOwnerStorage(this);
 
-        // Register abilities
+        // ========== Register ALL Abilities ==========
+        // NOTE: Mana costs are defined in the ability constructors as BaseAbility parameters
+
+        this.abilityManager.registerAbility(ElementType.AIR, 1, new AirBlastAbility(this));
+        this.abilityManager.registerAbility(ElementType.AIR, 2, new AirDashAbility(this));
+
+        this.abilityManager.registerAbility(ElementType.WATER, 2, new WaterBeamAbility(this));
         this.abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility(this));
+
+        this.abilityManager.registerAbility(ElementType.FIRE, 1, new FireballAbility(this));
+        this.abilityManager.registerAbility(ElementType.FIRE, 2, new MeteorShowerAbility(this));
+
+        this.abilityManager.registerAbility(ElementType.EARTH, 1, new EarthTunnelAbility(this));
+        this.abilityManager.registerAbility(ElementType.EARTH, 2, new EarthCharmAbility(this));
+
+        this.abilityManager.registerAbility(ElementType.LIFE, 1, new LifeRegenAbility(this));
+        this.abilityManager.registerAbility(ElementType.LIFE, 2, new LifeHealingBeamAbility(this));
+
         this.abilityManager.registerAbility(ElementType.DEATH, 1, new DeathSummonUndeadAbility(this));
         this.abilityManager.registerAbility(ElementType.DEATH, 2, new DeathWitherSkullAbility(this));
-        this.abilityManager.registerAbility(ElementType.FIRE, 1, new hs.elementPlugin.elements.abilities.impl.fire.FireballAbility(this));
-        this.abilityManager.registerAbility(ElementType.FIRE, 2, new hs.elementPlugin.elements.abilities.impl.fire.MeteorShowerAbility(this));
 
+        getLogger().info("Registered all element abilities:");
 
         // Register commands
         registerCommands();
-
         // Register listeners
         registerListeners();
-
         // ========== Register Recipes ==========
         registerRecipes();
 
@@ -171,7 +192,6 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathAbilityListener(elementManager, cooldownManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathFriendlyMobListener(this, trustManager), this);
 
-        // Craft listeners
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.DeathElementCraftListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.LifeElementCraftListener(this, elementManager), this);
 
@@ -183,7 +203,6 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
 
-        // ========== Pedestal/Custom Block Listeners ==========
         Bukkit.getPluginManager().registerEvents(new BlockPlacementListener(blockManager, blockStorage, ownerStorage), this);
         Bukkit.getPluginManager().registerEvents(new BlockBreakListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
         Bukkit.getPluginManager().registerEvents(new PedestalInteractionListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
@@ -199,10 +218,8 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getScheduler().runTaskLater(this, () -> {
             getLogger().info("Registering recipes...");
 
-
             // Utility recipes
             hs.elementPlugin.recipes.util.UtilRecipes.registerRecipes(this);
-
 
             // Pedestal recipe
             PedestalRecipe pedestalRecipe = new PedestalRecipe(this, blockManager);
