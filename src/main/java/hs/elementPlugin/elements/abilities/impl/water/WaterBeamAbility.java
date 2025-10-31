@@ -23,7 +23,7 @@ public class WaterBeamAbility extends BaseAbility {
     private final hs.elementPlugin.ElementPlugin plugin;
 
     public WaterBeamAbility(hs.elementPlugin.ElementPlugin plugin) {
-        super("water_beam", 40, 15, 1);
+        super("water_beam", 50, 15, 1);
         this.plugin = plugin;
     }
     

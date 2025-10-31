@@ -23,7 +23,7 @@ public class DeathSummonUndeadAbility extends BaseAbility {
     private final Random random = new Random();
 
     public DeathSummonUndeadAbility(ElementPlugin plugin) {
-        super("death_summon_undead", 50, 30, 2);
+        super("death_summon_undead", 75, 30, 2);
         this.plugin = plugin;
     }
 

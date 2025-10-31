@@ -12,7 +12,7 @@ public class EarthCharmAbility extends BaseAbility {
     private final hs.elementPlugin.ElementPlugin plugin;
     
     public EarthCharmAbility(hs.elementPlugin.ElementPlugin plugin) {
-        super("earth_charm", 30, 30, 1);
+        super("earth_charm", 75, 30, 1);
         this.plugin = plugin;
     }
 

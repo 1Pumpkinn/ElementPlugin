@@ -15,7 +15,7 @@ public class LifeRegenAbility extends BaseAbility {
     private final hs.elementPlugin.ElementPlugin plugin;
     
     public LifeRegenAbility(hs.elementPlugin.ElementPlugin plugin) {
-        super("life_regen", 30, 20, 1);
+        super("life_regen", 50, 20, 1);
         this.plugin = plugin;
     }
 

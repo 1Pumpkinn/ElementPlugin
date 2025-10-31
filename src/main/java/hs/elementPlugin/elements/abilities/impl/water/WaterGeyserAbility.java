@@ -18,7 +18,7 @@ public class WaterGeyserAbility extends BaseAbility {
     private final hs.elementPlugin.ElementPlugin plugin;
 
     public WaterGeyserAbility(hs.elementPlugin.ElementPlugin plugin) {
-        super("water_geyser", 30, 5, 1);
+        super("water_geyser", 75, 5, 1);
         this.plugin = plugin;
     }
 

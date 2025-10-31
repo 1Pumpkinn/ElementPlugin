@@ -14,7 +14,7 @@ public class AirBlastAbility extends BaseAbility {
     private final hs.elementPlugin.ElementPlugin plugin;
 
     public AirBlastAbility(hs.elementPlugin.ElementPlugin plugin) {
-        super("air_blast", 20, 8, 1);
+        super("air_blast", 50, 8, 1);
         this.plugin = plugin;
     }
 

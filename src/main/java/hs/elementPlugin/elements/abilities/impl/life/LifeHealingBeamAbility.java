@@ -16,7 +16,7 @@ public class LifeHealingBeamAbility extends BaseAbility {
     private final hs.elementPlugin.ElementPlugin plugin;
     
     public LifeHealingBeamAbility(hs.elementPlugin.ElementPlugin plugin) {
-        super("life_healing_beam", 40, 15, 1);
+        super("life_healing_beam", 75, 15, 1);
         this.plugin = plugin;
     }
 

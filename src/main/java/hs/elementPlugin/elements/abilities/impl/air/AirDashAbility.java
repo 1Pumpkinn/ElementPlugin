@@ -12,7 +12,7 @@ public class AirDashAbility extends BaseAbility {
     private final hs.elementPlugin.ElementPlugin plugin;
 
     public AirDashAbility(hs.elementPlugin.ElementPlugin plugin) {
-        super("air_dash", 15, 5, 1);
+        super("air_dash", 75, 5, 1);
         this.plugin = plugin;
     }
 

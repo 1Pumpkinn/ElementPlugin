@@ -34,7 +34,7 @@ public class EarthTunnelAbility extends BaseAbility {
     private final hs.elementPlugin.ElementPlugin plugin;
 
     public EarthTunnelAbility(hs.elementPlugin.ElementPlugin plugin) {
-        super("earth_tunnel", 20, 10, 1);
+        super("earth_tunnel", 50, 10, 1);
         this.plugin = plugin;
     }
 
