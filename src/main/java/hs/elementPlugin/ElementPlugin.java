@@ -227,7 +227,6 @@ public final class ElementPlugin extends JavaPlugin {
             PedestalRecipe pedestalRecipe = new PedestalRecipe(this, blockManager);
             pedestalRecipe.register();
 
-            hs.elementSmpUtility.recipes.CobwebRecipe.register(this);
             hs.elementSmpUtility.recipes.ShulkerBoxRecipe.register(this);
 
             getLogger().info("Recipes registered successfully");
