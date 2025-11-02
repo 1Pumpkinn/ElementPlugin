@@ -34,12 +34,7 @@ public class PedestalRecipe {
         NamespacedKey key = new NamespacedKey(plugin, "pedestal_recipe");
         ShapedRecipe recipe = new ShapedRecipe(key, pedestalItem);
 
-        // Recipe pattern:
-        //  [ ][ ][ ]
-        //  [ ][E][ ]
-        //  [ ][L][ ]
-        // E = Ender Pearl
-        // L = Lodestone
+
         recipe.shape(
                 "   ",
                 " E ",

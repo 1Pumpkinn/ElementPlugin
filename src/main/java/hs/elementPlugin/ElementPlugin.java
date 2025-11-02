@@ -207,6 +207,8 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new BlockBreakListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
         Bukkit.getPluginManager().registerEvents(new PedestalInteractionListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
         Bukkit.getPluginManager().registerEvents(new ChunkListener(blockStorage, pedestalStorage, ownerStorage), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementSmpUtility.listeners.PedestalProtectionListener(blockStorage), this);
+
 
         getLogger().info("Listeners registered successfully");
     }
@@ -224,6 +226,9 @@ public final class ElementPlugin extends JavaPlugin {
             // Pedestal recipe
             PedestalRecipe pedestalRecipe = new PedestalRecipe(this, blockManager);
             pedestalRecipe.register();
+
+            hs.elementSmpUtility.recipes.CobwebRecipe.register(this);
+            hs.elementSmpUtility.recipes.ShulkerBoxRecipe.register(this);
 
             getLogger().info("Recipes registered successfully");
         }, 20L); // 1-second delay
