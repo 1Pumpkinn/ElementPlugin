@@ -25,13 +25,14 @@ public class ShulkerBoxRecipe {
 
 
         recipe.shape(
-                " S ",
+                "AAA",
                 "SCS",
-                " S "
+                "AAA"
         );
 
         recipe.setIngredient('S', Material.BARREL);
         recipe.setIngredient('C', Material.BUNDLE);
+        recipe.setIngredient('A', Material.AMETHYST_SHARD);
 
         try {
             plugin.getServer().addRecipe(recipe);
