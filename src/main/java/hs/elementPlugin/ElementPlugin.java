@@ -228,6 +228,7 @@ public final class ElementPlugin extends JavaPlugin {
             pedestalRecipe.register();
 
             hs.elementSmpUtility.recipes.ShulkerBoxRecipe.register(this);
+            hs.elementSmpUtility.recipes.ElytraRecipe.register(this);
 
             getLogger().info("Recipes registered successfully");
         }, 20L); // 1-second delay
