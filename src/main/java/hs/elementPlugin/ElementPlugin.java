@@ -96,6 +96,9 @@ public final class ElementPlugin extends JavaPlugin {
         this.abilityManager.registerAbility(ElementType.DEATH, 1, new DeathSummonUndeadAbility(this));
         this.abilityManager.registerAbility(ElementType.DEATH, 2, new DeathWitherSkullAbility(this));
 
+        this.abilityManager.registerAbility(ElementType.METAL, 1, new hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility(this));
+        this.abilityManager.registerAbility(ElementType.METAL, 2, new hs.elementPlugin.elements.abilities.impl.metal.MetalDashAbility(this));
+
         getLogger().info("Registered all element abilities:");
 
         // Register commands

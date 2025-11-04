@@ -155,6 +155,47 @@ public class ElementManager {
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
 
+    public void assignRandomDifferentElement(Player player) {
+        PlayerData pd = data(player.getUniqueId());
+        ElementType currentElement = pd.getCurrentElement();
+
+        // Get list of basic elements (not Life/Death)
+        ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH};
+
+        // If current element is not one of the basic ones, just pick any
+        if (currentElement != ElementType.AIR && currentElement != ElementType.WATER &&
+                currentElement != ElementType.FIRE && currentElement != ElementType.EARTH) {
+            assignRandomWithTitle(player);
+            return;
+        }
+
+        // Filter out current element
+        java.util.List<ElementType> availableChoices = new java.util.ArrayList<>();
+        for (ElementType type : choices) {
+            if (type != currentElement) {
+                availableChoices.add(type);
+            }
+        }
+
+        // Pick random from remaining choices
+        ElementType pick = availableChoices.get(random.nextInt(availableChoices.size()));
+
+        // Return Life/Death core if player had one
+        returnLifeOrDeathCore(player, currentElement);
+
+        clearAllEffects(player);
+
+        pd.setCurrentElement(pick);
+        store.save(pd);
+        player.showTitle(net.kyori.adventure.title.Title.title(
+                net.kyori.adventure.text.Component.text("Element Rerolled!").color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
+                net.kyori.adventure.text.Component.text(pick.name()).color(net.kyori.adventure.text.format.NamedTextColor.AQUA),
+                net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(500), java.time.Duration.ofMillis(2000), java.time.Duration.ofMillis(500))
+        ));
+        applyUpsides(player);
+        player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+    }
+
     public void assignElement(Player player, ElementType type) {
         PlayerData pd = data(player.getUniqueId());
 

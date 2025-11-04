@@ -99,7 +99,7 @@ public class ElementCommand implements CommandExecutor {
 
     private boolean handleSet(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(ChatColor.RED + "Usage: /element set <player> <air|water|fire|earth|life|death>");
+            sender.sendMessage(ChatColor.RED + "Usage: /element set <player> <air|water|fire|earth|life|death|metal>");
             return true;
         }
 
@@ -113,7 +113,7 @@ public class ElementCommand implements CommandExecutor {
         try {
             elementType = ElementType.valueOf(args[2].toUpperCase());
         } catch (IllegalArgumentException e) {
-            sender.sendMessage(ChatColor.RED + "Invalid element type. Use: air, water, fire, earth, life, or death");
+            sender.sendMessage(ChatColor.RED + "Invalid element type. Use: air, water, fire, earth, life, death, or metal");
             return true;
         }
 
