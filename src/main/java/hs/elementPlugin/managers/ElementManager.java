@@ -58,6 +58,7 @@ public class ElementManager {
         register(new EarthElement(plugin));
         register(new LifeElement(plugin));
         register(new DeathElement(plugin));
+        register(new hs.elementPlugin.elements.impl.metal.MetalElement(plugin));
     }
 
     public ElementType getPlayerElement(Player player) {
@@ -117,7 +118,7 @@ public class ElementManager {
         currentlyRolling.add(player.getUniqueId());
 
         // Slowing title roll animation, then assign
-        String[] names = {"AIR", "WATER", "FIRE", "EARTH"};
+        String[] names = {"AIR", "WATER", "FIRE", "EARTH", "METAL"};
         player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
         int steps = 16;
         for (int i = 0; i < steps; i++) {
@@ -135,7 +136,7 @@ public class ElementManager {
     }
 
     public void assignRandomWithTitle(Player player) {
-        ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH};
+        ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH, ElementType.METAL};
         ElementType pick = choices[random.nextInt(choices.length)];
         PlayerData pd = data(player.getUniqueId());
 
@@ -160,11 +161,11 @@ public class ElementManager {
         ElementType currentElement = pd.getCurrentElement();
 
         // Get list of basic elements (not Life/Death)
-        ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH};
+        ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH, ElementType.METAL};
 
         // If current element is not one of the basic ones, just pick any
         if (currentElement != ElementType.AIR && currentElement != ElementType.WATER &&
-                currentElement != ElementType.FIRE && currentElement != ElementType.EARTH) {
+                currentElement != ElementType.FIRE && currentElement != ElementType.EARTH && currentElement != ElementType.METAL) {
             assignRandomWithTitle(player);
             return;
         }

@@ -36,7 +36,7 @@ public class ElementSelectionGUI {
         setupItems();
         openGuis.put(player.getUniqueId(), this);
     }
-    
+
     private void setupItems() {
         // Fire element item
         ItemStack fireItem = new ItemStack(Material.FIRE_CHARGE);
@@ -44,54 +44,65 @@ public class ElementSelectionGUI {
         fireMeta.setDisplayName(ChatColor.RED + "Fire Element");
 
         fireItem.setItemMeta(fireMeta);
-        
+
         // Water element item
         ItemStack waterItem = new ItemStack(Material.WATER_BUCKET);
         ItemMeta waterMeta = waterItem.getItemMeta();
         waterMeta.setDisplayName(ChatColor.BLUE + "Water Element");
 
         waterItem.setItemMeta(waterMeta);
-        
+
         // Earth element item
         ItemStack earthItem = new ItemStack(Material.GRASS_BLOCK);
         ItemMeta earthMeta = earthItem.getItemMeta();
         earthMeta.setDisplayName(ChatColor.GREEN + "Earth Element");
 
         earthItem.setItemMeta(earthMeta);
-        
+
         // Air element item
         ItemStack airItem = new ItemStack(Material.FEATHER);
         ItemMeta airMeta = airItem.getItemMeta();
         airMeta.setDisplayName(ChatColor.WHITE + "Air Element");
 
         airItem.setItemMeta(airMeta);
-        
+
+        // Metal element item
+        ItemStack metalItem = new ItemStack(Material.IRON_INGOT);
+        ItemMeta metalMeta = metalItem.getItemMeta();
+        metalMeta.setDisplayName(ChatColor.GRAY + "Metal Element");
+
+        metalItem.setItemMeta(metalMeta);
+
         // Place items in inventory
-        inventory.setItem(1, fireItem);
-        inventory.setItem(3, waterItem);
-        inventory.setItem(5, earthItem);
-        inventory.setItem(7, airItem);
+        inventory.setItem(0, fireItem);
+        inventory.setItem(2, waterItem);
+        inventory.setItem(4, earthItem);
+        inventory.setItem(6, airItem);
+        inventory.setItem(8, metalItem);
     }
     
     public void open() {
         player.openInventory(inventory);
     }
-    
+
     public void handleClick(int slot) {
         ElementType selectedElement = null;
-        
+
         switch (slot) {
-            case 1:
+            case 0:
                 selectedElement = ElementType.FIRE;
                 break;
-            case 3:
+            case 2:
                 selectedElement = ElementType.WATER;
                 break;
-            case 5:
+            case 4:
                 selectedElement = ElementType.EARTH;
                 break;
-            case 7:
+            case 6:
                 selectedElement = ElementType.AIR;
+                break;
+            case 8:
+                selectedElement = ElementType.METAL;
                 break;
             default:
                 return;

@@ -31,3 +31,7 @@ costs:
     ability1: 50
     ability2: 75
     item_use: 75
+  metal:
+    ability1: 50
+    ability2: 75
+    item_use: 75

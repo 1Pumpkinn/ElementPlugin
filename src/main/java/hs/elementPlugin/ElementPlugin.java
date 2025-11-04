@@ -212,6 +212,11 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ChunkListener(blockStorage, pedestalStorage, ownerStorage), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementSmpUtility.listeners.PedestalProtectionListener(blockStorage), this);
 
+        // ========== Metal Element ==========
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalJoinListener(elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalAbilityListener(elementManager, cooldownManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalArrowImmunityListener(elementManager), this);
+
 
         getLogger().info("Listeners registered successfully");
     }
