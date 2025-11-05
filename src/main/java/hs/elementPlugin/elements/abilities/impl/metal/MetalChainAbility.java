@@ -74,13 +74,18 @@ public class MetalChainAbility extends BaseAbility {
         Vector direction = targetLoc.toVector().subtract(playerLoc.toVector());
         double distance = direction.length();
 
-// Force horizontal direction only
-        direction.setY(0);
+        // Normalize the full 3D direction vector (keep Y component)
         direction.normalize();
 
-// Calculate yaw once for all chain segments
-        double yaw = Math.atan2(direction.getX(), direction.getZ());
-        Quaternionf rotation = new Quaternionf().rotateY((float) yaw);
+        // Calculate rotation to point chains at target
+        // Chains default to vertical (Y-axis), so we need to rotate them to point at target
+        double yaw = Math.atan2(-direction.getX(), direction.getZ());
+        double pitch = Math.asin(-direction.getY());
+
+        // Create rotation: first pitch (around X-axis), then yaw (around Y-axis)
+        Quaternionf rotation = new Quaternionf()
+                .rotateY((float) yaw)
+                .rotateX((float) pitch);
 
         List<BlockDisplay> chainDisplays = new ArrayList<>();
         BlockData chainBlock = Material.CHAIN.createBlockData();
@@ -91,12 +96,14 @@ public class MetalChainAbility extends BaseAbility {
 
         for (int i = 0; i <= numChains; i++) {
             double d = i * actualSpacing;
-            Location chainLoc = playerLoc.clone().add(direction.clone().multiply(d));
+            // Use the full 3D direction (with Y component) for positioning
+            Vector fullDirection = targetLoc.toVector().subtract(playerLoc.toVector()).normalize();
+            Location chainLoc = playerLoc.clone().add(fullDirection.clone().multiply(d));
 
             BlockDisplay display = chainLoc.getWorld().spawn(chainLoc, BlockDisplay.class, bd -> {
                 bd.setBlock(chainBlock);
 
-                // Apply the same yaw rotation to every segment
+                // Apply the rotation to point at target
                 Transformation transformation = bd.getTransformation();
                 transformation.getLeftRotation().set(rotation);
 
