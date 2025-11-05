@@ -103,7 +103,7 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                         }
 
                         // Damage the entity
-                        entity.damage(6.5, player); // 2 hearts of damage
+                        entity.damage(6.5, player);
                         damagedEntities.add(entity.getUniqueId());
                         hitEntity = true; // Mark that we hit an entity
 
