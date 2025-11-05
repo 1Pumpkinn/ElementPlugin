@@ -13,6 +13,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -71,46 +72,56 @@ public class MetalChainAbility extends BaseAbility {
         // --- Chain visuals ---
         Location playerLoc = player.getEyeLocation().subtract(0, 0.3, 0);
         Location targetLoc = target.getEyeLocation();
+
+        // Calculate direction - but keep it STRICTLY HORIZONTAL (ignore Y)
         Vector direction = targetLoc.toVector().subtract(playerLoc.toVector());
+        direction.setY(0); // Force horizontal only
         double distance = direction.length();
 
-        // Normalize the full 3D direction vector (keep Y component)
+        if (distance < 0.1) {
+            player.sendMessage(ChatColor.RED + "Target too close!");
+            return false;
+        }
+
         direction.normalize();
 
-        // Calculate rotation to point chains at target
-        // Chains default to vertical (Y-axis), so we need to rotate them to point at target
+        // Calculate yaw to point chains horizontally at target
+        // Chain blocks are vertical by default (Y-axis), so we need to:
+        // 1. Rotate 90° around X-axis to make them horizontal
+        // 2. Rotate around Y-axis to point at target
         double yaw = Math.atan2(-direction.getX(), direction.getZ());
-        double pitch = Math.asin(-direction.getY());
 
-        // Create rotation: first pitch (around X-axis), then yaw (around Y-axis)
+        // Build rotation: First make horizontal (90° around X), then rotate to face target (Y-axis)
         Quaternionf rotation = new Quaternionf()
-                .rotateY((float) yaw)
-                .rotateX((float) pitch);
+                .rotateY((float) yaw)           // Point at target horizontally
+                .rotateX((float) (Math.PI / 2.0)); // Lay flat (vertical chain -> horizontal)
 
         List<BlockDisplay> chainDisplays = new ArrayList<>();
         BlockData chainBlock = Material.CHAIN.createBlockData();
 
-        double chainLength = 0.5;
+        // Spawn chains along the HORIZONTAL line
+        double chainLength = 0.6;
         int numChains = (int) Math.ceil(distance / chainLength);
         double actualSpacing = distance / numChains;
 
+        // Average Y position for all chains (keep them at same height)
+        double chainY = (playerLoc.getY() + targetLoc.getY()) / 2.0;
+
         for (int i = 0; i <= numChains; i++) {
             double d = i * actualSpacing;
-            // Use the full 3D direction (with Y component) for positioning
-            Vector fullDirection = targetLoc.toVector().subtract(playerLoc.toVector()).normalize();
-            Location chainLoc = playerLoc.clone().add(fullDirection.clone().multiply(d));
+            Location chainLoc = playerLoc.clone().add(direction.clone().multiply(d));
+            chainLoc.setY(chainY); // Force all chains to same horizontal plane
 
             BlockDisplay display = chainLoc.getWorld().spawn(chainLoc, BlockDisplay.class, bd -> {
                 bd.setBlock(chainBlock);
 
-                // Apply the rotation to point at target
                 Transformation transformation = bd.getTransformation();
                 transformation.getLeftRotation().set(rotation);
 
-                // Uniform scale so they connect smoothly
-                transformation.getScale().set(0.55f, 0.55f, 0.55f);
-                bd.setTransformation(transformation);
+                // Scale: make them elongated to connect better
+                transformation.getScale().set(0.5f, 0.9f, 0.5f);
 
+                bd.setTransformation(transformation);
                 bd.setInterpolationDelay(0);
                 bd.setInterpolationDuration(2);
             });
