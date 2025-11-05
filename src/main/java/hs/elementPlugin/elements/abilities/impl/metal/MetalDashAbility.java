@@ -76,7 +76,6 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                             applyStun(player);
                         } else {
                             pendingStuns.put(player.getUniqueId(), true);
-                            player.sendMessage(ChatColor.YELLOW + "You will be stunned when you land!");
                         }
                     }
 
@@ -139,7 +138,6 @@ public class MetalDashAbility extends BaseAbility implements Listener {
         player.getWorld().spawnParticle(Particle.SMOKE, player.getLocation().add(0, 1, 0), 30, 0.3, 0.5, 0.3, 0.05, null, true);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_DAMAGE, 1.0f, 0.8f);
 
-        player.sendMessage(ChatColor.RED + "Your dash missed! You are stunned for 5 seconds!");
 
         // Remove from stunned set after 5 seconds
         new BukkitRunnable() {
@@ -172,7 +170,6 @@ public class MetalDashAbility extends BaseAbility implements Listener {
 
                 // Optional: Small visual feedback
                 if (player.getTicksLived() % 10 == 0) { // Only every 10 ticks to avoid spam
-                    player.sendMessage(ChatColor.RED + "You are stunned and cannot move!");
                 }
             }
         }

@@ -119,8 +119,6 @@ public class MetalChainAbility extends BaseAbility {
                             0.3, 0.5, 0.3, 0.1,
                             org.bukkit.Material.IRON_BLOCK.createBlockData(), true);
 
-                    player.sendMessage(ChatColor.GRAY + "Enemy stunned!");
-
                     cancel();
                     return;
                 }
@@ -174,7 +172,6 @@ public class MetalChainAbility extends BaseAbility {
             }
         }.runTaskTimer(plugin, 0L, 1L);
 
-        player.sendMessage(ChatColor.GRAY + "Chained enemy!");
         return true;
     }
 
