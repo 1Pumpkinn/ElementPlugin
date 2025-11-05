@@ -5,20 +5,15 @@ import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Transformation;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-import org.joml.AxisAngle4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MetalChainAbility extends BaseAbility {
     private final ElementPlugin plugin;
@@ -32,10 +27,10 @@ public class MetalChainAbility extends BaseAbility {
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
 
-        // --- Improved target detection (cone-based) ---
+        // --- Target detection (cone-based) ---
         LivingEntity target = null;
         double range = 20;
-        double coneAngle = Math.toRadians(25); // 25° cone
+        double coneAngle = Math.toRadians(25);
         Location eyeLoc = player.getEyeLocation();
         Vector lookDir = eyeLoc.getDirection();
 
@@ -69,96 +64,97 @@ public class MetalChainAbility extends BaseAbility {
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_CHAIN_PLACE, 1.0f, 0.8f);
         target.getWorld().playSound(target.getLocation(), Sound.BLOCK_CHAIN_HIT, 1.0f, 1.0f);
 
-        // --- Chain visuals ---
-        Location playerLoc = player.getEyeLocation().subtract(0, 0.3, 0);
-        Location targetLoc = target.getEyeLocation();
+        final LivingEntity finalTarget = target;
 
-        // Calculate direction - but keep it STRICTLY HORIZONTAL (ignore Y)
-        Vector direction = targetLoc.toVector().subtract(playerLoc.toVector());
-        direction.setY(0); // Force horizontal only
-        double distance = direction.length();
+        // Start chain particle animation and reeling
+        new BukkitRunnable() {
+            int ticks = 0;
+            final int maxTicks = 40; // 2 seconds of reeling
+            final Location playerStartLoc = player.getEyeLocation().subtract(0, 0.3, 0);
 
-        if (distance < 0.1) {
-            player.sendMessage(ChatColor.RED + "Target too close!");
-            return false;
-        }
-
-        direction.normalize();
-
-        // Calculate yaw to point chains horizontally at target
-        // Chain blocks are vertical by default (Y-axis), so we need to:
-        // 1. Rotate 90° around X-axis to make them horizontal
-        // 2. Rotate around Y-axis to point at target
-        double yaw = Math.atan2(-direction.getX(), direction.getZ());
-
-        // Build rotation: First make horizontal (90° around X), then rotate to face target (Y-axis)
-        Quaternionf rotation = new Quaternionf()
-                .rotateY((float) yaw)           // Point at target horizontally
-                .rotateX((float) (Math.PI / 2.0)); // Lay flat (vertical chain -> horizontal)
-
-        List<BlockDisplay> chainDisplays = new ArrayList<>();
-        BlockData chainBlock = Material.CHAIN.createBlockData();
-
-        // Spawn chains along the HORIZONTAL line
-        double chainLength = 0.6;
-        int numChains = (int) Math.ceil(distance / chainLength);
-        double actualSpacing = distance / numChains;
-
-        // Average Y position for all chains (keep them at same height)
-        double chainY = (playerLoc.getY() + targetLoc.getY()) / 2.0;
-
-        for (int i = 0; i <= numChains; i++) {
-            double d = i * actualSpacing;
-            Location chainLoc = playerLoc.clone().add(direction.clone().multiply(d));
-            chainLoc.setY(chainY); // Force all chains to same horizontal plane
-
-            BlockDisplay display = chainLoc.getWorld().spawn(chainLoc, BlockDisplay.class, bd -> {
-                bd.setBlock(chainBlock);
-
-                Transformation transformation = bd.getTransformation();
-                transformation.getLeftRotation().set(rotation);
-
-                // Scale: make them elongated to connect better
-                transformation.getScale().set(0.5f, 0.9f, 0.5f);
-
-                bd.setTransformation(transformation);
-                bd.setInterpolationDelay(0);
-                bd.setInterpolationDuration(2);
-            });
-            chainDisplays.add(display);
-        }
-
-        // --- Pull target towards player ---
-        Vector pullVector = player.getLocation().toVector().subtract(target.getLocation().toVector()).normalize();
-        pullVector.setY(pullVector.getY() + 0.5); // small upward lift
-        pullVector.multiply(2.5);
-        target.setVelocity(pullVector);
-
-        // --- Animate chain reeling in ---
-        int totalSteps = chainDisplays.size();
-        for (int i = 0; i < totalSteps; i++) {
-            final int step = i;
-            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                if (step < chainDisplays.size()) {
-                    BlockDisplay display = chainDisplays.get(totalSteps - 1 - step);
-                    Transformation trans = display.getTransformation();
-                    trans.getScale().set(0.05f, 0.05f, 0.05f);
-                    display.setTransformation(trans);
-                    display.setInterpolationDuration(3);
-
-                    plugin.getServer().getScheduler().runTaskLater(plugin, display::remove, 4L);
+            @Override
+            public void run() {
+                if (!player.isOnline() || !finalTarget.isValid() || ticks >= maxTicks) {
+                    cancel();
+                    return;
                 }
-            }, (long) (i * 1.5));
-        }
 
-        // Cleanup
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            for (BlockDisplay display : chainDisplays) {
-                if (display != null && !display.isDead()) {
-                    display.remove();
+                // Get current positions
+                Location currentPlayerLoc = player.getEyeLocation().subtract(0, 0.3, 0);
+                Location targetLoc = finalTarget.getEyeLocation();
+
+                // Calculate distance
+                double distance = currentPlayerLoc.distance(targetLoc);
+
+                // If target is close enough, stop
+                if (distance < 2.0) {
+                    // Apply stun effect when they reach the player
+                    finalTarget.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 255, true, true, true)); // 3 seconds
+                    finalTarget.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 60, 128, true, true, true)); // Prevent jumping (negative jump = 128)
+
+                    // Set velocity to zero to stop movement
+                    finalTarget.setVelocity(new Vector(0, 0, 0));
+
+                    // Visual/audio feedback for stun
+                    player.getWorld().playSound(targetLoc, Sound.BLOCK_ANVIL_LAND, 1.0f, 2.0f);
+                    player.getWorld().spawnParticle(Particle.BLOCK, targetLoc, 30,
+                            0.3, 0.5, 0.3, 0.1,
+                            org.bukkit.Material.IRON_BLOCK.createBlockData(), true);
+
+                    player.sendMessage(ChatColor.GRAY + "Enemy stunned!");
+
+                    cancel();
+                    return;
                 }
+
+                // Draw particle chain
+                Vector direction = targetLoc.toVector().subtract(currentPlayerLoc.toVector()).normalize();
+                double particleSpacing = 0.3;
+                int numParticles = (int) (distance / particleSpacing);
+
+                for (int i = 0; i <= numParticles; i++) {
+                    double t = i * particleSpacing;
+                    Location particleLoc = currentPlayerLoc.clone().add(direction.clone().multiply(t));
+
+                    // Main chain particles (iron blocks/anvil look)
+                    player.getWorld().spawnParticle(Particle.BLOCK, particleLoc, 1,
+                            0.05, 0.05, 0.05, 0.0,
+                            org.bukkit.Material.IRON_BLOCK.createBlockData(), true);
+
+                    // Add some sparkles for effect
+                    if (i % 3 == 0) {
+                        player.getWorld().spawnParticle(Particle.CRIT, particleLoc, 1,
+                                0.02, 0.02, 0.02, 0.01, null, true);
+                    }
+                }
+
+                // Apply gentle pull force to target
+                Vector pullDirection = currentPlayerLoc.toVector().subtract(targetLoc.toVector()).normalize();
+
+                // Gentle upward component to prevent dragging on ground
+                pullDirection.setY(pullDirection.getY() + 0.1);
+
+                // Smooth pull force (not instant velocity)
+                double pullStrength = 0.25; // Gentle pull
+                Vector currentVelocity = finalTarget.getVelocity();
+                Vector newVelocity = currentVelocity.add(pullDirection.multiply(pullStrength));
+
+                // Cap velocity to prevent launching
+                double maxSpeed = 0.8;
+                if (newVelocity.length() > maxSpeed) {
+                    newVelocity = newVelocity.normalize().multiply(maxSpeed);
+                }
+
+                finalTarget.setVelocity(newVelocity);
+
+                // Play chain sound periodically
+                if (ticks % 10 == 0) {
+                    player.getWorld().playSound(currentPlayerLoc, Sound.BLOCK_CHAIN_STEP, 0.5f, 1.2f);
+                }
+
+                ticks++;
             }
-        }, (long) (totalSteps * 1.5 + 20));
+        }.runTaskTimer(plugin, 0L, 1L);
 
         player.sendMessage(ChatColor.GRAY + "Chained enemy!");
         return true;
