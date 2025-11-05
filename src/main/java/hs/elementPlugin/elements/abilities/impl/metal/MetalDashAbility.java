@@ -9,19 +9,30 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-public class MetalDashAbility extends BaseAbility {
+public class MetalDashAbility extends BaseAbility implements Listener {
     private final ElementPlugin plugin;
+    private final Set<UUID> stunnedPlayers = new HashSet<>();
+    private final Set<UUID> dashingPlayers = new HashSet<>();
+    private final Map<UUID, Boolean> pendingStuns = new HashMap<>();
 
     public MetalDashAbility(ElementPlugin plugin) {
         super("metal_dash", 75, 15, 2);
         this.plugin = plugin;
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     @Override
@@ -29,9 +40,12 @@ public class MetalDashAbility extends BaseAbility {
         Player player = context.getPlayer();
         Vector direction = player.getLocation().getDirection().normalize();
 
-        // Apply initial velocity boost
-        Vector dashVelocity = direction.multiply(1.5);
-        dashVelocity.setY(Math.max(dashVelocity.getY(), 0.3)); // Prevent downward dashing
+        // Store the initial dash direction
+        final Vector dashDirection = direction.clone();
+
+        // Apply stronger initial velocity boost for longer dash
+        Vector dashVelocity = direction.multiply(2.5);
+        dashVelocity.setY(Math.max(dashVelocity.getY(), 0.4)); // Prevent downward dashing
         player.setVelocity(dashVelocity);
 
         // Track damaged entities to prevent multiple hits
@@ -41,16 +55,31 @@ public class MetalDashAbility extends BaseAbility {
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_ATTACK, 1.0f, 1.5f);
 
         setActive(player, true);
+        dashingPlayers.add(player.getUniqueId());
 
-        // Dash for 10 blocks (20 ticks at 0.5 blocks per tick)
+        // Dash for 20 blocks (40 ticks at 0.5 blocks per tick)
         new BukkitRunnable() {
             int ticks = 0;
-            final int maxTicks = 20;
+            final int maxTicks = 40;
+            boolean hitEntity = false;
 
             @Override
             public void run() {
                 if (!player.isOnline() || ticks >= maxTicks) {
                     setActive(player, false);
+                    dashingPlayers.remove(player.getUniqueId());
+
+                    // Apply stun if no entity was hit
+                    if (!hitEntity) {
+                        // Check if player is on ground, if not, mark for pending stun
+                        if (player.isOnGround()) {
+                            applyStun(player);
+                        } else {
+                            pendingStuns.put(player.getUniqueId(), true);
+                            player.sendMessage(ChatColor.YELLOW + "You will be stunned when you land!");
+                        }
+                    }
+
                     cancel();
                     return;
                 }
@@ -63,7 +92,7 @@ public class MetalDashAbility extends BaseAbility {
 
                 // Check for nearby entities every 2 ticks
                 if (ticks % 2 == 0) {
-                    for (LivingEntity entity : loc.getNearbyLivingEntities(2.0)) {
+                    for (LivingEntity entity : loc.getNearbyLivingEntities(2.5)) {
                         if (entity.equals(player)) continue;
                         if (damagedEntities.contains(entity.getUniqueId())) continue;
 
@@ -75,8 +104,9 @@ public class MetalDashAbility extends BaseAbility {
                         }
 
                         // Damage the entity
-                        entity.damage(4.0, player); // 2 hearts of damage
+                        entity.damage(6.5, player); // 2 hearts of damage
                         damagedEntities.add(entity.getUniqueId());
+                        hitEntity = true; // Mark that we hit an entity
 
                         // Apply slight knockback
                         Vector knockback = entity.getLocation().toVector().subtract(loc.toVector()).normalize();
@@ -96,6 +126,58 @@ public class MetalDashAbility extends BaseAbility {
         return true;
     }
 
+    private void applyStun(Player player) {
+        // Add player to stunned set
+        stunnedPlayers.add(player.getUniqueId());
+        pendingStuns.remove(player.getUniqueId());
+
+        // Apply slowness and jump boost debuffs for 5 seconds (100 ticks)
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 255, false, true, true));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 100, 128, false, true, true)); // Negative jump = can't jump
+
+        // Visual and audio feedback for the stun
+        player.getWorld().spawnParticle(Particle.SMOKE, player.getLocation().add(0, 1, 0), 30, 0.3, 0.5, 0.3, 0.05, null, true);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_DAMAGE, 1.0f, 0.8f);
+
+        player.sendMessage(ChatColor.RED + "Your dash missed! You are stunned for 5 seconds!");
+
+        // Remove from stunned set after 5 seconds
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                stunnedPlayers.remove(player.getUniqueId());
+            }
+        }.runTaskLater(plugin, 100L);
+    }
+
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
+
+        // Check for pending stun when player lands
+        if (pendingStuns.containsKey(playerId) && player.isOnGround()) {
+            applyStun(player);
+        }
+
+        // Check if player is stunned
+        if (stunnedPlayers.contains(playerId)) {
+            Location from = event.getFrom();
+            Location to = event.getTo();
+
+            // If player tried to move (not just looking around)
+            if (to != null && (from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ())) {
+                // Cancel the movement by teleporting back
+                event.setTo(from);
+
+                // Optional: Small visual feedback
+                if (player.getTicksLived() % 10 == 0) { // Only every 10 ticks to avoid spam
+                    player.sendMessage(ChatColor.RED + "You are stunned and cannot move!");
+                }
+            }
+        }
+    }
+
     @Override
     public String getName() {
         return ChatColor.GRAY + "Metal Dash";
@@ -103,6 +185,6 @@ public class MetalDashAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return "Dash forward 10 blocks, damaging enemies you pass through. (75 mana)";
+        return "Dash forward 20 blocks, damaging enemies you pass through. Missing all enemies stuns you for 5 seconds. (75 mana)";
     }
 }

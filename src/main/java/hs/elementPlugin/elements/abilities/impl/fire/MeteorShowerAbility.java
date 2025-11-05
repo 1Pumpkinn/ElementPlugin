@@ -38,7 +38,6 @@ public class MeteorShowerAbility extends BaseAbility implements Listener {
         // Use player's current location instead of where they're looking
         Location targetLoc = player.getLocation();
 
-        player.sendMessage(ChatColor.GOLD + "Meteor shower incoming!");
         player.getWorld().playSound(targetLoc, Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
 
         // Spawn meteors over 6 seconds - MUCH more meteors, faster spawn rate
