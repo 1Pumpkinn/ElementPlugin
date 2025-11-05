@@ -2,6 +2,7 @@ package hs.elementPlugin.elements.impl.metal.listeners;
 
 import hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -12,13 +13,15 @@ import org.bukkit.util.Vector;
 public class MetalChainStunListener implements Listener {
 
     /**
-     * Prevent stunned entities from moving
+     * Prevent stunned players from moving
      */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onEntityMove(PlayerMoveEvent event) {
+    public void onPlayerMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+
         // Check if player is stunned
-        if (event.getPlayer().hasMetadata(MetalChainAbility.META_CHAINED_STUN)) {
-            long stunUntil = event.getPlayer().getMetadata(MetalChainAbility.META_CHAINED_STUN).get(0).asLong();
+        if (player.hasMetadata(MetalChainAbility.META_CHAINED_STUN)) {
+            long stunUntil = player.getMetadata(MetalChainAbility.META_CHAINED_STUN).get(0).asLong();
 
             // Check if stun is still active
             if (System.currentTimeMillis() < stunUntil) {
@@ -30,6 +33,10 @@ public class MetalChainStunListener implements Listener {
                     // Set velocity to zero to stop all movement
                     event.getPlayer().setVelocity(new Vector(0, event.getPlayer().getVelocity().getY(), 0));
                 }
+            } else {
+                // Stun expired, remove metadata
+                player.removeMetadata(MetalChainAbility.META_CHAINED_STUN,
+                        player.getServer().getPluginManager().getPlugin("ElementPlugin"));
             }
         }
     }
@@ -49,6 +56,10 @@ public class MetalChainStunListener implements Listener {
             if (System.currentTimeMillis() < stunUntil) {
                 // Cancel velocity changes from damage
                 entity.setVelocity(new Vector(0, 0, 0));
+            } else {
+                // Stun expired, remove metadata
+                entity.removeMetadata(MetalChainAbility.META_CHAINED_STUN,
+                        entity.getServer().getPluginManager().getPlugin("ElementPlugin"));
             }
         }
     }

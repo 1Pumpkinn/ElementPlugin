@@ -18,6 +18,9 @@ import org.bukkit.util.Vector;
 public class MetalChainAbility extends BaseAbility {
     private final ElementPlugin plugin;
 
+    // Metadata key for stun tracking
+    public static final String META_CHAINED_STUN = "metal_chain_stunned";
+
     public MetalChainAbility(ElementPlugin plugin) {
         super("metal_chain", 50, 10, 1);
         this.plugin = plugin;
@@ -94,6 +97,21 @@ public class MetalChainAbility extends BaseAbility {
 
                     // Set velocity to zero to stop movement
                     finalTarget.setVelocity(new Vector(0, 0, 0));
+
+                    // Set metadata for stun duration (3 seconds = 3000ms)
+                    long stunDuration = 3000; // 3 seconds in milliseconds
+                    long stunUntil = System.currentTimeMillis() + stunDuration;
+                    finalTarget.setMetadata(META_CHAINED_STUN, new FixedMetadataValue(plugin, stunUntil));
+
+                    // Schedule metadata removal after stun expires
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            if (finalTarget.isValid()) {
+                                finalTarget.removeMetadata(META_CHAINED_STUN, plugin);
+                            }
+                        }
+                    }.runTaskLater(plugin, 60L); // 3 seconds = 60 ticks
 
                     // Visual/audio feedback for stun
                     player.getWorld().playSound(targetLoc, Sound.BLOCK_ANVIL_LAND, 1.0f, 2.0f);

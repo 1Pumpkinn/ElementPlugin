@@ -18,6 +18,7 @@ import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.elements.ElementRegistry;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.impl.earth.listeners.EarthOreDropListener;
+import hs.elementPlugin.elements.impl.metal.listeners.MetalChainStunListener;
 import hs.elementPlugin.elements.upsides.impl.EarthUpsides;
 import hs.elementPlugin.listeners.player.*;
 import hs.elementPlugin.listeners.items.listeners.*;
@@ -217,6 +218,8 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalAbilityListener(elementManager, cooldownManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalArrowImmunityListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalChainStunListener(), this);
+        getServer().getPluginManager().registerEvents(new MetalChainStunListener(), this);
+
 
 
         getLogger().info("Listeners registered successfully");
