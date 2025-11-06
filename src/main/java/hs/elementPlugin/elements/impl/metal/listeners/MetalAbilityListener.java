@@ -9,11 +9,9 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 
 public class MetalAbilityListener implements Listener {
     private final ElementManager elementManager;
-    private final CooldownManager cooldownManager;
 
-    public MetalAbilityListener(ElementManager elementManager, CooldownManager cooldownManager) {
+    public MetalAbilityListener(ElementManager elementManager) {
         this.elementManager = elementManager;
-        this.cooldownManager = cooldownManager;
     }
 
     @EventHandler
@@ -21,24 +19,15 @@ public class MetalAbilityListener implements Listener {
         Player player = event.getPlayer();
         if (elementManager.getPlayerElement(player) != ElementType.METAL) return;
 
+        // Cancel the event to prevent hand swapping
+        event.setCancelled(true);
+
         if (player.isSneaking()) {
             // Ability 2: Metal Dash
-            if (cooldownManager.isOnCooldown(player, "metal_dash")) {
-                player.sendMessage("§cMetal Dash is on cooldown!");
-                event.setCancelled(true);
-                return;
-            }
-            cooldownManager.setCooldown(player, "metal_dash", 15);
-            event.setCancelled(true);
+            elementManager.useAbility2(player);
         } else {
-            // Ability 1: Chain Reel
-            if (cooldownManager.isOnCooldown(player, "metal_chain")) {
-                player.sendMessage("§cChain Reel is on cooldown!");
-                event.setCancelled(true);
-                return;
-            }
-            cooldownManager.setCooldown(player, "metal_chain", 10);
-            event.setCancelled(true);
+            // Ability 1: Chain
+            elementManager.useAbility1(player);
         }
     }
 }

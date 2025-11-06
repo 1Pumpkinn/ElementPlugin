@@ -9,11 +9,9 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 
 public class FireAbilityListener implements Listener {
     private final ElementManager elementManager;
-    private final CooldownManager cooldownManager;
 
-    public FireAbilityListener(ElementManager elementManager, CooldownManager cooldownManager) {
+    public FireAbilityListener(ElementManager elementManager) {
         this.elementManager = elementManager;
-        this.cooldownManager = cooldownManager;
     }
 
     @EventHandler
@@ -21,26 +19,15 @@ public class FireAbilityListener implements Listener {
         Player player = event.getPlayer();
         if (elementManager.getPlayerElement(player) != ElementType.FIRE) return;
 
+        // Cancel the event to prevent hand swapping
+        event.setCancelled(true);
+
         if (player.isSneaking()) {
-            // Ability 2: Fire Summon
-            if (cooldownManager.isOnCooldown(player, "fire_summon")) {
-                player.sendMessage("§cFire Summon is on cooldown!");
-                event.setCancelled(true);
-                return;
-            }
-            // Execute Fire Summon ability
-            cooldownManager.setCooldown(player, "fire_summon", 30); // 1.5 second cooldown
-            event.setCancelled(true);
+            // Ability 2:
+            elementManager.useAbility2(player);
         } else {
-            // Ability 1: Fire Breath
-            if (cooldownManager.isOnCooldown(player, "fire_breath")) {
-                player.sendMessage("§cFire Breath is on cooldown!");
-                event.setCancelled(true);
-                return;
-            }
-            // Execute Fire Breath ability
-            cooldownManager.setCooldown(player, "fire_breath", 12); // 0.6 second cooldown
-            event.setCancelled(true);
+            // Ability 1:
+            elementManager.useAbility1(player);
         }
     }
 }

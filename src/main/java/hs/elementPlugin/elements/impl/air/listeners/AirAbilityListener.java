@@ -10,7 +10,7 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 public class AirAbilityListener implements Listener {
     private final ElementManager elementManager;
 
-    public AirAbilityListener(ElementManager elementManager, CooldownManager cooldownManager) {
+    public AirAbilityListener(ElementManager elementManager) {
         this.elementManager = elementManager;
     }
 
@@ -19,26 +19,15 @@ public class AirAbilityListener implements Listener {
         Player player = event.getPlayer();
         if (elementManager.getPlayerElement(player) != ElementType.AIR) return;
 
+        // Cancel the event to prevent hand swapping
+        event.setCancelled(true);
+
         if (player.isSneaking()) {
-            // Ability 2: Air Dash
-            if (cooldownManager.isOnCooldown(player, "air_dash")) {
-                player.sendMessage("§cAir Dash is on cooldown!");
-                event.setCancelled(true);
-                return;
-            }
-            // Execute Air Dash ability
-            cooldownManager.setCooldown(player, "air_dash", 20); // 1 second cooldown
-            event.setCancelled(true);
+            // Ability 2:
+            elementManager.useAbility2(player);
         } else {
-            // Ability 1: Air Blast
-            if (cooldownManager.isOnCooldown(player, "air_blast")) {
-                player.sendMessage("§cAir Blast is on cooldown!");
-                event.setCancelled(true);
-                return;
-            }
-            // Execute Air Blast ability
-            cooldownManager.setCooldown(player, "air_blast", 8); // 0.4 second cooldown
-            event.setCancelled(true);
+            // Ability 1:
+            elementManager.useAbility1(player);
         }
     }
 }

@@ -9,11 +9,9 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 
 public class FrostAbilityListener implements Listener {
     private final ElementManager elementManager;
-    private final CooldownManager cooldownManager;
 
-    public FrostAbilityListener(ElementManager elementManager, CooldownManager cooldownManager) {
+    public FrostAbilityListener(ElementManager elementManager) {
         this.elementManager = elementManager;
-        this.cooldownManager = cooldownManager;
     }
 
     @EventHandler
@@ -21,26 +19,15 @@ public class FrostAbilityListener implements Listener {
         Player player = event.getPlayer();
         if (elementManager.getPlayerElement(player) != ElementType.FROST) return;
 
+        // Cancel the event to prevent hand swapping
+        event.setCancelled(true);
+
         if (player.isSneaking()) {
-            // Ability 2: Frost Punch
-            if (cooldownManager.isOnCooldown(player, "frost_punch")) {
-                player.sendMessage("§cFrost Punch is on cooldown!");
-                event.setCancelled(true);
-                return;
-            }
-            // Execute Frozen Punch ability
-            cooldownManager.setCooldown(player, "frost_punch", 15); // 1 second cooldown
-            event.setCancelled(true);
+            // Ability 2:
+            elementManager.useAbility2(player);
         } else {
-            // Ability 1: Freezing Circle
-            if (cooldownManager.isOnCooldown(player, "frost_freezing_circle")) {
-                player.sendMessage("§cFreezing Circle is on cooldown!");
-                event.setCancelled(true);
-                return;
-            }
-            // Execute Freezing Circle ability
-            cooldownManager.setCooldown(player, "frost_freezing_circle", 15); // 0.75 second cooldown
-            event.setCancelled(true);
+            // Ability 1:
+            elementManager.useAbility1(player);
         }
     }
 }

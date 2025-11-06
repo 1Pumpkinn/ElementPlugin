@@ -9,11 +9,9 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 
 public class LifeAbilityListener implements Listener {
     private final ElementManager elementManager;
-    private final CooldownManager cooldownManager;
 
-    public LifeAbilityListener(ElementManager elementManager, CooldownManager cooldownManager) {
+    public LifeAbilityListener(ElementManager elementManager) {
         this.elementManager = elementManager;
-        this.cooldownManager = cooldownManager;
     }
 
     @EventHandler
@@ -21,26 +19,15 @@ public class LifeAbilityListener implements Listener {
         Player player = event.getPlayer();
         if (elementManager.getPlayerElement(player) != ElementType.LIFE) return;
 
+        // Cancel the event to prevent hand swapping
+        event.setCancelled(true);
+
         if (player.isSneaking()) {
-            // Ability 2: Life Regen
-            if (cooldownManager.isOnCooldown(player, "life_regen")) {
-                player.sendMessage("§cLife Regen is on cooldown!");
-                event.setCancelled(true);
-                return;
-            }
-            // Execute Life Regen ability
-            cooldownManager.setCooldown(player, "life_regen", 20); // 1 second cooldown
-            event.setCancelled(true);
+            // Ability 2:
+            elementManager.useAbility2(player);
         } else {
-            // Ability 1: Life Healing Beam
-            if (cooldownManager.isOnCooldown(player, "life_healing_beam")) {
-                player.sendMessage("§cLife Healing Beam is on cooldown!");
-                event.setCancelled(true);
-                return;
-            }
-            // Execute Life Healing Beam ability
-            cooldownManager.setCooldown(player, "life_healing_beam", 15); // 0.75 second cooldown
-            event.setCancelled(true);
+            // Ability 1:
+            elementManager.useAbility1(player);
         }
     }
 }

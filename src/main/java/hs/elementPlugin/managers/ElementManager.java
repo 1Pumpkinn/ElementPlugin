@@ -12,17 +12,11 @@ import hs.elementPlugin.elements.impl.fire.FireElement;
 import hs.elementPlugin.elements.impl.earth.EarthElement;
 import hs.elementPlugin.elements.impl.life.LifeElement;
 import hs.elementPlugin.elements.impl.death.DeathElement;
-import hs.elementPlugin.items.ItemKeys;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.NotNull;
 
