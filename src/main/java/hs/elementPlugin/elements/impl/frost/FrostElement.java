@@ -3,6 +3,7 @@ package hs.elementPlugin.elements.impl.frost;
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.abilities.Ability;
 import hs.elementPlugin.elements.abilities.impl.frost.FrostCircleAbility;
+import hs.elementPlugin.elements.abilities.impl.frost.FrostPunchAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
@@ -20,7 +21,7 @@ public class FrostElement extends BaseElement {
         super(plugin);
         this.plugin = plugin;
         this.ability1 = new FrostCircleAbility(plugin);
-        this.ability2 = new FrostFrozenPunchAbility(plugin);
+        this.ability2 = new FrostPunchAbility(plugin);
     }
 
     @Override
@@ -30,9 +31,9 @@ public class FrostElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: Speed 2 when wearing leather boots (handled in FrostUpsides)
-        // Upside 2: Speed 3 on ice (handled in FrostUpsides)
-        // These are applied continuously by the FrostPassiveListener
+        // Upsides are handled by FrostPassiveListener
+        // Upside 1: Speed 2 when wearing leather boots (always active)
+        // Upside 2: Speed 3 on ice (requires upgrade level 2)
     }
 
     @Override
