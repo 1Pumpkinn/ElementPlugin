@@ -45,6 +45,8 @@ public class ElementCommand implements CommandExecutor {
                 return handleSet(sender, args);
             case "testcrops":
                 return handleTestCrops(sender, args);
+            case "debug":
+                return handleDebug(sender, args);
             default:
                 sendHelp(sender);
                 return true;
@@ -113,7 +115,7 @@ public class ElementCommand implements CommandExecutor {
         try {
             elementType = ElementType.valueOf(args[2].toUpperCase());
         } catch (IllegalArgumentException e) {
-            sender.sendMessage(ChatColor.RED + "Invalid element type. Use: air, water, fire, earth, life, death, or metal");
+            sender.sendMessage(ChatColor.RED + "Invalid element type. Use: air, water, fire, earth, life, death, metal, or frost");
             return true;
         }
 
@@ -127,17 +129,56 @@ public class ElementCommand implements CommandExecutor {
             return true;
         }
 
+        plugin.getLogger().info("[ElementCommand] Attempting to set element for " + target.getName() + " (" + target.getUniqueId() + ") to " + elementType.name());
+
+        // Debug current state before change
+        dataStore.debugCacheState(target.getUniqueId());
+
+        // Set element using ElementManager (which now handles its own logging and DataStore interaction)
         elementManager.setElement(target, elementType);
+
+        // Debug cache state after change
+        dataStore.debugCacheState(target.getUniqueId());
+
         sender.sendMessage(ChatColor.GREEN + "Set " + target.getName() + "'s element to " + ChatColor.AQUA + elementType.name());
         target.sendMessage(ChatColor.GREEN + "Your element has been set to " + ChatColor.AQUA + elementType.name() + ChatColor.GREEN + " by an admin.");
-        
+
+        return true;
+    }
+
+    private boolean handleDebug(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(ChatColor.RED + "Usage: /element debug <player>");
+            return true;
+        }
+
+        Player target = Bukkit.getPlayer(args[1]);
+        if (target == null) {
+            sender.sendMessage(ChatColor.RED + "Player '" + args[1] + "' not found.");
+            return true;
+        }
+
+        sender.sendMessage(ChatColor.GOLD + "=== Element Debug for " + target.getName() + " ===");
+
+        // Check ElementManager
+        ElementType managerElement = elementManager.getPlayerElement(target);
+        sender.sendMessage(ChatColor.YELLOW + "ElementManager reports: " + (managerElement != null ? managerElement.name() : "null"));
+
+        // Check DataStore cache
+        dataStore.debugCacheState(target.getUniqueId());
+
+        // Force cache invalidation and reload
+        dataStore.invalidateCache(target.getUniqueId());
+        ElementType reloadedElement = elementManager.getPlayerElement(target);
+        sender.sendMessage(ChatColor.YELLOW + "After cache invalidation: " + (reloadedElement != null ? reloadedElement.name() : "null"));
+
         return true;
     }
 
     private boolean handleStatus(CommandSender sender) {
         boolean lifeCrafted = dataStore.isLifeElementCrafted();
         boolean deathCrafted = dataStore.isDeathElementCrafted();
-        
+
         sender.sendMessage(ChatColor.GOLD + "=== Element Recipe Status ===");
         sender.sendMessage(ChatColor.YELLOW + "Life Element: " + (lifeCrafted ? ChatColor.RED + "DISABLED" : ChatColor.GREEN + "ENABLED"));
         sender.sendMessage(ChatColor.YELLOW + "Death Element: " + (deathCrafted ? ChatColor.RED + "DISABLED" : ChatColor.GREEN + "ENABLED"));
@@ -149,7 +190,7 @@ public class ElementCommand implements CommandExecutor {
             sender.sendMessage(ChatColor.RED + "This command can only be used by players.");
             return true;
         }
-        
+
         // Test crop growth around the player
         int cropsGrown = 0;
         for (int dx = -2; dx <= 2; dx++) {
@@ -166,7 +207,7 @@ public class ElementCommand implements CommandExecutor {
                 }
             }
         }
-        
+
         sender.sendMessage(ChatColor.GREEN + "Tested crop growth: " + cropsGrown + " crops grown around you.");
         return true;
     }
@@ -178,5 +219,6 @@ public class ElementCommand implements CommandExecutor {
         sender.sendMessage(ChatColor.YELLOW + "/element set <player> <element> - Set player's element");
         sender.sendMessage(ChatColor.YELLOW + "/element status - Check recipe status");
         sender.sendMessage(ChatColor.YELLOW + "/element testcrops - Test crop growth around you");
+        sender.sendMessage(ChatColor.YELLOW + "/element debug <player> - Debug player's element data");
     }
 }
