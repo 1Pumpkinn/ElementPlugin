@@ -4,10 +4,13 @@ import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.abilities.impl.frost.FrostPunchAbility;
 import hs.elementPlugin.managers.ElementManager;
+import io.papermc.paper.event.entity.EntityMoveEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -21,6 +24,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 public class FrostFrozenPunchListener implements Listener {
+
     private final ElementPlugin plugin;
     private final ElementManager elementManager;
 
@@ -31,31 +35,43 @@ public class FrostFrozenPunchListener implements Listener {
         this.elementManager = elementManager;
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player attacker)) return;
         if (!(event.getEntity() instanceof LivingEntity victim)) return;
 
-        // Check if attacker has Frost element
-        if (elementManager.getPlayerElement(attacker) != ElementType.FROST) return;
+        // --- Debug start ---
+        Bukkit.getLogger().info("[FrostFrozenPunch] " + attacker.getName() + " hit " + victim.getName());
+        // --- Debug end ---
 
-        // Check if frozen punch is ready
-        if (!attacker.hasMetadata(FrostPunchAbility.META_FROZEN_PUNCH_READY)) return;
+        // Check if attacker has Frost element
+        ElementType type = elementManager.getPlayerElement(attacker);
+        if (type != ElementType.FROST) {
+            Bukkit.getLogger().info("[FrostFrozenPunch] " + attacker.getName() + " is not FROST (" + type + ")");
+            return;
+        }
+
+        // Check if frozen punch metadata exists
+        if (!attacker.hasMetadata(FrostPunchAbility.META_FROZEN_PUNCH_READY)) {
+            Bukkit.getLogger().info("[FrostFrozenPunch] " + attacker.getName() + " has no frozen punch metadata");
+            return;
+        }
 
         long until = attacker.getMetadata(FrostPunchAbility.META_FROZEN_PUNCH_READY).get(0).asLong();
         if (System.currentTimeMillis() > until) {
             attacker.removeMetadata(FrostPunchAbility.META_FROZEN_PUNCH_READY, plugin);
+            Bukkit.getLogger().info("[FrostFrozenPunch] Metadata expired for " + attacker.getName());
             return;
         }
 
         // Don't freeze trusted players
-        if (victim instanceof Player targetPlayer) {
-            if (plugin.getTrustManager().isTrusted(attacker.getUniqueId(), targetPlayer.getUniqueId())) {
-                return;
-            }
+        if (victim instanceof Player targetPlayer &&
+                plugin.getTrustManager().isTrusted(attacker.getUniqueId(), targetPlayer.getUniqueId())) {
+            Bukkit.getLogger().info("[FrostFrozenPunch] Target is trusted, skipping freeze.");
+            return;
         }
 
-        // Remove the ready state
+        // Remove the ready state (consume ability)
         attacker.removeMetadata(FrostPunchAbility.META_FROZEN_PUNCH_READY, plugin);
 
         // Apply freeze effect
@@ -67,24 +83,31 @@ public class FrostFrozenPunchListener implements Listener {
         victim.getWorld().spawnParticle(Particle.SNOWFLAKE, hitLoc, 50, 0.3, 0.5, 0.3, 0.1, null, true);
         victim.getWorld().spawnParticle(Particle.CLOUD, hitLoc, 25, 0.3, 0.5, 0.3, 0.05, null, true);
         victim.getWorld().playSound(hitLoc, Sound.BLOCK_GLASS_BREAK, 1.0f, 0.5f);
+
+        Bukkit.getLogger().info("[FrostFrozenPunch] Successfully froze " + victim.getName());
     }
 
     private void applyFreezeEffect(LivingEntity entity) {
-        // Set metadata for freeze duration
         long freezeUntil = System.currentTimeMillis() + 5000L; // 5 seconds
         entity.setMetadata(META_FROZEN, new FixedMetadataValue(plugin, freezeUntil));
 
-        // Apply visual freeze effect (max freeze ticks)
         entity.setFreezeTicks(entity.getMaxFreezeTicks());
-
-        // Apply movement prevention potions
         entity.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 255, false, true, true));
         entity.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 100, 128, false, true, true));
-
-        // Stop current velocity
         entity.setVelocity(new Vector(0, 0, 0));
 
-        // Visual effect task
+        // Disable mob AI
+        if (entity instanceof Mob mob) {
+            mob.setAware(false);
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (mob.isValid()) mob.setAware(true);
+                }
+            }.runTaskLater(plugin, 100L);
+        }
+
+        // Visual freeze effect
         new BukkitRunnable() {
             int ticks = 0;
             @Override
@@ -94,35 +117,28 @@ public class FrostFrozenPunchListener implements Listener {
                     cancel();
                     return;
                 }
-
-                // Check if still frozen
                 if (!entity.hasMetadata(META_FROZEN)) {
                     cancel();
                     return;
                 }
-
                 long until = entity.getMetadata(META_FROZEN).get(0).asLong();
                 if (System.currentTimeMillis() > until) {
                     entity.removeMetadata(META_FROZEN, plugin);
                     cancel();
                     return;
                 }
-
-                // Keep applying freeze visual and stop movement
                 entity.setFreezeTicks(entity.getMaxFreezeTicks());
                 entity.setVelocity(new Vector(0, entity.getVelocity().getY(), 0));
 
-                // Particle effects every 10 ticks
                 if (ticks % 10 == 0) {
                     Location loc = entity.getLocation().add(0, 1, 0);
                     entity.getWorld().spawnParticle(Particle.SNOWFLAKE, loc, 5, 0.3, 0.3, 0.3, 0, null, true);
                 }
-
                 ticks++;
             }
         }.runTaskTimer(plugin, 0L, 1L);
 
-        // Schedule metadata removal after 5 seconds
+        // Metadata cleanup
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -136,8 +152,6 @@ public class FrostFrozenPunchListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-
-        // Check if player is frozen
         if (!player.hasMetadata(META_FROZEN)) return;
 
         long until = player.getMetadata(META_FROZEN).get(0).asLong();
@@ -146,7 +160,6 @@ public class FrostFrozenPunchListener implements Listener {
             return;
         }
 
-        // Cancel horizontal movement
         Location from = event.getFrom();
         Location to = event.getTo();
 
@@ -154,5 +167,21 @@ public class FrostFrozenPunchListener implements Listener {
             event.setTo(from);
             player.setVelocity(new Vector(0, player.getVelocity().getY(), 0));
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onMobMove(EntityMoveEvent event) {
+        LivingEntity entity = event.getEntity();
+        if (entity instanceof Player) return;
+
+        if (!entity.hasMetadata(META_FROZEN)) return;
+
+        long until = entity.getMetadata(META_FROZEN).get(0).asLong();
+        if (System.currentTimeMillis() > until) {
+            entity.removeMetadata(META_FROZEN, plugin);
+            return;
+        }
+
+        event.setCancelled(true);
     }
 }

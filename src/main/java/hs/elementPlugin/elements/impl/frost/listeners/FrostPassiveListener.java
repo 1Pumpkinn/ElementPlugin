@@ -49,15 +49,17 @@ public class FrostPassiveListener implements Listener {
                     // Check if on ice (Upside 2, requires upgrade level 2)
                     boolean onIce = upgradeLevel >= 2 && isOnIce(player);
 
+                    // Remove any existing speed effects first to avoid conflicts
+                    player.removePotionEffect(PotionEffectType.SPEED);
+
                     // Apply appropriate speed effect
                     if (onIce) {
-                        // Speed 3 on ice (takes priority)
+                        // Speed 3 on ice (takes priority) - 3 seconds duration, reapplied every second
                         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 2, true, false, false));
                     } else if (hasLeatherBoots) {
-                        // Speed 2 with leather boots
+                        // Speed 2 with leather boots - 3 seconds duration, reapplied every second
                         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 1, true, false, false));
                     }
-                    // If neither condition is met, the speed effect will naturally expire
                 }
             }
         }.runTaskTimer(plugin, 0L, 20L); // Run every second (20 ticks)
