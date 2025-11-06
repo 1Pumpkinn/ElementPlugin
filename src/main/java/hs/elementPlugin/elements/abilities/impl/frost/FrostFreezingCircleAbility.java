@@ -75,7 +75,7 @@ public class FrostFreezingCircleAbility extends BaseAbility {
 
                     // Add some frost effect
                     if (i % 30 == 0) {
-                        player.getWorld().spawnParticle(Particle.ITEM_SNOWBALL, particleLoc, 2, 0.2, 0.2, 0.2, 0, null, true);
+                        player.getWorld().spawnParticle(Particle.CLOUD, particleLoc, 2, 0.2, 0.2, 0.2, 0, null, true);
                     }
                 }
 
@@ -83,7 +83,6 @@ public class FrostFreezingCircleAbility extends BaseAbility {
                 if (ticks % 10 == 0) {
                     for (LivingEntity entity : centerLocation.getNearbyLivingEntities(radius)) {
                         if (entity.equals(player)) continue;
-                        if (!isValidTarget(context, entity)) continue;
 
                         // Check if entity is a player and if they're trusted
                         if (entity instanceof Player targetPlayer) {

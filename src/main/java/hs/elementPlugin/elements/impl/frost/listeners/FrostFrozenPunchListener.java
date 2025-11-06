@@ -66,12 +66,13 @@ public class FrostFrozenPunchListener implements Listener {
             return;
         }
 
-        // Don't freeze trusted players
+        // Don't freeze trusted players (but DO freeze mobs)
         if (target instanceof Player targetPlayer) {
             if (trustManager.isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {
                 return;
             }
         }
+        // If target is not a player, it's a mob - freeze it!
 
         // Consume the ability
         player.removeMetadata(FrostFrozenPunchAbility.META_FROZEN_PUNCH_READY, plugin);
@@ -85,7 +86,8 @@ public class FrostFrozenPunchListener implements Listener {
         target.getWorld().spawnParticle(Particle.ITEM_SNOWBALL, loc, 20, 0.3, 0.5, 0.3, 0.1, null, true);
         target.getWorld().playSound(loc, Sound.BLOCK_GLASS_BREAK, 1.0f, 2.0f);
 
-        player.sendMessage(ChatColor.AQUA + "Target frozen!");
+        String targetName = target instanceof Player ? ((Player) target).getName() : target.getType().name();
+        player.sendMessage(ChatColor.AQUA + "Frozen " + targetName + "!");
     }
 
     /**
