@@ -37,13 +37,8 @@ public class DataStore {
             return new PlayerData(uuid);
         }
 
-
-
         PlayerData data = new PlayerData(uuid, section);
-        plugin.getLogger().info("[DataStore] Loaded from file for " + uuid + " - Element: " +
-                (data.getCurrentElement() != null ? data.getCurrentElement().name() : "null"));
         return data;
-
     }
 
     public DataStore(ElementPlugin plugin) {
