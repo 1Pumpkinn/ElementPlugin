@@ -24,10 +24,10 @@ public class FrostCircleAbility extends BaseAbility {
     private final ElementPlugin plugin;
     private final Set<UUID> activeCircles = new HashSet<>();
 
-    public static final String META_CIRCLE_FROZEN = "frost_circle_frozen";
+    public static final String META_CIRCLE_FROZEN = "frost_freezing_circle";
 
     public FrostCircleAbility(ElementPlugin plugin) {
-        super("frost_freezing_circle", 50, 15, 1);
+        super("frost_freezing_circle", 50, 10, 1);
         this.plugin = plugin;
     }
 
