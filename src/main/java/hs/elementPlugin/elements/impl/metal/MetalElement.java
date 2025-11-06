@@ -7,6 +7,7 @@ import hs.elementPlugin.elements.abilities.impl.metal.MetalDashAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.elements.upsides.impl.MetalUpsides;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -31,8 +32,8 @@ public class MetalElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: Speed 1 permanently
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, true, false));
+        // Upside 1: haste 1 permanently
+        player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, Integer.MAX_VALUE, 0, true, false));
 
         // Upside 2: Arrow immunity (handled in listener)
         // No passive effect needed here
@@ -50,10 +51,13 @@ public class MetalElement extends BaseElement {
 
     @Override
     public void clearEffects(Player player) {
-        player.removePotionEffect(PotionEffectType.SPEED);
+        player.removePotionEffect(PotionEffectType.HASTE);
         ability1.setActive(player, false);
         ability2.setActive(player, false);
+
+
     }
+
 
     @Override
     public String getDisplayName() {

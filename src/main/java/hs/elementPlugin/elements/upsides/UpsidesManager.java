@@ -32,6 +32,7 @@ public class UpsidesManager {
         upsidesMap.put(ElementType.EARTH, new EarthUpsides(elementManager));
         upsidesMap.put(ElementType.LIFE, new LifeUpsides(elementManager));
         upsidesMap.put(ElementType.DEATH, new DeathUpsides(elementManager));
+        upsidesMap.put(ElementType.METAL, new MetalUpsides(elementManager));
     }
 
     /**
@@ -63,7 +64,7 @@ public class UpsidesManager {
     public void applyUpsidesForPlayer(Player player) {
         var pd = elementManager.data(player.getUniqueId());
         if (pd == null || pd.getCurrentElement() == null) return;
-        
+
         ElementType elementType = pd.getCurrentElement();
         int upgradeLevel = pd.getUpgradeLevel(elementType);
         applyUpsides(elementType, player, upgradeLevel);
@@ -115,5 +116,13 @@ public class UpsidesManager {
      */
     public DeathUpsides getDeathUpsides() {
         return (DeathUpsides) getUpsides(ElementType.DEATH);
+    }
+
+    /**
+     * Get Metal upsides (convenience method)
+     * @return MetalUpsides instance
+     */
+    public MetalUpsides getMetalUpsides() {
+        return (MetalUpsides) getUpsides(ElementType.METAL);
     }
 }

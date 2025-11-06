@@ -21,7 +21,6 @@ public class MetalJoinListener implements Listener {
         Player player = event.getPlayer();
         if (elementManager.getPlayerElement(player) == ElementType.METAL) {
             // Apply speed effect for Metal element users
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, true, false));
-        }
+            player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, Integer.MAX_VALUE, 0, true, false));        }
     }
 }
