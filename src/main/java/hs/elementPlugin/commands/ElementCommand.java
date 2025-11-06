@@ -99,7 +99,7 @@ public class ElementCommand implements CommandExecutor {
 
     private boolean handleSet(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(ChatColor.RED + "Usage: /element set <player> <air|water|fire|earth|life|death|metal>");
+            sender.sendMessage(ChatColor.RED + "Usage: /element set <player> <air|water|fire|earth|life|death|metal|frost>");
             return true;
         }
 
