@@ -102,10 +102,14 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                             }
                         }
 
-                        // Damage the entity
-                        entity.damage(6.5, player);
+                        // Deal TRUE DAMAGE (ignore armor/resistance)
+                        double currentHealth = entity.getHealth();
+                        double newHealth = Math.max(0, currentHealth - 6.5);
+                        entity.setHealth(newHealth);
+
+                        // Mark as damaged
                         damagedEntities.add(entity.getUniqueId());
-                        hitEntity = true; // Mark that we hit an entity
+                        hitEntity = true;
 
                         // Apply slight knockback
                         Vector knockback = entity.getLocation().toVector().subtract(loc.toVector()).normalize();
@@ -117,7 +121,6 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                         entity.getWorld().playSound(entity.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.2f);
                     }
                 }
-
                 ticks++;
             }
         }.runTaskTimer(plugin, 0L, 1L);

@@ -63,11 +63,8 @@ public class ElementManager {
     }
 
     public ElementType getPlayerElement(Player player) {
-        plugin.getLogger().info("[ElementManager] getPlayerElement called for " + player.getName() + " (" + player.getUniqueId() + ")");
-        PlayerData data = data(player.getUniqueId()); // Use the fixed data() method
+        PlayerData data = data(player.getUniqueId());
         ElementType element = data != null ? data.getElementType() : null;
-        plugin.getLogger().info("[ElementManager] Retrieved element for " + player.getName() + ": " +
-                (element != null ? element.name() : "null"));
         return element;
     }
 
@@ -76,12 +73,7 @@ public class ElementManager {
     }
 
     public PlayerData data(@NotNull UUID uuid) {
-        // CRITICAL FIX: PlayerData should be retrieved from DataStore, not ManaManager
-        plugin.getLogger().info("[ElementManager] data() called for " + uuid + ", retrieving from DataStore.");
-        PlayerData pd = store.getPlayerData(uuid);
-        plugin.getLogger().info("[ElementManager] data() returning PlayerData for " + uuid + " - Element: " +
-                (pd.getCurrentElement() != null ? pd.getCurrentElement().name() : "null"));
-        return pd;
+        return store.getPlayerData(uuid);
     }
 
     public Element get(ElementType type) { return registry.get(type); }
@@ -234,9 +226,6 @@ public class ElementManager {
     }
 
     public void setElement(Player player, ElementType type) {
-        plugin.getLogger().info("[ElementManager] setElement called for " + player.getName() + " (" + player.getUniqueId() + ") with element: " +
-                (type != null ? type.name() : "null"));
-
         PlayerData pd = data(player.getUniqueId());
 
         // Return Life/Death core if player had one (and it's different from new element)

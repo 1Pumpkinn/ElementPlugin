@@ -33,10 +33,8 @@ public abstract class BaseElement implements Element {
     public boolean ability1(ElementContext context) {
         if (!checkUpgradeLevel(context.getPlayer(), context.getUpgradeLevel(), 1)) return false;
 
-        // First, try to execute the ability - it will check if it should cancel
-        // This allows the ability to check its own metadata/state
+        // Check if ability can be cancelled
         boolean shouldCheckCostsAndCooldowns = !canCancelAbility1(context);
-
 
         if (!shouldCheckCostsAndCooldowns) {
             executeAbility1(context);
@@ -71,11 +69,10 @@ public abstract class BaseElement implements Element {
 
         if (!checkUpgradeLevel(context.getPlayer(), context.getUpgradeLevel(), 2)) return false;
 
-        // First, try to execute the ability - it will check if it should cancel
+        // Check if ability can be cancelled
         boolean shouldCheckCostsAndCooldowns = !canCancelAbility2(context);
 
         if (!shouldCheckCostsAndCooldowns) {
-            // This is a cancellation - no costs or cooldowns
             executeAbility2(context);
             return true;
         }
@@ -86,7 +83,7 @@ public abstract class BaseElement implements Element {
             return false;
         }
 
-        // Check mana
+        // Check mana only (no cooldown)
         int cost = context.getConfigManager().getAbility2Cost(getType());
         if (!hasMana(context.getPlayer(), context.getManaManager(), cost)) return false;
 

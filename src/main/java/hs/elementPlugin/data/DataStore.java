@@ -23,30 +23,27 @@ public class DataStore {
 
     public PlayerData getPlayerData(UUID uuid) {
         if (playerDataCache.containsKey(uuid)) {
-            PlayerData cached = playerDataCache.get(uuid);
-            plugin.getLogger().info("[DataStore] Retrieved cached data for " + uuid + " - Element: " +
-                    (cached.getCurrentElement() != null ? cached.getCurrentElement().name() : "null"));
-            return cached;
+            return playerDataCache.get(uuid);
         }
 
         PlayerData data = loadPlayerDataFromFile(uuid);
         playerDataCache.put(uuid, data);
-        plugin.getLogger().info("[DataStore] Loaded fresh data for " + uuid + " - Element: " +
-                (data.getCurrentElement() != null ? data.getCurrentElement().name() : "null"));
         return data;
     }
 
     private PlayerData loadPlayerDataFromFile(UUID uuid) {
         ConfigurationSection section = playerCfg.getConfigurationSection("players." + uuid.toString());
         if (section == null) {
-            plugin.getLogger().info("[DataStore] No existing data found for " + uuid + ", creating new PlayerData");
             return new PlayerData(uuid);
         }
+
+
 
         PlayerData data = new PlayerData(uuid, section);
         plugin.getLogger().info("[DataStore] Loaded from file for " + uuid + " - Element: " +
                 (data.getCurrentElement() != null ? data.getCurrentElement().name() : "null"));
         return data;
+
     }
 
     public DataStore(ElementPlugin plugin) {
@@ -101,19 +98,11 @@ public class DataStore {
     }
 
     public synchronized PlayerData load(UUID uuid) {
-        // CRITICAL FIX: Use the same method as getPlayerData to ensure consistency
-        plugin.getLogger().info("[DataStore] load() called for " + uuid);
-        PlayerData data = getPlayerData(uuid);
-        plugin.getLogger().info("[DataStore] load() returning data for " + uuid + " - Element: " +
-                (data.getCurrentElement() != null ? data.getCurrentElement().name() : "null"));
-        return data;
+        return getPlayerData(uuid);
     }
 
     public synchronized void save(PlayerData pd) {
         try {
-            plugin.getLogger().info("[DataStore] Saving data for " + pd.getUuid() + " - Element: " +
-                    (pd.getCurrentElement() != null ? pd.getCurrentElement().name() : "null"));
-
             String key = "players." + pd.getUuid().toString();
             ConfigurationSection sec = playerCfg.getConfigurationSection(key);
             if (sec == null) sec = playerCfg.createSection(key);
@@ -124,26 +113,19 @@ public class DataStore {
             for (ElementType t : pd.getOwnedItems()) items.add(t.name());
             sec.set("items", items);
 
-            // CRITICAL FIX: Update cache with the saved data
             playerDataCache.put(pd.getUuid(), pd);
-            plugin.getLogger().info("[DataStore] Updated cache for " + pd.getUuid() + " with element: " +
-                    (pd.getCurrentElement() != null ? pd.getCurrentElement().name() : "null"));
-
             flushPlayerData();
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to save player data for " + pd.getUuid(), e);
         }
     }
 
-    // NEW METHOD: Clear cache entry to force reload from file
     public synchronized void invalidateCache(UUID uuid) {
-        plugin.getLogger().info("[DataStore] Invalidating cache for " + uuid);
         playerDataCache.remove(uuid);
     }
 
     // NEW METHOD: Debug method to check cache state
     public void debugCacheState(UUID uuid) {
-        plugin.getLogger().info("[DataStore] DEBUG - Cache contains " + uuid + ": " + playerDataCache.containsKey(uuid));
         if (playerDataCache.containsKey(uuid)) {
             PlayerData cached = playerDataCache.get(uuid);
             plugin.getLogger().info("[DataStore] DEBUG - Cached element for " + uuid + ": " +
