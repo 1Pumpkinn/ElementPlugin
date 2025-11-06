@@ -59,6 +59,7 @@ public class ElementManager {
         register(new LifeElement(plugin));
         register(new DeathElement(plugin));
         register(new hs.elementPlugin.elements.impl.metal.MetalElement(plugin));
+        register(new hs.elementPlugin.elements.impl.frost.FrostElement(plugin));
     }
 
     public ElementType getPlayerElement(Player player) {

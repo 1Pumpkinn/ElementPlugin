@@ -100,6 +100,9 @@ public final class ElementPlugin extends JavaPlugin {
         this.abilityManager.registerAbility(ElementType.METAL, 1, new hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility(this));
         this.abilityManager.registerAbility(ElementType.METAL, 2, new hs.elementPlugin.elements.abilities.impl.metal.MetalDashAbility(this));
 
+        this.abilityManager.registerAbility(ElementType.FROST, 1, new hs.elementPlugin.elements.abilities.impl.frost.FrostFreezingCircleAbility(this));
+        this.abilityManager.registerAbility(ElementType.FROST, 2, new hs.elementPlugin.elements.abilities.impl.frost.FrostFrozenPunchAbility(this));
+
         getLogger().info("Registered all element abilities:");
 
         // Register commands
@@ -220,6 +223,11 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalChainStunListener(), this);
         getServer().getPluginManager().registerEvents(new MetalChainStunListener(), this);
 
+        // ========== Frost Element ==========
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostAbilityListener(elementManager, cooldownManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostFrozenPunchListener(this, elementManager, trustManager), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
 
 
         getLogger().info("Listeners registered successfully");

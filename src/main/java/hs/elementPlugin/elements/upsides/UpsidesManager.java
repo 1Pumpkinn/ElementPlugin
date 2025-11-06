@@ -33,6 +33,7 @@ public class UpsidesManager {
         upsidesMap.put(ElementType.LIFE, new LifeUpsides(elementManager));
         upsidesMap.put(ElementType.DEATH, new DeathUpsides(elementManager));
         upsidesMap.put(ElementType.METAL, new MetalUpsides(elementManager));
+        upsidesMap.put(ElementType.FROST, new FrostUpsides(elementManager));
     }
 
     /**
@@ -125,4 +126,9 @@ public class UpsidesManager {
     public MetalUpsides getMetalUpsides() {
         return (MetalUpsides) getUpsides(ElementType.METAL);
     }
+
+    public FrostUpsides getFrostUpsides() {
+        return (FrostUpsides) getUpsides(ElementType.FROST);
+    }
+
 }
