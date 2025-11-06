@@ -9,19 +9,17 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public class FrostFreezingCircleAbility extends BaseAbility {
+public class FrostCircleAbility extends BaseAbility {
     private final ElementPlugin plugin;
     private final Set<UUID> activeCircles = new HashSet<>();
 
-    public FrostFreezingCircleAbility(ElementPlugin plugin) {
+    public FrostCircleAbility(ElementPlugin plugin) {
         super("frost_freezing_circle", 50, 15, 1);
         this.plugin = plugin;
     }
@@ -79,22 +77,24 @@ public class FrostFreezingCircleAbility extends BaseAbility {
                     }
                 }
 
-                // Check for enemies in circle every 10 ticks
-                if (ticks % 10 == 0) {
-                    for (LivingEntity entity : centerLocation.getNearbyLivingEntities(radius)) {
-                        if (entity.equals(player)) continue;
+                // Check for enemies in circle every tick and apply freeze
+                for (LivingEntity entity : centerLocation.getNearbyLivingEntities(radius)) {
+                    if (entity.equals(player)) continue;
 
-                        // Check if entity is a player and if they're trusted
-                        if (entity instanceof Player targetPlayer) {
-                            if (context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {
-                                continue;
-                            }
+                    // Check if entity is a player and if they're trusted - skip if trusted
+                    if (entity instanceof Player targetPlayer) {
+                        if (context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {
+                            continue;
                         }
+                        // Not trusted, so freeze this player
+                    }
+                    // If not a player, it's a mob - freeze it too
 
-                        // Apply freezing effect (same as powder snow)
-                        entity.setFreezeTicks(entity.getMaxFreezeTicks());
+                    // Apply freezing effect (same as powder snow) - must be applied every tick
+                    entity.setFreezeTicks(entity.getMaxFreezeTicks());
 
-                        // Visual feedback
+                    // Visual feedback every 10 ticks to reduce particle spam
+                    if (ticks % 10 == 0) {
                         entity.getWorld().spawnParticle(Particle.SNOWFLAKE, entity.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0, null, true);
                     }
                 }

@@ -2,8 +2,7 @@ package hs.elementPlugin.elements.impl.frost;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.frost.FrostFreezingCircleAbility;
-import hs.elementPlugin.elements.abilities.impl.frost.FrostFrozenPunchAbility;
+import hs.elementPlugin.elements.abilities.impl.frost.FrostCircleAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
@@ -20,7 +19,7 @@ public class FrostElement extends BaseElement {
     public FrostElement(ElementPlugin plugin) {
         super(plugin);
         this.plugin = plugin;
-        this.ability1 = new FrostFreezingCircleAbility(plugin);
+        this.ability1 = new FrostCircleAbility(plugin);
         this.ability2 = new FrostFrozenPunchAbility(plugin);
     }
 

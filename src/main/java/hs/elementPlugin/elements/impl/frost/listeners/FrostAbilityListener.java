@@ -23,24 +23,24 @@ public class FrostAbilityListener implements Listener {
         if (elementManager.getPlayerElement(player) != ElementType.FROST) return;
 
         if (player.isSneaking()) {
-            // Ability 2: Frozen Punch
-            if (cooldownManager.isOnCooldown(player, "frost_frozen_punch")) {
-                player.sendMessage("§cFrozen Punch is on cooldown!");
+            // Ability 2: Frost Punch
+            if (cooldownManager.isOnCooldown(player, "frost_punch")) {
+                player.sendMessage("§cFrost Punch is on cooldown!");
                 event.setCancelled(true);
                 return;
             }
             // Execute Frozen Punch ability
-            cooldownManager.setCooldown(player, "frost_frozen_punch", 20); // 1 second cooldown
+            cooldownManager.setCooldown(player, "frost_punch", 20); // 1 second cooldown
             event.setCancelled(true);
         } else {
             // Ability 1: Freezing Circle
-            if (cooldownManager.isOnCooldown(player, "frost_freezing_circle")) {
+            if (cooldownManager.isOnCooldown(player, "frost_circle")) {
                 player.sendMessage("§cFreezing Circle is on cooldown!");
                 event.setCancelled(true);
                 return;
             }
             // Execute Freezing Circle ability
-            cooldownManager.setCooldown(player, "frost_freezing_circle", 15); // 0.75 second cooldown
+            cooldownManager.setCooldown(player, "frost_circle", 15); // 0.75 second cooldown
             event.setCancelled(true);
         }
     }
