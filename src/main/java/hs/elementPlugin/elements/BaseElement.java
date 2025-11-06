@@ -3,6 +3,7 @@ package hs.elementPlugin.elements;
 import hs.elementPlugin.ElementPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+
 /**
  * Abstract base class for all elements that provides common functionality
  * and reduces code duplication in element implementations.
@@ -34,20 +35,14 @@ public abstract class BaseElement implements Element {
         if (!checkUpgradeLevel(context.getPlayer(), context.getUpgradeLevel(), 1)) return false;
 
         // Check if ability can be cancelled
-        boolean shouldCheckCostsAndCooldowns = !canCancelAbility1(context);
+        boolean shouldCheckCosts = !canCancelAbility1(context);
 
-        if (!shouldCheckCostsAndCooldowns) {
+        if (!shouldCheckCosts) {
             executeAbility1(context);
             return true;
         }
 
-        // Normal activation flow - check cooldown
-        String cooldownKey = getType().toString().toLowerCase() + "_ability1";
-        if (!plugin.getCooldownManager().tryUseAbility(context.getPlayer(), cooldownKey, 3)) {
-            return false;
-        }
-
-        // Check mana
+        // Normal activation flow - check mana only (NO COOLDOWN)
         int cost = context.getConfigManager().getAbility1Cost(getType());
         if (!hasMana(context.getPlayer(), context.getManaManager(), cost)) return false;
 
@@ -70,20 +65,14 @@ public abstract class BaseElement implements Element {
         if (!checkUpgradeLevel(context.getPlayer(), context.getUpgradeLevel(), 2)) return false;
 
         // Check if ability can be cancelled
-        boolean shouldCheckCostsAndCooldowns = !canCancelAbility2(context);
+        boolean shouldCheckCosts = !canCancelAbility2(context);
 
-        if (!shouldCheckCostsAndCooldowns) {
+        if (!shouldCheckCosts) {
             executeAbility2(context);
             return true;
         }
 
-        // Normal activation flow - check cooldown
-        String cooldownKey = getType().toString().toLowerCase() + "_ability2";
-        if (!plugin.getCooldownManager().tryUseAbility(context.getPlayer(), cooldownKey, 3)) {
-            return false;
-        }
-
-        // Check mana only (no cooldown)
+        // Normal activation flow - check mana only (NO COOLDOWN)
         int cost = context.getConfigManager().getAbility2Cost(getType());
         if (!hasMana(context.getPlayer(), context.getManaManager(), cost)) return false;
 

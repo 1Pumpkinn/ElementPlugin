@@ -2,7 +2,6 @@ package hs.elementPlugin.elements.impl.water.listeners;
 
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
-import hs.elementPlugin.managers.CooldownManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

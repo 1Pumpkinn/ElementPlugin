@@ -1,7 +1,6 @@
 package hs.elementPlugin.listeners;
 
 import hs.elementPlugin.managers.ElementManager;
-import hs.elementPlugin.managers.CooldownManager;
 import hs.elementPlugin.data.PlayerData;
 import hs.elementPlugin.elements.ElementType;
 import org.bukkit.entity.Player;
@@ -83,22 +82,15 @@ public class AbilityListener implements Listener {
                     return;
                 }
 
-                CooldownManager cooldowns = plugin.getCooldownManager();
-                String base = element.toString().toLowerCase();
-
                 boolean abilityUsed = false;
 
-                // Trigger ability
+                // Trigger ability (NO COOLDOWN CHECK)
                 if (isSneaking) {
-                    if (!cooldowns.isOnCooldown(player, base + "_ability2")) {
-                        elements.useAbility2(player);
-                        abilityUsed = true;
-                    }
+                    elements.useAbility2(player);
+                    abilityUsed = true;
                 } else {
-                    if (!cooldowns.isOnCooldown(player, base + "_ability1")) {
-                        elements.useAbility1(player);
-                        abilityUsed = true;
-                    }
+                    elements.useAbility1(player);
+                    abilityUsed = true;
                 }
 
                 // Reset tracking so next press starts fresh

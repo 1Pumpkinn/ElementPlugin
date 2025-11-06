@@ -2,7 +2,6 @@ package hs.elementPlugin.elements.impl.air.listeners;
 
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
-import hs.elementPlugin.managers.CooldownManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -10,11 +9,9 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 
 public class AirAbilityListener implements Listener {
     private final ElementManager elementManager;
-    private final CooldownManager cooldownManager;
 
     public AirAbilityListener(ElementManager elementManager, CooldownManager cooldownManager) {
         this.elementManager = elementManager;
-        this.cooldownManager = cooldownManager;
     }
 
     @EventHandler
