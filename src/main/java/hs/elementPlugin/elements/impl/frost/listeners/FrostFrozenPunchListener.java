@@ -87,8 +87,6 @@ public class FrostFrozenPunchListener implements Listener {
         entity.setMetadata(META_FROZEN, new FixedMetadataValue(plugin, freezeUntil));
 
         entity.setFreezeTicks(entity.getMaxFreezeTicks());
-        entity.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 255, false, true, true));
-        entity.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 100, 128, false, true, true));
         entity.setVelocity(new Vector(0, 0, 0));
 
         // Disable mob AI
@@ -102,7 +100,7 @@ public class FrostFrozenPunchListener implements Listener {
             }.runTaskLater(plugin, 100L);
         }
 
-        // Visual freeze effect
+        // Visual freeze effect - continuously apply freeze and prevent movement
         new BukkitRunnable() {
             int ticks = 0;
             @Override
@@ -122,6 +120,8 @@ public class FrostFrozenPunchListener implements Listener {
                     cancel();
                     return;
                 }
+
+                // Keep entity frozen and motionless
                 entity.setFreezeTicks(entity.getMaxFreezeTicks());
                 entity.setVelocity(new Vector(0, entity.getVelocity().getY(), 0));
 

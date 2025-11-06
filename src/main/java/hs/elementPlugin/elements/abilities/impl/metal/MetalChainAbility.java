@@ -91,10 +91,6 @@ public class MetalChainAbility extends BaseAbility {
 
                 // If target is close enough, stop
                 if (distance < 2.0) {
-                    // Apply stun effect when they reach the player
-                    finalTarget.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 255, true, true, true)); // 3 seconds
-                    finalTarget.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 60, 128, true, true, true)); // Prevent jumping (negative jump = 128)
-
                     // Set velocity to zero to stop movement
                     finalTarget.setVelocity(new Vector(0, 0, 0));
 

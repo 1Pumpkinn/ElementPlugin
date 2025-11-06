@@ -133,10 +133,6 @@ public class MetalDashAbility extends BaseAbility implements Listener {
         stunnedPlayers.add(player.getUniqueId());
         pendingStuns.remove(player.getUniqueId());
 
-        // Apply slowness and jump boost debuffs for 5 seconds (100 ticks)
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 255, false, true, true));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 100, 128, false, true, true)); // Negative jump = can't jump
-
         // Visual and audio feedback for the stun
         player.getWorld().spawnParticle(Particle.SMOKE, player.getLocation().add(0, 1, 0), 30, 0.3, 0.5, 0.3, 0.05, null, true);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_DAMAGE, 1.0f, 0.8f);
