@@ -60,7 +60,7 @@ public class FrostElement extends BaseElement {
 
     @Override
     public String getDescription() {
-        return "Masters of ice and cold. Frost users can freeze enemies and gain speed on ice.";
+        return "Frost Element.";
     }
 
     @Override

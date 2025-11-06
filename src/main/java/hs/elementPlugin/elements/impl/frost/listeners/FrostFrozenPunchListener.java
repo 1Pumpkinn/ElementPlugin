@@ -40,34 +40,31 @@ public class FrostFrozenPunchListener implements Listener {
         if (!(event.getDamager() instanceof Player attacker)) return;
         if (!(event.getEntity() instanceof LivingEntity victim)) return;
 
-        // --- Debug start ---
-        Bukkit.getLogger().info("[FrostFrozenPunch] " + attacker.getName() + " hit " + victim.getName());
-        // --- Debug end ---
 
         // Check if attacker has Frost element
         ElementType type = elementManager.getPlayerElement(attacker);
         if (type != ElementType.FROST) {
-            Bukkit.getLogger().info("[FrostFrozenPunch] " + attacker.getName() + " is not FROST (" + type + ")");
+
             return;
         }
 
         // Check if frozen punch metadata exists
         if (!attacker.hasMetadata(FrostPunchAbility.META_FROZEN_PUNCH_READY)) {
-            Bukkit.getLogger().info("[FrostFrozenPunch] " + attacker.getName() + " has no frozen punch metadata");
+
             return;
         }
 
         long until = attacker.getMetadata(FrostPunchAbility.META_FROZEN_PUNCH_READY).get(0).asLong();
         if (System.currentTimeMillis() > until) {
             attacker.removeMetadata(FrostPunchAbility.META_FROZEN_PUNCH_READY, plugin);
-            Bukkit.getLogger().info("[FrostFrozenPunch] Metadata expired for " + attacker.getName());
+
             return;
         }
 
         // Don't freeze trusted players
         if (victim instanceof Player targetPlayer &&
                 plugin.getTrustManager().isTrusted(attacker.getUniqueId(), targetPlayer.getUniqueId())) {
-            Bukkit.getLogger().info("[FrostFrozenPunch] Target is trusted, skipping freeze.");
+
             return;
         }
 
@@ -78,13 +75,11 @@ public class FrostFrozenPunchListener implements Listener {
         applyFreezeEffect(victim);
 
         // Feedback
-        attacker.sendMessage("§b§lFROZEN! §7Enemy cannot move for 5 seconds.");
         Location hitLoc = victim.getEyeLocation();
         victim.getWorld().spawnParticle(Particle.SNOWFLAKE, hitLoc, 50, 0.3, 0.5, 0.3, 0.1, null, true);
         victim.getWorld().spawnParticle(Particle.CLOUD, hitLoc, 25, 0.3, 0.5, 0.3, 0.05, null, true);
         victim.getWorld().playSound(hitLoc, Sound.BLOCK_GLASS_BREAK, 1.0f, 0.5f);
 
-        Bukkit.getLogger().info("[FrostFrozenPunch] Successfully froze " + victim.getName());
     }
 
     private void applyFreezeEffect(LivingEntity entity) {

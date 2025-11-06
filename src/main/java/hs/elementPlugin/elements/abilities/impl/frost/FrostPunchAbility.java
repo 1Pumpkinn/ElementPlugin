@@ -34,8 +34,6 @@ public class FrostPunchAbility extends BaseAbility {
         player.getWorld().spawnParticle(Particle.SNOWFLAKE, loc, 30, 0.3, 0.3, 0.3, 0.1, null, true);
         player.getWorld().spawnParticle(Particle.CLOUD, loc, 15, 0.3, 0.3, 0.3, 0.05, null, true);
 
-        player.sendMessage(ChatColor.AQUA + "Frozen Punch activated! Hit an enemy to freeze them for 5 seconds.");
-
         return true;
     }
 
