@@ -93,25 +93,25 @@ public class MetalChainAbility extends BaseAbility {
                 // If target is close enough, stop
                 if (distance < 2.0) {
                     // Set velocity to zero to stop movement
-                    entity.setVelocity(new Vector(0, 0, 0));
+                    finalTarget.setVelocity(new Vector(0, 0, 0));
 
                     // Disable mob AI if it's a mob
-                    if (entity instanceof Mob mob) {
+                    if (finalTarget instanceof Mob mob) {
                         mob.setAware(false);
                     }
 
                     // Set metadata for stun duration (3 seconds = 3000ms)
                     long stunDuration = 3000; // 3 seconds in milliseconds
                     long stunUntil = System.currentTimeMillis() + stunDuration;
-                    entity.setMetadata(META_CHAINED_STUN, new FixedMetadataValue(plugin, stunUntil));
+                    finalTarget.setMetadata(META_CHAINED_STUN, new FixedMetadataValue(plugin, stunUntil));
 
                     // Schedule metadata removal and re-enable AI after stun expires
                     new BukkitRunnable() {
                         @Override
                         public void run() {
-                            if (entity.isValid()) {
-                                entity.removeMetadata(META_CHAINED_STUN, plugin);
-                                if (entity instanceof Mob mob) {
+                            if (finalTarget.isValid()) {
+                                finalTarget.removeMetadata(META_CHAINED_STUN, plugin);
+                                if (finalTarget instanceof Mob mob) {
                                     mob.setAware(true);
                                 }
                             }
