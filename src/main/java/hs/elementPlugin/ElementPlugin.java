@@ -101,6 +101,7 @@ public final class ElementPlugin extends JavaPlugin {
         this.abilityManager.registerAbility(ElementType.FROST, 1, new FrostCircleAbility(this));
         this.abilityManager.registerAbility(ElementType.FROST, 2, new FrostPunchAbility(this));
 
+
         getLogger().info("Registered all element abilities:");
 
         // Register commands
@@ -185,22 +186,16 @@ public final class ElementPlugin extends JavaPlugin {
         // ========== Earth Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthCharmListener(elementManager, this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthJoinListener(elementManager), this);
-        // REMOVE THIS LINE:
-        // Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthAbilityListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthFriendlyMobListener(this, trustManager), this);
         Bukkit.getPluginManager().registerEvents(new EarthOreDropListener(elementManager), this);
 
         // ========== Life Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeRegenListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
-        // REMOVE THIS LINE:
-        // Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeAbilityListener(elementManager), this);
 
         // ========== Death Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathRawFoodListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
-        // REMOVE THIS LINE:
-        // Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathAbilityListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathFriendlyMobListener(this, trustManager), this);
 
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.DeathElementCraftListener(this, elementManager), this);
@@ -230,8 +225,6 @@ public final class ElementPlugin extends JavaPlugin {
 
         // ========== Frost Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
-        // REMOVE THIS LINE:
-        // Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostAbilityListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostFrozenPunchListener(this, elementManager), this);
 
