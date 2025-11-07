@@ -3,9 +3,7 @@ package hs.elementPlugin.managers;
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.data.PlayerData;
-import hs.elementPlugin.managers.ConfigManager;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
@@ -53,13 +51,10 @@ public class ManaManager {
                     }
                 }
 
-                // Fire Upside 2: auto-smelt ores when upgrade >=2
-                autoSmeltIfFireUpside2(p, pd);
-
                 // Action bar display with mana emoji
                 String manaDisplay = p.getGameMode() == GameMode.CREATIVE ? "∞" : String.valueOf(pd.getMana());
                 p.sendActionBar(
-                    net.kyori.adventure.text.Component.text("♻ Mana: ")
+                    net.kyori.adventure.text.Component.text("Ⓜ Mana: ")
                         .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
                         .append(net.kyori.adventure.text.Component.text(manaDisplay, net.kyori.adventure.text.format.NamedTextColor.WHITE))
                         .append(net.kyori.adventure.text.Component.text("/" + maxMana, net.kyori.adventure.text.format.NamedTextColor.GRAY))
@@ -109,41 +104,5 @@ public class ManaManager {
         
         PlayerData pd = get(player.getUniqueId());
         return pd.getMana() >= amount;
-    }
-
-    private void autoSmeltIfFireUpside2(Player p, PlayerData pd) {
-        if (pd.getCurrentElement() != hs.elementPlugin.elements.ElementType.FIRE) return;
-        if (pd.getUpgradeLevel(hs.elementPlugin.elements.ElementType.FIRE) < 2) return;
-        var inv = p.getInventory();
-        
-        // Use a map to track smelted items and stack them properly
-        java.util.Map<org.bukkit.Material, Integer> smeltedItems = new java.util.HashMap<>();
-        
-        for (int i = 0; i < inv.getSize(); i++) {
-            var it = inv.getItem(i);
-            if (it == null) continue;
-            var out = mapSmeltOutput(it.getType());
-            if (out != null) {
-                int amount = it.getAmount();
-                smeltedItems.merge(out, amount, Integer::sum);
-                inv.setItem(i, null); // Remove the original item
-            }
-        }
-        
-        // Add the smelted items back to inventory, stacking properly
-        for (var entry : smeltedItems.entrySet()) {
-            org.bukkit.inventory.ItemStack smelted = new org.bukkit.inventory.ItemStack(entry.getKey(), entry.getValue());
-            inv.addItem(smelted);
-        }
-    }
-
-    private org.bukkit.Material mapSmeltOutput(org.bukkit.Material in) {
-        switch (in) {
-            case RAW_IRON, IRON_ORE, DEEPSLATE_IRON_ORE -> { return org.bukkit.Material.IRON_INGOT; }
-            case RAW_GOLD, GOLD_ORE, DEEPSLATE_GOLD_ORE -> { return org.bukkit.Material.GOLD_INGOT; }
-            case RAW_COPPER, COPPER_ORE, DEEPSLATE_COPPER_ORE -> { return org.bukkit.Material.COPPER_INGOT; }
-            case ANCIENT_DEBRIS -> { return org.bukkit.Material.NETHERITE_SCRAP; }
-            default -> { return null; }
-        }
     }
 }
