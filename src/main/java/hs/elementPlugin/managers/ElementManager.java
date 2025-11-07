@@ -143,7 +143,13 @@ public class ElementManager {
 
         clearAllEffects(player);
 
-        pd.setCurrentElement(pick);
+        // Store current upgrade level before changing element
+        int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
+
+        // Use setCurrentElementWithoutReset to preserve upgrade level
+        pd.setCurrentElementWithoutReset(pick);
+        pd.setCurrentElementUpgradeLevel(currentUpgradeLevel);
+
         store.save(pd);
         player.showTitle(net.kyori.adventure.title.Title.title(
                 net.kyori.adventure.text.Component.text("Element Chosen!").color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
@@ -184,7 +190,13 @@ public class ElementManager {
 
         clearAllEffects(player);
 
-        pd.setCurrentElement(pick);
+        // Store current upgrade level before changing element
+        int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
+
+        // Use setCurrentElementWithoutReset to preserve upgrade level
+        pd.setCurrentElementWithoutReset(pick);
+        pd.setCurrentElementUpgradeLevel(currentUpgradeLevel);
+
         store.save(pd);
         // FIX: Wrap the arguments in Title.title()
         player.showTitle(net.kyori.adventure.title.Title.title(
@@ -208,7 +220,7 @@ public class ElementManager {
         // Clear effects from previous element
         clearAllEffects(player);
 
-        pd.setCurrentElement(type); // This automatically resets upgrade level
+        pd.setCurrentElement(type); // This automatically resets upgrade level (for first-time selection)
         store.save(pd);
         player.showTitle(net.kyori.adventure.title.Title.title(
                 net.kyori.adventure.text.Component.text("Element Chosen!").color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
