@@ -123,7 +123,7 @@ public class FrostFrozenPunchListener implements Listener {
 
                 // Keep entity frozen and motionless
                 entity.setFreezeTicks(entity.getMaxFreezeTicks());
-                entity.setVelocity(new Vector(0, entity.getVelocity().getY(), 0));
+                entity.setVelocity(new Vector(0, 0, 0));
 
                 if (ticks % 10 == 0) {
                     Location loc = entity.getLocation().add(0, 1, 0);
