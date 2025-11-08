@@ -66,19 +66,12 @@ public class ElementSelectionGUI {
 
         airItem.setItemMeta(airMeta);
 
-        // Metal element item
-        ItemStack metalItem = new ItemStack(Material.IRON_INGOT);
-        ItemMeta metalMeta = metalItem.getItemMeta();
-        metalMeta.setDisplayName(ChatColor.GRAY + "Metal Element");
-
-        metalItem.setItemMeta(metalMeta);
 
         // Place items in inventory
         inventory.setItem(0, fireItem);
         inventory.setItem(2, waterItem);
         inventory.setItem(4, earthItem);
         inventory.setItem(6, airItem);
-        inventory.setItem(8, metalItem);
     }
     
     public void open() {
@@ -101,11 +94,6 @@ public class ElementSelectionGUI {
             case 6:
                 selectedElement = ElementType.AIR;
                 break;
-            case 8:
-                selectedElement = ElementType.METAL;
-                break;
-            default:
-                return;
         }
         
         if (selectedElement != null) {
