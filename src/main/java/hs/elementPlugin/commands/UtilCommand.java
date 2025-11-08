@@ -1,6 +1,7 @@
 package hs.elementPlugin.commands;
 
 import hs.elementPlugin.ElementPlugin;
+import hs.elementPlugin.items.AdvancedRerollerItem;
 import hs.elementPlugin.items.Upgrader1Item;
 import hs.elementPlugin.items.Upgrader2Item;
 import hs.elementPlugin.items.RerollerItem;
@@ -33,20 +34,24 @@ public class UtilCommand implements CommandExecutor {
         // Create stacks of utility items
         ItemStack upgrader1Stack = Upgrader1Item.make(plugin);
         upgrader1Stack.setAmount(64);
-        
+
         ItemStack upgrader2Stack = Upgrader2Item.make(plugin);
         upgrader2Stack.setAmount(64);
-        
+
         ItemStack rerollerStack = RerollerItem.make(plugin);
         rerollerStack.setAmount(64);
 
+        ItemStack advancedRerollerStack = AdvancedRerollerItem.make(plugin);
+        advancedRerollerStack.setAmount(64);
+
         // Give items to player
-        player.getInventory().addItem(upgrader1Stack, upgrader2Stack, rerollerStack);
-        
+        player.getInventory().addItem(upgrader1Stack, upgrader2Stack, rerollerStack, advancedRerollerStack);
+
         player.sendMessage(ChatColor.GREEN + "You have been given utility items!");
         player.sendMessage(ChatColor.YELLOW + "• 64x Upgrader I");
         player.sendMessage(ChatColor.YELLOW + "• 64x Upgrader II");
         player.sendMessage(ChatColor.YELLOW + "• 64x Reroller");
+        player.sendMessage(ChatColor.DARK_PURPLE + "• 64x Advanced Reroller");
 
         return true;
     }
