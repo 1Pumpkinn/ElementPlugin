@@ -81,7 +81,6 @@ public class AdvancedRerollerListener implements Listener {
         player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
 
         String[] names = {"METAL", "FROST"};
-        ChatColor[] colors = {ChatColor.AQUA};
         int steps = 20;
         long interval = 3L;
 
@@ -96,10 +95,11 @@ public class AdvancedRerollerListener implements Listener {
                     return;
                 }
 
-                int i = tick % 2;
+                // Always AQUA text color during roll
+                String name = names[tick % 2];
                 player.sendTitle(
-                        colors[i] + "Rolling...",
-                        colors[i] + names[i],
+                        ChatColor.GOLD + "Rolling...",
+                        ChatColor.AQUA + name,
                         0, 10, 0
                 );
                 tick++;
@@ -116,13 +116,12 @@ public class AdvancedRerollerListener implements Listener {
         pd.setCurrentElementUpgradeLevel(currentUpgradeLevel);
         plugin.getDataStore().save(pd);
 
+        // Always show AQUA title color for both elements
         var title = net.kyori.adventure.title.Title.title(
-                net.kyori.adventure.text.Component.text("Element Chosen!").color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
-                net.kyori.adventure.text.Component.text(element.name()).color(
-                        element == ElementType.METAL
-                                ? net.kyori.adventure.text.format.NamedTextColor.GRAY
-                                : net.kyori.adventure.text.format.NamedTextColor.AQUA
-                ),
+                net.kyori.adventure.text.Component.text("Element Chosen!")
+                        .color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
+                net.kyori.adventure.text.Component.text(element.name())
+                        .color(net.kyori.adventure.text.format.NamedTextColor.AQUA),
                 net.kyori.adventure.title.Title.Times.times(
                         java.time.Duration.ofMillis(500),
                         java.time.Duration.ofMillis(2000),
@@ -134,9 +133,11 @@ public class AdvancedRerollerListener implements Listener {
         plugin.getElementManager().applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
 
-        ChatColor color = element == ElementType.METAL ? ChatColor.GRAY : ChatColor.AQUA;
-        player.sendMessage(ChatColor.GREEN + "Your element has been rerolled to " + color + element.name() + ChatColor.GREEN + "!");
+        // Message also always uses AQUA for consistency
+        player.sendMessage(ChatColor.GREEN + "Your element has been rerolled");
     }
+
+
 
     private void clearAllEffects(Player player, PlayerData pd) {
         for (PotionEffect effect : player.getActivePotionEffects()) {

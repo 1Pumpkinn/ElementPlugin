@@ -104,7 +104,7 @@ public class ElementManager {
                     return;
                 }
                 String randomName = rollingNames[random.nextInt(rollingNames.length)];
-                player.sendTitle(ChatColor.YELLOW + "Rolling...", ChatColor.AQUA + randomName, 0, 10, 0);
+                player.sendTitle(ChatColor.GOLD + "Rolling...", ChatColor.AQUA + randomName, 0, 10, 0);
                 tick++;
             }
         }.runTaskTimer(plugin, 0L, delayPerStep);
