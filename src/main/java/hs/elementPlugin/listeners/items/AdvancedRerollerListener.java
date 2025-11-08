@@ -95,16 +95,20 @@ public class AdvancedRerollerListener implements Listener {
         // Add to rolling set
         plugin.getElementManager().data(player.getUniqueId());
 
-        // Show rolling animation
-        String[] names = {targetElement.name()};
+        // Show rolling animation - cycle between METAL and FROST
+        String[] names = {"METAL", "FROST"};
+        ChatColor[] colors = {ChatColor.GRAY, ChatColor.AQUA};
         player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
 
-        int steps = 16;
+        int steps = 20; // More steps for better animation
         for (int i = 0; i < steps; i++) {
             int delay = i * 3;
+            final int index = i; // Capture for lambda
             org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                String name = names[random.nextInt(names.length)];
-                ChatColor color = targetElement == ElementType.METAL ? ChatColor.GRAY : ChatColor.AQUA;
+                // Alternate between METAL and FROST
+                int nameIndex = index % 2;
+                String name = names[nameIndex];
+                ChatColor color = colors[nameIndex];
                 player.sendTitle(color + "Rolling...", color + name, 0, 10, 0);
             }, delay);
         }

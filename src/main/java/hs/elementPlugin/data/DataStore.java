@@ -144,7 +144,6 @@ public class DataStore {
     private void flushPlayerData() {
         try {
             playerCfg.save(playerFile);
-            plugin.getLogger().info("[DataStore] Successfully saved players.yml to disk");
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to save players.yml to disk", e);
         }

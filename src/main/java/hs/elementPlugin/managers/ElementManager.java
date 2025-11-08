@@ -116,7 +116,7 @@ public class ElementManager {
         currentlyRolling.add(player.getUniqueId());
 
         // Slowing title roll animation, then assign
-        String[] names = {"AIR", "WATER", "FIRE", "EARTH", "METAL", "FROST"};
+        String[] names = {"AIR", "WATER", "FIRE", "EARTH"};
         player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
         int steps = 16;
         for (int i = 0; i < steps; i++) {
@@ -134,7 +134,7 @@ public class ElementManager {
     }
 
     public void assignRandomWithTitle(Player player) {
-        ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH, ElementType.METAL, ElementType.FROST};
+        ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH};
         ElementType pick = choices[random.nextInt(choices.length)];
         PlayerData pd = data(player.getUniqueId());
 
@@ -165,11 +165,10 @@ public class ElementManager {
         ElementType currentElement = pd.getCurrentElement();
 
         // Get list of basic elements (not Life/Death)
-        ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH, ElementType.METAL, ElementType.FROST};
+        ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH};
         // If current element is not one of the basic ones, just pick any
         if (currentElement != ElementType.AIR && currentElement != ElementType.WATER &&
-                currentElement != ElementType.FIRE && currentElement != ElementType.EARTH &&
-                currentElement != ElementType.METAL && currentElement != ElementType.FROST) {
+                currentElement != ElementType.FIRE && currentElement != ElementType.EARTH) {
             assignRandomWithTitle(player);
             return;
         }
