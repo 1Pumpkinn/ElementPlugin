@@ -57,7 +57,7 @@ public class FrostCircleAbility extends BaseAbility {
             @Override
             public void run() {
                 if (!player.isOnline() || ticks >= maxTicks) {
-                    // Cleanup: Remove all frozen metadata and re-enable mob AI
+                    // Cleanup: Remove all frozen metadata
                     for (LivingEntity entity : centerLocation.getNearbyLivingEntities(radius + 2)) {
                         if (entity.hasMetadata(META_CIRCLE_FROZEN)) {
                             entity.removeMetadata(META_CIRCLE_FROZEN, plugin);

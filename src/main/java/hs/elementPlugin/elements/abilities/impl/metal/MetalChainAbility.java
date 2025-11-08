@@ -93,9 +93,8 @@ public class MetalChainAbility extends BaseAbility {
                     // Set velocity to zero to stop movement
                     finalTarget.setVelocity(new Vector(0, 0, 0));
 
-                    // Disable mob AI if it's a mob
                     if (finalTarget instanceof Mob mob) {
-                        mob.setAware(false);
+                        mob.setAware(true);
                     }
 
                     // Set metadata for stun duration (3 seconds = 3000ms)

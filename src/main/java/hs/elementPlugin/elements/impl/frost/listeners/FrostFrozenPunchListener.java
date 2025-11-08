@@ -89,9 +89,8 @@ public class FrostFrozenPunchListener implements Listener {
         entity.setFreezeTicks(entity.getMaxFreezeTicks());
         entity.setVelocity(new Vector(0, 0, 0));
 
-        // Disable mob AI
         if (entity instanceof Mob mob) {
-            mob.setAware(false);
+            mob.setAware(true);
             new BukkitRunnable() {
                 @Override
                 public void run() {
