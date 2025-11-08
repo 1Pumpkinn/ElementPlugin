@@ -3,29 +3,22 @@ package hs.elementPlugin.managers;
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.data.PlayerData;
-import hs.elementPlugin.elements.Element;
-import hs.elementPlugin.elements.ElementContext;
-import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.elements.*;
 import hs.elementPlugin.elements.impl.air.AirElement;
 import hs.elementPlugin.elements.impl.water.WaterElement;
 import hs.elementPlugin.elements.impl.fire.FireElement;
 import hs.elementPlugin.elements.impl.earth.EarthElement;
 import hs.elementPlugin.elements.impl.life.LifeElement;
 import hs.elementPlugin.elements.impl.death.DeathElement;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Sound;
+import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EnumMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class ElementManager {
     private final ElementPlugin plugin;
@@ -35,17 +28,23 @@ public class ElementManager {
     private final ConfigManager configManager;
 
     private final Map<ElementType, Element> registry = new EnumMap<>(ElementType.class);
-    private final Random random = new Random();
     private final Set<UUID> currentlyRolling = new HashSet<>();
+    private final Random random = new Random();
 
-    public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager, TrustManager trustManager, ConfigManager configManager) {
+    private static final ElementType[] BASIC_ELEMENTS = {
+            ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH
+    };
+
+    public ElementManager(ElementPlugin plugin, DataStore store,
+                          ManaManager manaManager, TrustManager trustManager,
+                          ConfigManager configManager) {
         this.plugin = plugin;
         this.store = store;
         this.manaManager = manaManager;
         this.trustManager = trustManager;
         this.configManager = configManager;
 
-        // Register elements with plugin parameter only
+        // Register all elements
         register(new AirElement(plugin));
         register(new WaterElement(plugin));
         register(new FireElement(plugin));
@@ -56,12 +55,6 @@ public class ElementManager {
         register(new hs.elementPlugin.elements.impl.frost.FrostElement(plugin));
     }
 
-    public ElementType getPlayerElement(Player player) {
-        PlayerData data = data(player.getUniqueId());
-        ElementType element = data != null ? data.getElementType() : null;
-        return element;
-    }
-
     private void register(Element element) {
         registry.put(element.getType(), element);
     }
@@ -70,19 +63,139 @@ public class ElementManager {
         return store.getPlayerData(uuid);
     }
 
-    public Element get(ElementType type) { return registry.get(type); }
+    public Element get(ElementType type) {
+        return registry.get(type);
+    }
 
-    private void clearAllEffects(Player player) {
-        // Remove all potion effects
-        for (PotionEffect effect : player.getActivePotionEffects()) {
-            player.removePotionEffect(effect.getType());
+    public ElementType getPlayerElement(Player player) {
+        PlayerData pd = data(player.getUniqueId());
+        return pd != null ? pd.getElementType() : null;
+    }
+
+    public void ensureAssigned(Player player) {
+        PlayerData pd = data(player.getUniqueId());
+        if (pd.getCurrentElement() == null) rollAndAssign(player);
+    }
+
+    public boolean isCurrentlyRolling(Player player) {
+        return currentlyRolling.contains(player.getUniqueId());
+    }
+
+    /* ------------------------------  ELEMENT ASSIGNMENT ------------------------------ */
+
+    public void rollAndAssign(Player player) {
+        if (!beginRoll(player)) return;
+
+        String[] rollingNames = Arrays.stream(BASIC_ELEMENTS).map(Enum::name).toArray(String[]::new);
+
+        player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
+        int steps = 16;
+        long delayPerStep = 3L;
+
+        new BukkitRunnable() {
+            int tick = 0;
+
+            @Override
+            public void run() {
+                if (tick >= steps) {
+                    assignRandomWithTitle(player);
+                    endRoll(player);
+                    cancel();
+                    return;
+                }
+                String randomName = rollingNames[random.nextInt(rollingNames.length)];
+                player.sendTitle(ChatColor.YELLOW + "Rolling...", ChatColor.AQUA + randomName, 0, 10, 0);
+                tick++;
+            }
+        }.runTaskTimer(plugin, 0L, delayPerStep);
+    }
+
+    public void assignRandomWithTitle(Player player) {
+        assignElementInternal(player, randomChoice(BASIC_ELEMENTS), "Element Chosen!");
+    }
+
+    public void assignRandomDifferentElement(Player player) {
+        PlayerData pd = data(player.getUniqueId());
+        ElementType current = pd.getCurrentElement();
+
+        ElementType[] choices = BASIC_ELEMENTS;
+        if (!Arrays.asList(BASIC_ELEMENTS).contains(current)) {
+            assignRandomWithTitle(player);
+            return;
         }
 
-        // Reset max health to default (20 HP)
-        var attr = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        List<ElementType> available = new ArrayList<>(Arrays.asList(BASIC_ELEMENTS));
+        available.remove(current);
+
+        assignElementInternal(player, randomChoice(available), "Element Rerolled!");
+    }
+
+    public void assignElement(Player player, ElementType type) {
+        assignElementInternal(player, type, "Element Chosen!", true);
+    }
+
+    public void setElement(Player player, ElementType type) {
+        PlayerData pd = data(player.getUniqueId());
+        ElementType old = pd.getCurrentElement();
+
+        if (old != type) returnLifeOrDeathCore(player, old);
+        clearAllEffects(player);
+
+        pd.setCurrentElement(type);
+        store.save(pd);
+
+        plugin.getLogger().info("[ElementManager] Set element for " + player.getName() + " to " + type);
+        player.sendMessage(ChatColor.GOLD + "Your element is now " + ChatColor.AQUA + type.name());
+
+        applyUpsides(player);
+    }
+
+    private void assignElementInternal(Player player, ElementType type, String titleText) {
+        assignElementInternal(player, type, titleText, false);
+    }
+
+    private void assignElementInternal(Player player, ElementType type, String titleText, boolean resetLevel) {
+        PlayerData pd = data(player.getUniqueId());
+        ElementType old = pd.getCurrentElement();
+
+        if (old != type) returnLifeOrDeathCore(player, old);
+        clearAllEffects(player);
+
+        int currentUpgrade = pd.getCurrentElementUpgradeLevel();
+        if (resetLevel) pd.setCurrentElement(type);
+        else {
+            pd.setCurrentElementWithoutReset(type);
+            pd.setCurrentElementUpgradeLevel(currentUpgrade);
+        }
+
+        store.save(pd);
+        showElementTitle(player, type, titleText);
+        applyUpsides(player);
+        player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+    }
+
+    /* ------------------------------  ELEMENT VISUALS ------------------------------ */
+
+    private void showElementTitle(Player player, ElementType type, String title) {
+        var titleObj = net.kyori.adventure.title.Title.title(
+                net.kyori.adventure.text.Component.text(title).color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
+                net.kyori.adventure.text.Component.text(type.name())
+                        .color(net.kyori.adventure.text.format.NamedTextColor.AQUA),
+                net.kyori.adventure.title.Title.Times.times(
+                        java.time.Duration.ofMillis(500),
+                        java.time.Duration.ofMillis(2000),
+                        java.time.Duration.ofMillis(500)
+                )
+        );
+        player.showTitle(titleObj);
+    }
+
+    private void clearAllEffects(Player player) {
+        player.getActivePotionEffects().forEach(effect -> player.removePotionEffect(effect.getType()));
+        var attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null) {
             attr.setBaseValue(20.0);
-            if (player.getHealth() > 20.0) player.setHealth(20.0);
+            player.setHealth(Math.min(player.getHealth(), 20.0));
         }
     }
 
@@ -90,190 +203,33 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType type = pd.getCurrentElement();
         if (type == null) return;
-        Element e = registry.get(type);
-        if (e != null) e.applyUpsides(player, pd.getUpgradeLevel(type));
+        Element element = registry.get(type);
+        if (element != null) element.applyUpsides(player, pd.getUpgradeLevel(type));
     }
 
-    public void ensureAssigned(Player player) {
-        PlayerData pd = data(player.getUniqueId());
-        if (pd.getCurrentElement() == null) {
-            rollAndAssign(player);
-        }
-    }
+    /* ------------------------------  ROLL TRACKING ------------------------------ */
 
-    public boolean isCurrentlyRolling(Player player) {
-        return currentlyRolling.contains(player.getUniqueId());
-    }
-
-    public void rollAndAssign(Player player) {
-        // Check if player is already rolling
+    private boolean beginRoll(Player player) {
         if (isCurrentlyRolling(player)) {
             player.sendMessage(ChatColor.RED + "You are already rerolling your element!");
-            return;
+            return false;
         }
-
-        // Add player to currently rolling set
         currentlyRolling.add(player.getUniqueId());
-
-        // Slowing title roll animation, then assign
-        String[] names = {"AIR", "WATER", "FIRE", "EARTH"};
-        player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
-        int steps = 16;
-        for (int i = 0; i < steps; i++) {
-            int delay = i * 3;
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                String name = names[random.nextInt(names.length)];
-                player.sendTitle(ChatColor.YELLOW + "Rolling...", ChatColor.AQUA + name, 0, 10, 0);
-            }, delay);
-        }
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            assignRandomWithTitle(player);
-            // Remove player from currently rolling set when done
-            currentlyRolling.remove(player.getUniqueId());
-        }, steps * 3L + 2L);
+        return true;
     }
 
-    public void assignRandomWithTitle(Player player) {
-        ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH};
-        ElementType pick = choices[random.nextInt(choices.length)];
-        PlayerData pd = data(player.getUniqueId());
-
-        // Return Life/Death core if player had one
-        returnLifeOrDeathCore(player, pd.getCurrentElement());
-
-        clearAllEffects(player);
-
-        // Store current upgrade level before changing element
-        int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
-
-        // Use setCurrentElementWithoutReset to preserve upgrade level
-        pd.setCurrentElementWithoutReset(pick);
-        pd.setCurrentElementUpgradeLevel(currentUpgradeLevel);
-
-        store.save(pd);
-        player.showTitle(net.kyori.adventure.title.Title.title(
-                net.kyori.adventure.text.Component.text("Element Chosen!").color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
-                net.kyori.adventure.text.Component.text(pick.name()).color(net.kyori.adventure.text.format.NamedTextColor.AQUA),
-                net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(500), java.time.Duration.ofMillis(2000), java.time.Duration.ofMillis(500))
-        ));
-        applyUpsides(player);
-        player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+    private void endRoll(Player player) {
+        currentlyRolling.remove(player.getUniqueId());
     }
 
-    public void assignRandomDifferentElement(Player player) {
-        PlayerData pd = data(player.getUniqueId());
-        ElementType currentElement = pd.getCurrentElement();
+    /* ------------------------------  LIFE/DEATH CORE ------------------------------ */
 
-        // Get list of basic elements (not Life/Death)
-        ElementType[] choices = new ElementType[]{ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH};
-        // If current element is not one of the basic ones, just pick any
-        if (currentElement != ElementType.AIR && currentElement != ElementType.WATER &&
-                currentElement != ElementType.FIRE && currentElement != ElementType.EARTH) {
-            assignRandomWithTitle(player);
-            return;
-        }
-
-        // Filter out current element
-        java.util.List<ElementType> availableChoices = new java.util.ArrayList<>();
-        for (ElementType type : choices) {
-            if (type != currentElement) {
-                availableChoices.add(type);
-            }
-        }
-
-        // Pick random from remaining choices
-        ElementType pick = availableChoices.get(random.nextInt(availableChoices.size()));
-
-        // Return Life/Death core if player had one
-        returnLifeOrDeathCore(player, currentElement);
-
-        clearAllEffects(player);
-
-        // Store current upgrade level before changing element
-        int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
-
-        // Use setCurrentElementWithoutReset to preserve upgrade level
-        pd.setCurrentElementWithoutReset(pick);
-        pd.setCurrentElementUpgradeLevel(currentUpgradeLevel);
-
-        store.save(pd);
-        // FIX: Wrap the arguments in Title.title()
-        player.showTitle(net.kyori.adventure.title.Title.title(
-                net.kyori.adventure.text.Component.text("Element Rerolled!").color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
-                net.kyori.adventure.text.Component.text(pick.name()).color(net.kyori.adventure.text.format.NamedTextColor.AQUA),
-                net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(500), java.time.Duration.ofMillis(2000), java.time.Duration.ofMillis(500))
-        ));
-        applyUpsides(player);
-        player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-    }
-
-    public void assignElement(Player player, ElementType type) {
-        PlayerData pd = data(player.getUniqueId());
-
-        // Return Life/Death core if player had one (and it's different from new element)
-        ElementType oldElement = pd.getCurrentElement();
-        if (oldElement != type) {
-            returnLifeOrDeathCore(player, oldElement);
-        }
-
-        // Clear effects from previous element
-        clearAllEffects(player);
-
-        pd.setCurrentElement(type); // This automatically resets upgrade level (for first-time selection)
-        store.save(pd);
-        player.showTitle(net.kyori.adventure.title.Title.title(
-                net.kyori.adventure.text.Component.text("Element Chosen!").color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
-                net.kyori.adventure.text.Component.text(type.name()).color(net.kyori.adventure.text.format.NamedTextColor.AQUA),
-                net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(500), java.time.Duration.ofMillis(2000), java.time.Duration.ofMillis(500))
-        ));
-        applyUpsides(player);
-        player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-    }
-
-    public void setElement(Player player, ElementType type) {
-        PlayerData pd = data(player.getUniqueId());
-
-        // Return Life/Death core if player had one (and it's different from new element)
-        ElementType oldElement = pd.getCurrentElement();
-        if (oldElement != type) {
-            returnLifeOrDeathCore(player, oldElement);
-        }
-
-        // Clear effects from previous element
-        clearAllEffects(player);
-
-        pd.setCurrentElement(type);
-        store.save(pd); // This save will update the DataStore's cache and persist to file.
-
-        plugin.getLogger().info("[ElementManager] Successfully set element for " + player.getName() + " to: " +
-                (type != null ? type.name() : "null"));
-
-        player.sendMessage(
-                net.kyori.adventure.text.Component.text("Your element is now ")
-                        .color(net.kyori.adventure.text.format.NamedTextColor.GOLD)
-                        .append(net.kyori.adventure.text.Component.text(type.name(), net.kyori.adventure.text.format.NamedTextColor.AQUA))
-        );
-        applyUpsides(player);
-    }
-
-    /**
-     * Returns a Life or Death core to the player if they had one
-     * @param player The player to return the core to
-     * @param oldElement The element the player had before switching
-     */
     private void returnLifeOrDeathCore(Player player, ElementType oldElement) {
-        if (oldElement == null) return;
-
-        // Only return if it was Life or Death
-        if (oldElement != ElementType.LIFE && oldElement != ElementType.DEATH) return;
+        if (oldElement == null || (oldElement != ElementType.LIFE && oldElement != ElementType.DEATH)) return;
 
         PlayerData pd = data(player.getUniqueId());
-
-        // Only return if they still have the element item flag
-        // (if they died, this flag would have been removed)
         if (!pd.hasElementItem(oldElement)) return;
 
-        // Create and give the core back
         ItemStack core = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, oldElement);
         if (core != null) {
             player.getInventory().addItem(core);
@@ -283,49 +239,47 @@ public class ElementManager {
         }
     }
 
-    public boolean useAbility1(Player player) {
-        PlayerData pd = data(player.getUniqueId());
-        ElementType type = pd.getCurrentElement();
-        if (type == null) return false;
-        Element e = registry.get(type);
-        if (e == null) return false;
+    /* ------------------------------  ABILITIES ------------------------------ */
 
-        ElementContext context = new ElementContext(
-                player,
-                pd.getUpgradeLevel(type),
-                type,
-                manaManager,
-                trustManager,
-                configManager,
-                plugin
-        );
-        return e.ability1(context);
+    public boolean useAbility1(Player player) {
+        return useAbility(player, 1);
     }
 
     public boolean useAbility2(Player player) {
-        PlayerData pd = data(player.getUniqueId());
-        ElementType type = pd.getCurrentElement();
-        if (type == null) return false;
-        Element e = registry.get(type);
-        if (e == null) return false;
-
-        ElementContext context = new ElementContext(
-                player,
-                pd.getUpgradeLevel(type),
-                type,
-                manaManager,
-                trustManager,
-                configManager,
-                plugin
-        );
-        return e.ability2(context);
+        return useAbility(player, 2);
     }
 
-    public void giveElementItem(Player player, ElementType elementType) {
-        ItemStack item = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, elementType);
+    private boolean useAbility(Player player, int ability) {
+        PlayerData pd = data(player.getUniqueId());
+        ElementType type = pd.getCurrentElement();
+        Element element = registry.get(type);
+        if (element == null) return false;
+
+        ElementContext ctx = new ElementContext(
+                player, pd.getUpgradeLevel(type), type,
+                manaManager, trustManager, configManager, plugin
+        );
+        return ability == 1 ? element.ability1(ctx) : element.ability2(ctx);
+    }
+
+    /* ------------------------------  ITEMS ------------------------------ */
+
+    public void giveElementItem(Player player, ElementType type) {
+        ItemStack item = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, type);
         if (item != null) {
             player.getInventory().addItem(item);
-            player.sendMessage(org.bukkit.ChatColor.GREEN + "You received a " + hs.elementPlugin.items.ElementCoreItem.getDisplayName(elementType) + " item!");
+            player.sendMessage(ChatColor.GREEN + "You received a " +
+                    hs.elementPlugin.items.ElementCoreItem.getDisplayName(type) + " item!");
         }
+    }
+
+    /* ------------------------------  UTILITY ------------------------------ */
+
+    private <T> T randomChoice(T[] array) {
+        return array[random.nextInt(array.length)];
+    }
+
+    private <T> T randomChoice(List<T> list) {
+        return list.get(random.nextInt(list.size()));
     }
 }
