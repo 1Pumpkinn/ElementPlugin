@@ -207,6 +207,7 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.GUIListener(this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.AdvancedRerollerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
 
         Bukkit.getPluginManager().registerEvents(new BlockPlacementListener(blockManager, blockStorage, ownerStorage), this);

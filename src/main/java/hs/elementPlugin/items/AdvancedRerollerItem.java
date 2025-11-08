@@ -23,9 +23,7 @@ public final class AdvancedRerollerItem {
         meta.setDisplayName(ChatColor.DARK_PURPLE + "Advanced Reroller");
         meta.setLore(List.of(
                 ChatColor.GRAY + "Unlocks advanced elements",
-                ChatColor.AQUA + "Roll for Metal or Frost elements",
-                ChatColor.YELLOW + "Right-click to reroll",
-                ChatColor.RED + "Cannot roll Metal twice"
+                ChatColor.YELLOW + "Right-click to reroll"
         ));
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
         pdc.set(ItemKeys.namespaced(plugin, KEY), PersistentDataType.BYTE, (byte)1);
