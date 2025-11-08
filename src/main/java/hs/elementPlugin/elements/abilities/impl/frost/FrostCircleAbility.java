@@ -11,6 +11,8 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
@@ -59,6 +61,8 @@ public class FrostCircleAbility extends BaseAbility {
                     for (LivingEntity entity : centerLocation.getNearbyLivingEntities(radius + 2)) {
                         if (entity.hasMetadata(META_CIRCLE_FROZEN)) {
                             entity.removeMetadata(META_CIRCLE_FROZEN, plugin);
+                            // Remove slowness effect
+                            entity.removePotionEffect(PotionEffectType.SLOWNESS);
                             if (entity instanceof Mob mob) {
                                 mob.setAware(true);
                             }
@@ -106,18 +110,18 @@ public class FrostCircleAbility extends BaseAbility {
                     // Apply freezing effect (same as powder snow)
                     entity.setFreezeTicks(entity.getMaxFreezeTicks());
 
-                    // Mark entity as frozen (for movement prevention)
+                    // Mark entity as frozen (for slow movement instead of complete freeze)
                     if (!entity.hasMetadata(META_CIRCLE_FROZEN)) {
                         entity.setMetadata(META_CIRCLE_FROZEN, new FixedMetadataValue(plugin, true));
                     }
 
+                    // Apply Slowness 4 (very slow movement instead of no movement)
+                    entity.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 3, false, false, false));
+
                     // For mobs, disable AI while in circle
                     if (entity instanceof Mob mob) {
-                        mob.setAware(false);
+                        mob.setAware(true);
                     }
-
-                    // Stop movement - set velocity to zero
-                    entity.setVelocity(new Vector(0, 0, 0));
 
                     // Visual feedback every 10 ticks to reduce particle spam
                     if (ticks % 10 == 0) {
@@ -125,12 +129,13 @@ public class FrostCircleAbility extends BaseAbility {
                     }
                 }
 
-                // Re-enable AI for mobs that left the circle
+                // Re-enable AI for mobs that left the circle and remove effects
                 for (LivingEntity entity : player.getWorld().getNearbyLivingEntities(centerLocation, radius + 2)) {
                     if (entity.hasMetadata(META_CIRCLE_FROZEN)) {
                         double distance = entity.getLocation().distance(centerLocation);
                         if (distance > radius) {
                             entity.removeMetadata(META_CIRCLE_FROZEN, plugin);
+                            entity.removePotionEffect(PotionEffectType.SLOWNESS);
                             if (entity instanceof Mob mob) {
                                 mob.setAware(true);
                             }
@@ -152,7 +157,7 @@ public class FrostCircleAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return "Create a circle around you that freezes enemies who step inside for 10 seconds.";
+        return "Create a circle around you that severely slows enemies who step inside for 10 seconds.";
     }
 
     @Override

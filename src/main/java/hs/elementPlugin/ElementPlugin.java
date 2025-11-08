@@ -228,7 +228,6 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostFrozenPunchListener(this, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostCircleMovementListener(), this);
 
         getLogger().info("Listeners registered successfully");
     }
