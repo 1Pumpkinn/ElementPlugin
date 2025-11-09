@@ -34,45 +34,29 @@ public class DataStore {
     }
 
     private PlayerData loadPlayerDataFromFile(UUID uuid) {
-        // CRITICAL FIX: Reload the config from disk to ensure we have the latest data
         try {
             playerCfg = YamlConfiguration.loadConfiguration(playerFile);
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to reload player configuration", e);
+            return new PlayerData(uuid);
         }
 
         String uuidString = uuid.toString();
         ConfigurationSection section = null;
 
-        // Try BOTH formats: "players.<uuid>" AND just "<uuid>" at root level
-        // First try the standard format with "players" prefix
-        section = playerCfg.getConfigurationSection("players." + uuidString);
+        // Try root level first (current format in your file)
+        section = playerCfg.getConfigurationSection(uuidString);
 
-        // If not found, try root level (legacy format)
+        // If not found, try "players.<uuid>" format
         if (section == null) {
-            section = playerCfg.getConfigurationSection(uuidString);
-            if (section != null) {
-                plugin.getLogger().info("[DataStore] Found data for " + uuid + " at ROOT level (legacy format)");
-            }
-        } else {
-            plugin.getLogger().info("[DataStore] Found data for " + uuid + " under 'players' section");
+            section = playerCfg.getConfigurationSection("players." + uuidString);
         }
 
         if (section == null) {
-            plugin.getLogger().warning("[DataStore] No data found for " + uuid + " - creating new PlayerData");
             return new PlayerData(uuid);
         }
 
-        plugin.getLogger().info("[DataStore] Loading data for " + uuid + " from file");
-        PlayerData data = new PlayerData(uuid, section);
-
-        // Log what was loaded
-        plugin.getLogger().info("[DataStore] Loaded element: " +
-                (data.getCurrentElement() != null ? data.getCurrentElement().name() : "null"));
-        plugin.getLogger().info("[DataStore] Loaded mana: " + data.getMana());
-        plugin.getLogger().info("[DataStore] Loaded upgrade level: " + data.getCurrentElementUpgradeLevel());
-
-        return data;
+        return new PlayerData(uuid, section);
     }
 
     public DataStore(ElementPlugin plugin) {
@@ -100,30 +84,6 @@ public class DataStore {
 
         try {
             this.playerCfg = YamlConfiguration.loadConfiguration(playerFile);
-
-            // Count players in BOTH formats
-            int playersCount = 0;
-            ConfigurationSection playersSection = playerCfg.getConfigurationSection("players");
-            if (playersSection != null) {
-                playersCount = playersSection.getKeys(false).size();
-            }
-
-            // Also count root-level UUIDs (legacy format)
-            int rootLevelCount = 0;
-            for (String key : playerCfg.getKeys(false)) {
-                if (!key.equals("players")) {
-                    try {
-                        UUID.fromString(key);
-                        rootLevelCount++;
-                    } catch (IllegalArgumentException e) {
-                        // Not a UUID, skip
-                    }
-                }
-            }
-
-            plugin.getLogger().info("[DataStore] Loaded players.yml with " + playersCount +
-                    " players (under 'players' section) + " + rootLevelCount +
-                    " players (root level/legacy format) = " + (playersCount + rootLevelCount) + " total");
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to load players.yml configuration: " + e.getMessage());
             throw new RuntimeException("Could not load players.yml configuration", e);
@@ -156,10 +116,10 @@ public class DataStore {
 
     public synchronized void save(PlayerData pd) {
         try {
-            // CRITICAL FIX: Reload config before saving to avoid overwriting other changes
             playerCfg = YamlConfiguration.loadConfiguration(playerFile);
 
-            String key = "players." + pd.getUuid().toString();
+            // Use root-level format to match existing file structure
+            String key = pd.getUuid().toString();
             ConfigurationSection sec = playerCfg.getConfigurationSection(key);
             if (sec == null) sec = playerCfg.createSection(key);
 
@@ -171,16 +131,20 @@ public class DataStore {
             for (ElementType t : pd.getOwnedItems()) items.add(t.name());
             sec.set("items", items);
 
+            // Save trust list
+            sec.set("trust", null); // Clear existing
+            if (!pd.getTrustedPlayers().isEmpty()) {
+                ConfigurationSection trustSec = sec.createSection("trust");
+                for (UUID trustedUuid : pd.getTrustedPlayers()) {
+                    trustSec.set(trustedUuid.toString(), true);
+                }
+            }
+
             // Update cache
             playerDataCache.put(pd.getUuid(), pd);
 
             // Save to disk
             flushPlayerData();
-
-            plugin.getLogger().info("[DataStore] Saved data for " + pd.getUuid() +
-                    " - Element: " + (pd.getCurrentElement() != null ? pd.getCurrentElement().name() : "null") +
-                    ", Mana: " + pd.getMana() +
-                    ", Upgrade: " + pd.getCurrentElementUpgradeLevel());
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to save player data for " + pd.getUuid(), e);
         }
@@ -188,34 +152,6 @@ public class DataStore {
 
     public synchronized void invalidateCache(UUID uuid) {
         playerDataCache.remove(uuid);
-        plugin.getLogger().info("[DataStore] Invalidated cache for " + uuid);
-    }
-
-    // NEW METHOD: Debug method to check cache state
-    public void debugCacheState(UUID uuid) {
-        if (playerDataCache.containsKey(uuid)) {
-            PlayerData cached = playerDataCache.get(uuid);
-            plugin.getLogger().info("[DataStore] DEBUG - Cached element for " + uuid + ": " +
-                    (cached.getCurrentElement() != null ? cached.getCurrentElement().name() : "null"));
-        } else {
-            plugin.getLogger().info("[DataStore] DEBUG - No cached data for " + uuid);
-        }
-
-        // Check BOTH file locations
-        ConfigurationSection section = playerCfg.getConfigurationSection("players." + uuid.toString());
-        if (section != null) {
-            String fileElement = section.getString("element");
-            plugin.getLogger().info("[DataStore] DEBUG - File element for " + uuid + " (under 'players'): " + fileElement);
-        } else {
-            // Try root level
-            section = playerCfg.getConfigurationSection(uuid.toString());
-            if (section != null) {
-                String fileElement = section.getString("element");
-                plugin.getLogger().info("[DataStore] DEBUG - File element for " + uuid + " (root level): " + fileElement);
-            } else {
-                plugin.getLogger().info("[DataStore] DEBUG - No file data found for " + uuid);
-            }
-        }
     }
 
     public synchronized void flushAll() {
@@ -225,49 +161,21 @@ public class DataStore {
     private void flushPlayerData() {
         try {
             playerCfg.save(playerFile);
-            plugin.getLogger().info("[DataStore] Flushed player data to disk");
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to save players.yml to disk", e);
         }
     }
 
-    // TRUST store
+    // TRUST store - now delegates to PlayerData
     public synchronized Set<UUID> getTrusted(UUID owner) {
-        try {
-            // CRITICAL FIX: Reload config to get latest trust data
-            playerCfg = YamlConfiguration.loadConfiguration(playerFile);
-
-            ConfigurationSection sec = playerCfg.getConfigurationSection("players." + owner + ".trust");
-            Set<UUID> set = new HashSet<>();
-            if (sec != null) {
-                for (String k : sec.getKeys(false)) {
-                    try {
-                        set.add(UUID.fromString(k));
-                    } catch (IllegalArgumentException e) {
-                        plugin.getLogger().warning("Invalid UUID in trust data: " + k + " for player " + owner);
-                    }
-                }
-            }
-            return set;
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load trust data for " + owner, e);
-            return new HashSet<>();
-        }
+        PlayerData pd = getPlayerData(owner);
+        return pd.getTrustedPlayers();
     }
 
     public synchronized void setTrusted(UUID owner, Set<UUID> trusted) {
-        try {
-            // CRITICAL FIX: Reload config before modifying
-            playerCfg = YamlConfiguration.loadConfiguration(playerFile);
-
-            String base = "players." + owner + ".trust";
-            playerCfg.set(base, null);
-            ConfigurationSection sec = playerCfg.createSection(base);
-            for (UUID u : trusted) sec.set(u.toString(), true);
-            flushPlayerData();
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to save trust data for " + owner, e);
-        }
+        PlayerData pd = getPlayerData(owner);
+        pd.setTrustedPlayers(trusted);
+        save(pd);
     }
 
     // Server-wide restrictions

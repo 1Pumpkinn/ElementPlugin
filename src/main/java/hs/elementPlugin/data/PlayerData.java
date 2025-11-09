@@ -2,6 +2,8 @@ package hs.elementPlugin.data;
 
 import hs.elementPlugin.elements.ElementType;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class PlayerData {
@@ -10,6 +12,7 @@ public class PlayerData {
     private final java.util.EnumSet<ElementType> ownedItems = java.util.EnumSet.noneOf(ElementType.class);
     private int mana = 100;
     private int currentElementUpgradeLevel = 0; // Only save current element's upgrade level
+    private final Set<UUID> trustedPlayers = new HashSet<>();
 
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
@@ -36,6 +39,18 @@ public class PlayerData {
                         this.ownedItems.add(t);
                     } catch (IllegalArgumentException e) {
                         // skip invalid
+                    }
+                }
+            }
+
+            // Load trust list
+            org.bukkit.configuration.ConfigurationSection trustSection = section.getConfigurationSection("trust");
+            if (trustSection != null) {
+                for (String key : trustSection.getKeys(false)) {
+                    try {
+                        this.trustedPlayers.add(UUID.fromString(key));
+                    } catch (IllegalArgumentException e) {
+                        // Invalid UUID, skip
                     }
                 }
             }
@@ -103,4 +118,28 @@ public class PlayerData {
     public void setMana(int mana) { this.mana = Math.max(0, mana); }
 
     public void addMana(int delta) { setMana(this.mana + delta); }
+
+    // Trust list methods
+    public Set<UUID> getTrustedPlayers() {
+        return new HashSet<>(trustedPlayers);
+    }
+
+    public void addTrustedPlayer(UUID uuid) {
+        trustedPlayers.add(uuid);
+    }
+
+    public void removeTrustedPlayer(UUID uuid) {
+        trustedPlayers.remove(uuid);
+    }
+
+    public boolean isTrusted(UUID uuid) {
+        return trustedPlayers.contains(uuid);
+    }
+
+    public void setTrustedPlayers(Set<UUID> trusted) {
+        trustedPlayers.clear();
+        if (trusted != null) {
+            trustedPlayers.addAll(trusted);
+        }
+    }
 }

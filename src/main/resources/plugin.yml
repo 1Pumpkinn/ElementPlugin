@@ -13,9 +13,9 @@ commands:
     usage: /trust <list|add|remove|accept|deny> [player]
 
   element:
-    description: Element admin/self commands
-    usage: /element <reroll|set|disable|enable|status> [player] [element]
-    permission: element.element
+    description: Element admin commands
+    usage: /element <set|debug> <player> [element]
+    permission: element.admin
 
   mana:
     description: Manage mana (reset or set)
@@ -40,6 +40,14 @@ commands:
     aliases: [ ped ]
 
 permissions:
+  element.admin:
+    description: Allows use of element admin commands
+    default: op
+
+  element.mana:
+    description: Allows use of mana management commands
+    default: op
+
   elementsmp.customblock:
     description: Allows use of the customblock command
     default: op
