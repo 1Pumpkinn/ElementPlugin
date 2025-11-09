@@ -49,7 +49,7 @@ public class DamageTester implements CommandExecutor {
         villager.setSilent(true); // No sounds
         villager.setInvulnerable(false); // Make sure it can take damage
 
-        // Create Protection IV armor
+        // Create PROTECTION IV armor
         ItemStack helmet = new ItemStack(Material.DIAMOND_HELMET);
         helmet.addEnchantment(Enchantment.PROTECTION, 4);
 
@@ -81,6 +81,6 @@ public class DamageTester implements CommandExecutor {
         villager.setCustomName("§6Test Dummy");
         villager.setCustomNameVisible(true);
 
-        player.sendMessage("§aSpawned test villager with Protection IV armor!");
+        player.sendMessage("§aSpawned test villager with PROTECTION IV armor!");
     }
 }
