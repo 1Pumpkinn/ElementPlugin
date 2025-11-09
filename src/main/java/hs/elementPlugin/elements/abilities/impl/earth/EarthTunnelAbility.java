@@ -17,6 +17,17 @@ public class EarthTunnelAbility extends BaseAbility {
     private static final Set<Material> TUNNELABLE = EnumSet.of(
             Material.STONE, Material.DEEPSLATE, Material.DIRT, Material.GRASS_BLOCK,
             Material.COBBLESTONE, Material.ANDESITE, Material.DIORITE, Material.GRANITE,
+
+            Material.GRAVEL, Material.SAND, Material.RED_SAND, Material.SANDSTONE,
+            Material.TUFF, Material.CALCITE, Material.DRIPSTONE_BLOCK,
+
+            // Nether Blocks
+            Material.BLACKSTONE, Material.ANCIENT_DEBRIS, Material.CRIMSON_NYLIUM,
+            Material.WARPED_HYPHAE, Material.SOUL_SAND, Material.BASALT, Material.SOUL_SOIL,
+            Material.NETHERRACK,
+
+            // Ores
+
             Material.COAL_ORE, Material.DEEPSLATE_COAL_ORE,
             Material.IRON_ORE, Material.DEEPSLATE_IRON_ORE,
             Material.COPPER_ORE, Material.DEEPSLATE_COPPER_ORE,
@@ -25,10 +36,16 @@ public class EarthTunnelAbility extends BaseAbility {
             Material.LAPIS_ORE, Material.DEEPSLATE_LAPIS_ORE,
             Material.DIAMOND_ORE, Material.DEEPSLATE_DIAMOND_ORE,
             Material.EMERALD_ORE, Material.DEEPSLATE_EMERALD_ORE,
-            Material.GRAVEL, Material.SAND, Material.RED_SAND, Material.SANDSTONE,
-            Material.TUFF, Material.CALCITE, Material.DRIPSTONE_BLOCK, Material.NETHERRACK,
-            Material.BLACKSTONE, Material.ANCIENT_DEBRIS, Material.CRIMSON_NYLIUM, Material.WARPED_HYPHAE,
-            Material.SOUL_SAND, Material.SOUL_SOIL
+
+            Material.NETHERITE_BLOCK,
+            Material.DIAMOND_BLOCK,
+            Material.EMERALD_BLOCK,
+            Material.GOLD_BLOCK,
+            Material.REDSTONE_BLOCK,
+            Material.LAPIS_BLOCK,
+            Material.IRON_BLOCK,
+            Material.COPPER_BLOCK,
+            Material.COAL_BLOCK
     );
 
     private final hs.elementPlugin.ElementPlugin plugin;
