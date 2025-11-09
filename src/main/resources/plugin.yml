@@ -39,6 +39,12 @@ commands:
     permission: elementsmp.pedestal.admin
     aliases: [ ped ]
 
+  damagetest:
+    description: Spawn test dummies for damage testing
+    usage: /damagetest <spawn>
+    default: op
+
+
 permissions:
   element.admin:
     description: Allows use of element admin commands

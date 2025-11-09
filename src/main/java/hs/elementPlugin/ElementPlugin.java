@@ -136,6 +136,7 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("element").setExecutor(new hs.elementPlugin.commands.ElementCommand(this));
         getCommand("mana").setExecutor(new hs.elementPlugin.commands.ManaCommand(manaManager, configManager));
         getCommand("util").setExecutor(new hs.elementPlugin.commands.UtilCommand(this));
+        getCommand("damageTester").setExecutor(new hs.elementPlugin.util.DamageTester());
 
         // Pedestal/Custom block commands
         getCommand("customblock").setExecutor(new CustomBlockCommand(blockManager));
