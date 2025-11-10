@@ -10,20 +10,18 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AbilityListener implements Listener {
+    private static final long DOUBLE_TAP_THRESHOLD_MS = 250;
+    private static final long CHECK_DELAY_TICKS = 6;
+    private static final long CLEANUP_DELAY_TICKS = 2;
+
     private final hs.elementPlugin.ElementPlugin plugin;
     private final ElementManager elements;
-
-    // Track last offhand key press times for double-tap detection
-    private final Map<UUID, Long> lastOffhandPress = new HashMap<>();
-
-    // Tunable constants
-    private static final long DOUBLE_TAP_THRESHOLD = 250; // ms (~5 ticks)
-    private static final long CHECK_DELAY_TICKS = 6;      // wait before confirming single tap
+    private final Map<UUID, TapTracker> tapTrackers = new ConcurrentHashMap<>();
 
     public AbilityListener(hs.elementPlugin.ElementPlugin plugin, ElementManager elements) {
         this.plugin = plugin;
@@ -31,81 +29,94 @@ public class AbilityListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onSwapHands(PlayerSwapHandItemsEvent e) {
-        Player player = e.getPlayer();
-        UUID id = player.getUniqueId();
-        long now = System.currentTimeMillis();
+    public void onSwapHands(PlayerSwapHandItemsEvent event) {
+        Player player = event.getPlayer();
 
-        // Make sure player has an element
-        PlayerData pd = elements.data(id);
-        ElementType element = pd.getCurrentElement();
-        if (element == null) return;
+        // Verify player has an element
+        if (!hasElement(player)) return;
 
-        Long lastPress = lastOffhandPress.get(id);
+        UUID playerId = player.getUniqueId();
+        TapTracker tracker = tapTrackers.computeIfAbsent(playerId, k -> new TapTracker());
 
-        // --- Double-tap detection ---
-        if (lastPress != null && (now - lastPress) <= DOUBLE_TAP_THRESHOLD) {
-            // Second press detected within window -> allow normal swap
-            lastOffhandPress.remove(id);
+        long currentTime = System.currentTimeMillis();
 
-            // Clear again after short delay to prevent stale timing from staying
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    lastOffhandPress.remove(id);
-                }
-            }.runTaskLater(plugin, 1); // 1 ticks = 50ms buffer
-
-            return;
+        // Check for double-tap
+        if (tracker.isDoubleTap(currentTime)) {
+            tracker.reset();
+            scheduleCleanup(playerId);
+            return; // Allow normal swap
         }
 
-        // First tap: store timestamp and wait briefly to see if a second tap comes
-        lastOffhandPress.put(id, now);
+        // First tap - cancel and schedule ability check
+        event.setCancelled(true);
+        tracker.recordTap(currentTime, player.isSneaking());
 
-        // Cancel the hand swap temporarily (we'll decide later whether to trigger ability)
-        e.setCancelled(true);
+        scheduleAbilityActivation(player, playerId, currentTime);
+    }
 
-        // Store whether player is sneaking NOW (not later when task runs)
-        final boolean isSneaking = player.isSneaking();
+    private boolean hasElement(Player player) {
+        PlayerData pd = elements.data(player.getUniqueId());
+        return pd.getCurrentElement() != null;
+    }
 
-        // Delay ability firing to confirm that this was not a double-tap
+    private void scheduleAbilityActivation(Player player, UUID playerId, long tapTime) {
         new BukkitRunnable() {
             @Override
             public void run() {
-                // Check if this press is still valid (not cleared by a second tap)
-                Long pressTime = lastOffhandPress.get(id);
-                if (pressTime == null || !pressTime.equals(now)) return;
-
-                // If player is offline, don't fire ability
                 if (!player.isOnline()) {
-                    lastOffhandPress.remove(id);
+                    tapTrackers.remove(playerId);
                     return;
                 }
 
-                boolean abilityUsed = false;
-
-                // Trigger ability (NO COOLDOWN CHECK)
-                if (isSneaking) {
-                    elements.useAbility2(player);
-                    abilityUsed = true;
-                } else {
-                    elements.useAbility1(player);
-                    abilityUsed = true;
+                TapTracker tracker = tapTrackers.get(playerId);
+                if (tracker == null || !tracker.isValidTap(tapTime)) {
+                    return; // Second tap occurred, cancelled
                 }
 
-                // Reset tracking so next press starts fresh
-                lastOffhandPress.remove(id);
+                // Execute ability
+                boolean success = tracker.wasShiftHeld ?
+                        elements.useAbility2(player) :
+                        elements.useAbility1(player);
 
-                // Optional small grace period to ensure clean reactivation
-                if (abilityUsed) {
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            lastOffhandPress.remove(id);
-                        }
-                    }.runTaskLater(plugin, 2); // 2 ticks = 100ms
+                if (success) {
+                    scheduleCleanup(playerId);
                 }
             }
         }.runTaskLater(plugin, CHECK_DELAY_TICKS);
+    }
+
+    private void scheduleCleanup(UUID playerId) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                tapTrackers.remove(playerId);
+            }
+        }.runTaskLater(plugin, CLEANUP_DELAY_TICKS);
+    }
+
+    /**
+     * Tracks tap timing and state for double-tap detection
+     */
+    private static class TapTracker {
+        private long lastTapTime = 0;
+        private boolean wasShiftHeld = false;
+
+        boolean isDoubleTap(long currentTime) {
+            return lastTapTime > 0 && (currentTime - lastTapTime) <= DOUBLE_TAP_THRESHOLD_MS;
+        }
+
+        void recordTap(long time, boolean shiftHeld) {
+            this.lastTapTime = time;
+            this.wasShiftHeld = shiftHeld;
+        }
+
+        boolean isValidTap(long originalTime) {
+            return lastTapTime == originalTime;
+        }
+
+        void reset() {
+            lastTapTime = 0;
+            wasShiftHeld = false;
+        }
     }
 }

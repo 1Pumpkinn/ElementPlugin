@@ -19,46 +19,50 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public class ElementManager {
+    private static final ElementType[] BASIC_ELEMENTS = {
+            ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH
+    };
+    private static final int ROLL_STEPS = 16;
+    private static final long ROLL_DELAY_TICKS = 3L;
+
     private final ElementPlugin plugin;
     private final DataStore store;
     private final ManaManager manaManager;
     private final TrustManager trustManager;
     private final ConfigManager configManager;
-
     private final Map<ElementType, Element> registry = new EnumMap<>(ElementType.class);
     private final Set<UUID> currentlyRolling = new HashSet<>();
     private final Random random = new Random();
 
-    private static final ElementType[] BASIC_ELEMENTS = {
-            ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH
-    };
-
-    public ElementManager(ElementPlugin plugin, DataStore store,
-                          ManaManager manaManager, TrustManager trustManager,
-                          ConfigManager configManager) {
+    public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager,
+                          TrustManager trustManager, ConfigManager configManager) {
         this.plugin = plugin;
         this.store = store;
         this.manaManager = manaManager;
         this.trustManager = trustManager;
         this.configManager = configManager;
-
-        // Register all elements
-        register(new AirElement(plugin));
-        register(new WaterElement(plugin));
-        register(new FireElement(plugin));
-        register(new EarthElement(plugin));
-        register(new LifeElement(plugin));
-        register(new DeathElement(plugin));
-        register(new hs.elementPlugin.elements.impl.metal.MetalElement(plugin));
-        register(new hs.elementPlugin.elements.impl.frost.FrostElement(plugin));
+        registerAllElements();
     }
 
-    private void register(Element element) {
-        registry.put(element.getType(), element);
+    private void registerAllElements() {
+        registerElement(ElementType.AIR, () -> new AirElement(plugin));
+        registerElement(ElementType.WATER, () -> new WaterElement(plugin));
+        registerElement(ElementType.FIRE, () -> new FireElement(plugin));
+        registerElement(ElementType.EARTH, () -> new EarthElement(plugin));
+        registerElement(ElementType.LIFE, () -> new LifeElement(plugin));
+        registerElement(ElementType.DEATH, () -> new DeathElement(plugin));
+        registerElement(ElementType.METAL, () -> new hs.elementPlugin.elements.impl.metal.MetalElement(plugin));
+        registerElement(ElementType.FROST, () -> new hs.elementPlugin.elements.impl.frost.FrostElement(plugin));
     }
 
+    private void registerElement(ElementType type, Supplier<Element> supplier) {
+        registry.put(type, supplier.get());
+    }
+
+    // Public API
     public PlayerData data(@NotNull UUID uuid) {
         return store.getPlayerData(uuid);
     }
@@ -68,66 +72,53 @@ public class ElementManager {
     }
 
     public ElementType getPlayerElement(Player player) {
-        PlayerData pd = data(player.getUniqueId());
-        return pd != null ? pd.getElementType() : null;
+        return Optional.ofNullable(data(player.getUniqueId()))
+                .map(PlayerData::getElementType)
+                .orElse(null);
     }
 
     public void ensureAssigned(Player player) {
-        PlayerData pd = data(player.getUniqueId());
-        if (pd.getCurrentElement() == null) rollAndAssign(player);
+        if (getPlayerElement(player) == null) {
+            rollAndAssign(player);
+        }
     }
 
     public boolean isCurrentlyRolling(Player player) {
         return currentlyRolling.contains(player.getUniqueId());
     }
 
-    /* ------------------------------  ELEMENT ASSIGNMENT ------------------------------ */
-
+    // Element Assignment Methods
     public void rollAndAssign(Player player) {
         if (!beginRoll(player)) return;
 
-        String[] rollingNames = Arrays.stream(BASIC_ELEMENTS).map(Enum::name).toArray(String[]::new);
-
         player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
-        int steps = 16;
-        long delayPerStep = 3L;
 
-        new BukkitRunnable() {
-            int tick = 0;
-
-            @Override
-            public void run() {
-                if (tick >= steps) {
+        new RollingAnimation(player, BASIC_ELEMENTS)
+                .withSteps(ROLL_STEPS)
+                .withDelay(ROLL_DELAY_TICKS)
+                .onComplete(() -> {
                     assignRandomWithTitle(player);
                     endRoll(player);
-                    cancel();
-                    return;
-                }
-                String randomName = rollingNames[random.nextInt(rollingNames.length)];
-                player.sendTitle(ChatColor.GOLD + "Rolling...", ChatColor.AQUA + randomName, 0, 10, 0);
-                tick++;
-            }
-        }.runTaskTimer(plugin, 0L, delayPerStep);
+                })
+                .start();
     }
 
     public void assignRandomWithTitle(Player player) {
-        assignElementInternal(player, randomChoice(BASIC_ELEMENTS), "Element Chosen!");
+        ElementType randomType = BASIC_ELEMENTS[random.nextInt(BASIC_ELEMENTS.length)];
+        assignElementInternal(player, randomType, "Element Chosen!");
     }
 
     public void assignRandomDifferentElement(Player player) {
-        PlayerData pd = data(player.getUniqueId());
-        ElementType current = pd.getCurrentElement();
+        ElementType current = getPlayerElement(player);
+        List<ElementType> available = Arrays.stream(BASIC_ELEMENTS)
+                .filter(type -> type != current)
+                .toList();
 
-        ElementType[] choices = BASIC_ELEMENTS;
-        if (!Arrays.asList(BASIC_ELEMENTS).contains(current)) {
-            assignRandomWithTitle(player);
-            return;
-        }
+        ElementType newType = available.isEmpty() ?
+                BASIC_ELEMENTS[random.nextInt(BASIC_ELEMENTS.length)] :
+                available.get(random.nextInt(available.size()));
 
-        List<ElementType> available = new ArrayList<>(Arrays.asList(BASIC_ELEMENTS));
-        available.remove(current);
-
-        assignElementInternal(player, randomChoice(available), "Element Rerolled!");
+        assignElementInternal(player, newType, "Element Rerolled!");
     }
 
     public void assignElement(Player player, ElementType type) {
@@ -138,13 +129,16 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
-        if (old != type) returnLifeOrDeathCore(player, old);
-        clearAllEffects(player);
+        if (old != type) {
+            returnLifeOrDeathCore(player, old);
+        }
 
+        clearAllEffects(player);
         pd.setCurrentElement(type);
         store.save(pd);
 
-        plugin.getLogger().info("[ElementManager] Set element for " + player.getName() + " to " + type);
+        plugin.getLogger().info(String.format("[ElementManager] Set element for %s to %s",
+                player.getName(), type));
         player.sendMessage(ChatColor.GOLD + "Your element is now " + ChatColor.AQUA + type.name());
 
         applyUpsides(player);
@@ -158,12 +152,16 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
-        if (old != type) returnLifeOrDeathCore(player, old);
+        if (old != type) {
+            returnLifeOrDeathCore(player, old);
+        }
+
         clearAllEffects(player);
 
-        int currentUpgrade = pd.getCurrentElementUpgradeLevel();
-        if (resetLevel) pd.setCurrentElement(type);
-        else {
+        if (resetLevel) {
+            pd.setCurrentElement(type);
+        } else {
+            int currentUpgrade = pd.getCurrentElementUpgradeLevel();
             pd.setCurrentElementWithoutReset(type);
             pd.setCurrentElementUpgradeLevel(currentUpgrade);
         }
@@ -174,11 +172,71 @@ public class ElementManager {
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
 
-    /* ------------------------------  ELEMENT VISUALS ------------------------------ */
+    // Effect Management
+    private void clearAllEffects(Player player) {
+        player.getActivePotionEffects()
+                .forEach(effect -> player.removePotionEffect(effect.getType()));
 
+        Optional.ofNullable(player.getAttribute(Attribute.MAX_HEALTH))
+                .ifPresent(attr -> {
+                    attr.setBaseValue(20.0);
+                    player.setHealth(Math.min(player.getHealth(), 20.0));
+                });
+    }
+
+    public void applyUpsides(Player player) {
+        PlayerData pd = data(player.getUniqueId());
+        ElementType type = pd.getCurrentElement();
+
+        Optional.ofNullable(type)
+                .map(registry::get)
+                .ifPresent(element -> element.applyUpsides(player, pd.getUpgradeLevel(type)));
+    }
+
+    // Ability Execution
+    public boolean useAbility1(Player player) {
+        return useAbility(player, 1);
+    }
+
+    public boolean useAbility2(Player player) {
+        return useAbility(player, 2);
+    }
+
+    private boolean useAbility(Player player, int abilityNumber) {
+        PlayerData pd = data(player.getUniqueId());
+        ElementType type = pd.getCurrentElement();
+        Element element = registry.get(type);
+
+        if (element == null) return false;
+
+        ElementContext ctx = ElementContext.builder()
+                .player(player)
+                .upgradeLevel(pd.getUpgradeLevel(type))
+                .elementType(type)
+                .manaManager(manaManager)
+                .trustManager(trustManager)
+                .configManager(configManager)
+                .plugin(plugin)
+                .build();
+
+        return abilityNumber == 1 ? element.ability1(ctx) : element.ability2(ctx);
+    }
+
+    // Item Management
+    public void giveElementItem(Player player, ElementType type) {
+        Optional.ofNullable(hs.elementPlugin.items.ElementCoreItem.createCore(plugin, type))
+                .ifPresent(item -> {
+                    player.getInventory().addItem(item);
+                    player.sendMessage(ChatColor.GREEN + "You received a " +
+                            hs.elementPlugin.items.ElementCoreItem.getDisplayName(type) + " item!");
+                });
+    }
+
+    // Helper Methods
     private void showElementTitle(Player player, ElementType type, String title) {
         var titleObj = net.kyori.adventure.title.Title.title(
-                net.kyori.adventure.text.Component.text(title).color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
+                net.kyori.adventure.text.Component.text(title)
+                        .color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
                 net.kyori.adventure.text.Component.text(type.name())
                         .color(net.kyori.adventure.text.format.NamedTextColor.AQUA),
                 net.kyori.adventure.title.Title.Times.times(
@@ -190,24 +248,18 @@ public class ElementManager {
         player.showTitle(titleObj);
     }
 
-    private void clearAllEffects(Player player) {
-        player.getActivePotionEffects().forEach(effect -> player.removePotionEffect(effect.getType()));
-        var attr = player.getAttribute(Attribute.MAX_HEALTH);
-        if (attr != null) {
-            attr.setBaseValue(20.0);
-            player.setHealth(Math.min(player.getHealth(), 20.0));
-        }
-    }
+    private void returnLifeOrDeathCore(Player player, ElementType oldElement) {
+        if (oldElement != ElementType.LIFE && oldElement != ElementType.DEATH) return;
+        if (!data(player.getUniqueId()).hasElementItem(oldElement)) return;
 
-    public void applyUpsides(Player player) {
-        PlayerData pd = data(player.getUniqueId());
-        ElementType type = pd.getCurrentElement();
-        if (type == null) return;
-        Element element = registry.get(type);
-        if (element != null) element.applyUpsides(player, pd.getUpgradeLevel(type));
+        Optional.ofNullable(hs.elementPlugin.items.ElementCoreItem.createCore(plugin, oldElement))
+                .ifPresent(core -> {
+                    player.getInventory().addItem(core);
+                    player.sendMessage(ChatColor.YELLOW + "Your " +
+                            hs.elementPlugin.items.ElementCoreItem.getDisplayName(oldElement) +
+                            ChatColor.YELLOW + " has been returned to you!");
+                });
     }
-
-    /* ------------------------------  ROLL TRACKING ------------------------------ */
 
     private boolean beginRoll(Player player) {
         if (isCurrentlyRolling(player)) {
@@ -222,64 +274,55 @@ public class ElementManager {
         currentlyRolling.remove(player.getUniqueId());
     }
 
-    /* ------------------------------  LIFE/DEATH CORE ------------------------------ */
+    // Inner class for rolling animation
+    private class RollingAnimation {
+        private final Player player;
+        private final ElementType[] elements;
+        private int steps = 16;
+        private long delayTicks = 3L;
+        private Runnable onComplete;
 
-    private void returnLifeOrDeathCore(Player player, ElementType oldElement) {
-        if (oldElement == null || (oldElement != ElementType.LIFE && oldElement != ElementType.DEATH)) return;
-
-        PlayerData pd = data(player.getUniqueId());
-        if (!pd.hasElementItem(oldElement)) return;
-
-        ItemStack core = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, oldElement);
-        if (core != null) {
-            player.getInventory().addItem(core);
-            player.sendMessage(ChatColor.YELLOW + "Your " +
-                    hs.elementPlugin.items.ElementCoreItem.getDisplayName(oldElement) +
-                    ChatColor.YELLOW + " has been returned to you!");
+        RollingAnimation(Player player, ElementType[] elements) {
+            this.player = player;
+            this.elements = elements;
         }
-    }
 
-    /* ------------------------------  ABILITIES ------------------------------ */
-
-    public boolean useAbility1(Player player) {
-        return useAbility(player, 1);
-    }
-
-    public boolean useAbility2(Player player) {
-        return useAbility(player, 2);
-    }
-
-    private boolean useAbility(Player player, int ability) {
-        PlayerData pd = data(player.getUniqueId());
-        ElementType type = pd.getCurrentElement();
-        Element element = registry.get(type);
-        if (element == null) return false;
-
-        ElementContext ctx = new ElementContext(
-                player, pd.getUpgradeLevel(type), type,
-                manaManager, trustManager, configManager, plugin
-        );
-        return ability == 1 ? element.ability1(ctx) : element.ability2(ctx);
-    }
-
-    /* ------------------------------  ITEMS ------------------------------ */
-
-    public void giveElementItem(Player player, ElementType type) {
-        ItemStack item = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, type);
-        if (item != null) {
-            player.getInventory().addItem(item);
-            player.sendMessage(ChatColor.GREEN + "You received a " +
-                    hs.elementPlugin.items.ElementCoreItem.getDisplayName(type) + " item!");
+        RollingAnimation withSteps(int steps) {
+            this.steps = steps;
+            return this;
         }
-    }
 
-    /* ------------------------------  UTILITY ------------------------------ */
+        RollingAnimation withDelay(long ticks) {
+            this.delayTicks = ticks;
+            return this;
+        }
 
-    private <T> T randomChoice(T[] array) {
-        return array[random.nextInt(array.length)];
-    }
+        RollingAnimation onComplete(Runnable callback) {
+            this.onComplete = callback;
+            return this;
+        }
 
-    private <T> T randomChoice(List<T> list) {
-        return list.get(random.nextInt(list.size()));
+        void start() {
+            new BukkitRunnable() {
+                int tick = 0;
+
+                @Override
+                public void run() {
+                    if (tick >= steps) {
+                        if (onComplete != null) onComplete.run();
+                        cancel();
+                        return;
+                    }
+
+                    String randomName = elements[random.nextInt(elements.length)].name();
+                    player.sendTitle(
+                            ChatColor.GOLD + "Rolling...",
+                            ChatColor.AQUA + randomName,
+                            0, 10, 0
+                    );
+                    tick++;
+                }
+            }.runTaskTimer(plugin, 0L, delayTicks);
+        }
     }
 }
