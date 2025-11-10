@@ -18,15 +18,6 @@ public class PedestalBlock {
     private static final double ITEM_HOVER_HEIGHT = 0.5;
     private static final double BLOCK_HOVER_HEIGHT = 0.6;
 
-    // Different centering for items vs blocks
-    private static final double ITEM_CENTER_X = 0.5;
-    private static final double ITEM_CENTER_Y = -0.4;
-    private static final double ITEM_CENTER_Z = 0.7;
-
-    private static final double BLOCK_CENTER_X = 0.5;
-    private static final double BLOCK_CENTER_Y = -0.2;
-    private static final double BLOCK_CENTER_Z = 0.5;
-
     private static final String METADATA_KEY = "pedestal_display";
 
     /**
@@ -44,21 +35,30 @@ public class PedestalBlock {
         if (stand == null) {
             stand = createDisplay(pedestalLocation, displayItem);
             if (stand == null) {
-                plugin.getLogger().warning("Failed to create armor stand display at " + pedestalLocation);
                 return null;
             }
         } else if (displayItem != null && displayItem.getType() != Material.AIR) {
             // Update position if item type changed (block vs item)
             boolean isBlock = displayItem.getType().isBlock();
             Location newLoc = getCenteredLocation(pedestalLocation, isBlock);
+            // Preserve current rotation when updating
+            newLoc.setYaw(stand.getLocation().getYaw());
+            newLoc.setPitch(stand.getLocation().getPitch());
             stand.teleport(newLoc);
         }
 
         if (stand != null) {
             if (displayItem != null && displayItem.getType() != Material.AIR) {
                 stand.getEquipment().setHelmet(displayItem);
+
+                // For flat items, tilt them slightly upward
+                if (!displayItem.getType().isBlock()) {
+                    stand.setHeadPose(new EulerAngle(Math.toRadians(0), 0, 0));
+                } else {
+                    stand.setHeadPose(new EulerAngle(0, 0, 0));
+                }
+
                 addGlowEffect(pedestalLocation, true);
-                plugin.getLogger().info("Set helmet to: " + displayItem.getType() + " for armor stand at " + pedestalLocation);
             } else {
                 stand.getEquipment().setHelmet(null);
                 addGlowEffect(pedestalLocation, false);
@@ -74,16 +74,13 @@ public class PedestalBlock {
     private static ArmorStand createDisplay(Location pedestalLocation, ItemStack displayItem) {
         Plugin plugin = Bukkit.getPluginManager().getPlugin("ElementPlugin");
         if (plugin == null) {
-            Bukkit.getLogger().severe("ElementPlugin not found! Cannot create pedestal display.");
             return null;
         }
 
         boolean isBlock = displayItem != null && displayItem.getType().isBlock();
         Location spawnLoc = getCenteredLocation(pedestalLocation, isBlock);
-        spawnLoc.setYaw(0);
+        spawnLoc.setYaw(0);  // Start facing North
         spawnLoc.setPitch(0);
-
-        plugin.getLogger().info("Creating armor stand at: " + spawnLoc);
 
         try {
             ArmorStand stand = (ArmorStand) pedestalLocation.getWorld().spawnEntity(spawnLoc, EntityType.ARMOR_STAND);
@@ -100,15 +97,12 @@ public class PedestalBlock {
             stand.setCanPickupItems(false);
             stand.setCollidable(false);
 
-            // Center the head pose
             stand.setHeadPose(new EulerAngle(0, 0, 0));
 
             stand.setMetadata(METADATA_KEY, new FixedMetadataValue(plugin, true));
 
-            plugin.getLogger().info("Successfully created armor stand for pedestal");
             return stand;
         } catch (Exception e) {
-            plugin.getLogger().severe("Failed to create armor stand: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -118,7 +112,7 @@ public class PedestalBlock {
      * Returns an existing armor stand for the pedestal if one exists.
      */
     public static ArmorStand getExistingDisplay(Location pedestalLocation) {
-        Location checkLoc = getCenteredLocation(pedestalLocation, false);
+        Location checkLoc = pedestalLocation.clone().add(0.5, 0.5, 0.5);
 
         return pedestalLocation.getWorld().getNearbyEntities(checkLoc, 0.8, 0.8, 0.8).stream()
                 .filter(entity -> entity instanceof ArmorStand)
@@ -129,10 +123,44 @@ public class PedestalBlock {
     }
 
     /**
+     * Rotates the displayed item 90 degrees clockwise (North -> East -> South -> West -> North)
+     * and recenters the armor stand in case of drift.
+     *
+     * @param pedestalLocation The location of the pedestal
+     * @return true if rotation was successful, false otherwise
+     */
+    public static boolean rotateDisplay(Location pedestalLocation) {
+        ArmorStand stand = getExistingDisplay(pedestalLocation);
+        if (stand == null) {
+            return false;
+        }
+
+        // Get the currently displayed item to determine centering (block vs item)
+        ItemStack displayed = stand.getEquipment() != null ? stand.getEquipment().getHelmet() : null;
+        boolean isBlock = displayed != null && displayed.getType().isBlock();
+
+        // Calculate the correct centered location
+        Location centeredLoc = getCenteredLocation(pedestalLocation, isBlock);
+
+        // Use current yaw, normalize, and rotate 90 degrees clockwise
+        float currentYaw = stand.getLocation().getYaw();
+        currentYaw = (currentYaw % 360 + 360) % 360; // normalize to 0–360
+        float newYaw = (currentYaw + 90.0f) % 360.0f;
+
+        // Apply new yaw to centered location
+        centeredLoc.setYaw(newYaw);
+        centeredLoc.setPitch(0f);
+
+        // Teleport armor stand to the new centered, rotated position
+        stand.teleport(centeredLoc);
+
+        return true;
+    }
+
+    /**
      * Removes the armor stand display from the pedestal.
      */
     public static void removeDisplay(Location pedestalLocation) {
-        // Use the same logic as removeAllDisplays for consistency
         removeAllDisplays(pedestalLocation);
     }
 
@@ -159,14 +187,12 @@ public class PedestalBlock {
                 }
 
                 // Also remove if it's an invisible, small, marker armor stand in the pedestal column
-                // This catches armor stands that lost metadata (e.g., after restart)
                 if (!stand.isVisible() && stand.isSmall() && stand.isMarker()) {
                     Location standLoc = stand.getLocation();
                     int standBlockX = standLoc.getBlockX();
                     int standBlockZ = standLoc.getBlockZ();
                     int standY = (int) Math.floor(standLoc.getY());
 
-                    // Remove if armor stand is within the pedestal's column (same X,Z, Y within range)
                     boolean sameXZ = (standBlockX == pedestalX && standBlockZ == pedestalZ);
                     boolean correctHeight = (standY >= pedestalY && standY <= pedestalY + 2);
 
@@ -194,20 +220,20 @@ public class PedestalBlock {
 
     /**
      * Get the centered location for the armor stand display.
-     * Uses different positioning for blocks vs items.
+     * Uses fixed centering to ensure the item or block is perfectly aligned.
      */
     private static Location getCenteredLocation(Location pedestalLocation, boolean isBlock) {
         if (isBlock) {
             return pedestalLocation.clone().add(
-                    BLOCK_CENTER_X,
-                    BLOCK_HOVER_HEIGHT + BLOCK_CENTER_Y,
-                    BLOCK_CENTER_Z
+                    0.5,
+                    BLOCK_HOVER_HEIGHT - 0.1,
+                    0.5
             );
         } else {
             return pedestalLocation.clone().add(
-                    ITEM_CENTER_X,
-                    ITEM_HOVER_HEIGHT + ITEM_CENTER_Y,
-                    ITEM_CENTER_Z
+                    0.5,
+                    ITEM_HOVER_HEIGHT - 0.2,
+                    0.5
             );
         }
     }
@@ -216,7 +242,6 @@ public class PedestalBlock {
      * Adds or removes a light block above the pedestal for a glowing effect.
      */
     private static void addGlowEffect(Location pedestalLocation, boolean add) {
-        // Place light source one block ABOVE the pedestal
         Location lightLocation = pedestalLocation.clone().add(0, 1, 0);
         Block lightBlock = lightLocation.getBlock();
 

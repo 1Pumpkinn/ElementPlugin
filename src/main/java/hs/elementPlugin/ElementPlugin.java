@@ -219,8 +219,6 @@ public final class ElementPlugin extends JavaPlugin {
 
         // ========== Metal Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalJoinListener(elementManager), this);
-        // REMOVE THIS LINE:
-        // Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalAbilityListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalArrowImmunityListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalChainStunListener(), this);
         getServer().getPluginManager().registerEvents(new MetalChainStunListener(), this);

@@ -47,7 +47,8 @@ public class PedestalInteractionListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPedestalInteract(PlayerInteractEvent event) {
-        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+        // Handle both right-click and left-click
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.LEFT_CLICK_BLOCK) {
             return;
         }
 
@@ -66,10 +67,6 @@ public class PedestalInteractionListener implements Listener {
             return;
         }
 
-        // CRITICAL: Always cancel the event when interacting with a pedestal
-        // This prevents item consumption BEFORE we check what to do
-        event.setCancelled(true);
-
         Player player = event.getPlayer();
         ItemStack heldItem = player.getInventory().getItemInMainHand();
 
@@ -80,19 +77,16 @@ public class PedestalInteractionListener implements Listener {
         if (ownerUUID == null) {
             player.sendActionBar(
                     Component.text("Error: This pedestal has no owner!")
-                            .color(TextColor.color(0xFF5555))
-            );
-            blockManager.getPlugin().getLogger().warning(
-                    "Pedestal at " + block.getLocation() + " has no owner!"
-            );
+                            .color(TextColor.color(0xFF5555)));
             return;
         }
 
         boolean isOwner = ownerUUID.equals(player.getUniqueId());
         boolean hasBypass = player.hasPermission("elementsmp.pedestal.bypass");
 
-        // If not owner AND doesn't have bypass permission, deny access
+        // If not owner AND doesn't have bypass permission, deny ALL access
         if (!isOwner && !hasBypass) {
+            event.setCancelled(true);
             String ownerName = ownerStorage.getOwnerName(block.getLocation());
             player.sendActionBar(
                     Component.text("This pedestal belongs to " + ownerName + "!")
@@ -101,7 +95,7 @@ public class PedestalInteractionListener implements Listener {
             return;
         }
 
-        // Player is authorized - handle interaction
+        // Player is authorized (owner or has bypass)
         ItemStack currentItem = pedestalStorage.getPedestalItem(block.getLocation());
 
         // Auto-restore display if missing (failsafe)
@@ -112,10 +106,52 @@ public class PedestalInteractionListener implements Listener {
             }
         }
 
-        if (player.isSneaking()) {
+        // Handle rotation with SNEAK + LEFT CLICK
+        if (event.getAction() == Action.LEFT_CLICK_BLOCK && player.isSneaking()) {
+            event.setCancelled(true);
+            handleRotateItem(player, block, currentItem);
+            return;
+        }
+
+        // Handle removal with SNEAK + RIGHT CLICK
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && player.isSneaking()) {
+            event.setCancelled(true);
             handleRemoveItem(player, block, currentItem);
-        } else {
+            return;
+        }
+
+        // Handle placement with RIGHT CLICK (no sneak)
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && !player.isSneaking()) {
+            event.setCancelled(true);
             handlePlaceItem(player, block, heldItem, currentItem);
+            return;
+        }
+
+        // LEFT CLICK without sneak - allow breaking if owner
+        // DON'T cancel the event - let it break naturally
+        // The BlockBreakListener will handle the ownership check
+    }
+
+    /**
+     * Handle rotating an item on the pedestal
+     */
+    private void handleRotateItem(Player player, Block block, ItemStack currentItem) {
+        if (currentItem == null || currentItem.getType() == Material.AIR) {
+            player.sendActionBar(Component.text("Pedestal is empty - nothing to rotate!")
+                    .color(TextColor.color(0xFF5555)));
+            return;
+        }
+
+        // Rotate the display 90 degrees
+        boolean success = PedestalBlock.rotateDisplay(block.getLocation());
+
+        if (success) {
+            player.playSound(block.getLocation(), Sound.BLOCK_WOOD_STEP, 1.0f, 1.5f);
+            player.sendActionBar(Component.text("Rotated item 90°")
+                    .color(TextColor.color(0x55FF55)));
+        } else {
+            player.sendActionBar(Component.text("Failed to rotate item")
+                    .color(TextColor.color(0xFF5555)));
         }
     }
 
@@ -179,7 +215,7 @@ public class PedestalInteractionListener implements Listener {
     private void handlePlaceItem(Player player, Block block, ItemStack heldItem, ItemStack currentItem) {
         if (heldItem.getType() == Material.AIR) {
             if (currentItem != null) {
-                player.sendActionBar(Component.text("Sneak + Right Click to remove item")
+                player.sendActionBar(Component.text("Sneak + Right Click to remove | Sneak + Left Click to rotate")
                         .color(TextColor.color(0xFFAA00)));
             } else {
                 player.sendActionBar(Component.text("Hold an item to place it on the pedestal")
