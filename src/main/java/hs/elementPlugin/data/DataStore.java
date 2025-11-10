@@ -44,12 +44,17 @@ public class DataStore {
         String uuidString = uuid.toString();
         ConfigurationSection section = null;
 
-        // Try root level first (current format in your file)
-        section = playerCfg.getConfigurationSection(uuidString);
+        // CRITICAL: Try "players.<uuid>" format FIRST (this is the primary location)
+        section = playerCfg.getConfigurationSection("players." + uuidString);
 
-        // If not found, try "players.<uuid>" format
+        // Fallback: Try root level (legacy format)
         if (section == null) {
-            section = playerCfg.getConfigurationSection("players." + uuidString);
+            section = playerCfg.getConfigurationSection(uuidString);
+
+            // If found at root level, log a warning
+            if (section != null) {
+                plugin.getLogger().warning("Found player data for " + uuidString + " at root level. Consider migrating to 'players.' format.");
+            }
         }
 
         if (section == null) {
@@ -118,8 +123,8 @@ public class DataStore {
         try {
             playerCfg = YamlConfiguration.loadConfiguration(playerFile);
 
-            // Use root-level format to match existing file structure
-            String key = pd.getUuid().toString();
+            // ALWAYS use "players.<uuid>" format for consistency
+            String key = "players." + pd.getUuid().toString();
             ConfigurationSection sec = playerCfg.getConfigurationSection(key);
             if (sec == null) sec = playerCfg.createSection(key);
 
