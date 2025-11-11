@@ -47,7 +47,7 @@ public class ChunkListener implements Listener {
         if (plugin != null) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 restorePedestalDisplays(chunk);
-            }, 1L); // 1 tick delay to let chunk fully load
+            }, 5L); // Increased delay to 5 ticks to ensure chunk is fully loaded
         }
     }
 
@@ -63,7 +63,7 @@ public class ChunkListener implements Listener {
 
     /**
      * Restore all pedestal displays in a chunk based on stored data
-     * CRITICAL: Also removes any orphaned armor stands at pedestal locations
+     * CRITICAL: Removes orphaned armor stands and creates fresh displays
      */
     private void restorePedestalDisplays(Chunk chunk) {
         Plugin plugin = Bukkit.getPluginManager().getPlugin("ElementSmpUtility");
@@ -83,27 +83,33 @@ public class ChunkListener implements Listener {
                         // Check if it's registered as a pedestal
                         String blockId = storage.getCustomBlockIdCached(loc);
                         if ("pedestal".equals(blockId)) {
-                            // FIRST: Remove any existing armor stands (cleanup orphans from restart)
+                            // FIRST: Aggressively remove ALL armor stands at this location
                             PedestalBlock.removeAllDisplays(loc);
 
-                            // THEN: Get stored item and recreate display if needed
+                            // Get stored item
                             ItemStack storedItem = pedestalStorage.getPedestalItem(loc);
 
                             if (storedItem != null && storedItem.getType() != Material.AIR) {
-                                // Restore the display
-                                PedestalBlock.createOrUpdateDisplay(loc, storedItem);
-                                restored++;
+                                // Schedule recreation with delay to ensure cleanup completed
+                                final Location finalLoc = loc.clone();
+                                final ItemStack finalItem = storedItem.clone();
 
-                                if (plugin != null) {
-                                    plugin.getLogger().info(
-                                            "Restored pedestal display at " +
-                                                    loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() +
-                                                    " with " + storedItem.getType() +
-                                                    " (Owner: " + ownerStorage.getOwnerName(loc) + ")"
-                                    );
-                                }
+                                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                                    // Create fresh display
+                                    PedestalBlock.createOrUpdateDisplay(finalLoc, finalItem);
+
+                                    if (plugin != null) {
+                                        plugin.getLogger().info(
+                                                "Restored pedestal display at " +
+                                                        finalLoc.getBlockX() + "," + finalLoc.getBlockY() + "," + finalLoc.getBlockZ() +
+                                                        " with " + finalItem.getType() +
+                                                        " (Owner: " + ownerStorage.getOwnerName(finalLoc) + ")"
+                                        );
+                                    }
+                                }, 3L); // 3 tick delay for cleanup
+
+                                restored++;
                             } else {
-                                // No item stored, cleanup was already done above
                                 cleaned++;
                             }
                         }
@@ -115,7 +121,7 @@ public class ChunkListener implements Listener {
         if (plugin != null && (restored > 0 || cleaned > 0)) {
             plugin.getLogger().info(
                     "Chunk " + chunk.getX() + "," + chunk.getZ() +
-                            ": Restored " + restored + " pedestals, cleaned " + cleaned + " empty pedestals"
+                            ": Restoring " + restored + " pedestals, cleaning " + cleaned + " empty pedestals"
             );
         }
     }

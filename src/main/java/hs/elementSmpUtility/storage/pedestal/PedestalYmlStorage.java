@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * YAML-based backup storage for pedestals
+ * YAML-based backup storage for pedestals (with rotation support)
  * Provides redundancy alongside chunk PDC storage
  */
 public class PedestalYmlStorage {
@@ -60,6 +60,28 @@ public class PedestalYmlStorage {
         }
 
         saveConfig();
+    }
+
+    /**
+     * Save pedestal rotation to YAML
+     */
+    public void savePedestalRotation(Location location, float yaw) {
+        String key = getLocationKey(location);
+        config.set(key + ".rotation", yaw);
+        saveConfig();
+    }
+
+    /**
+     * Load pedestal rotation from YAML
+     */
+    public Float loadPedestalRotation(Location location) {
+        String key = getLocationKey(location);
+
+        if (!config.contains(key + ".rotation")) {
+            return null;
+        }
+
+        return (float) config.getDouble(key + ".rotation", 0.0);
     }
 
     /**

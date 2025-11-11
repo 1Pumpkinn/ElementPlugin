@@ -12,8 +12,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
@@ -104,8 +102,9 @@ public class MetalDashAbility extends BaseAbility implements Listener {
 
                         // Deal TRUE DAMAGE (ignore armor/resistance)
                         double currentHealth = entity.getHealth();
-                        double newHealth = Math.max(0, currentHealth - 6.5);
+                        double newHealth = Math.max(0, currentHealth - 4.0);
                         entity.setHealth(newHealth);
+
 
                         // Mark as damaged
                         damagedEntities.add(entity.getUniqueId());

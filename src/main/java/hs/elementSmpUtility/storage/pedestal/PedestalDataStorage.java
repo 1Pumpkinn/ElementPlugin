@@ -17,20 +17,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Manages storage of pedestal item data
+ * Manages storage of pedestal item data AND rotation
  * Uses DUAL storage: Chunk PDC (primary) + YAML file (backup)
  */
 public class PedestalDataStorage {
 
     private final JavaPlugin plugin;
     private final NamespacedKey pedestalKey;
+    private final NamespacedKey rotationKey;
     private final Map<String, ItemStack> pedestalCache;
+    private final Map<String, Float> rotationCache;
     private final PedestalYmlStorage ymlStorage;
 
     public PedestalDataStorage(JavaPlugin plugin) {
         this.plugin = plugin;
         this.pedestalKey = new NamespacedKey(plugin, "pedestal_items");
+        this.rotationKey = new NamespacedKey(plugin, "pedestal_rotations");
         this.pedestalCache = new HashMap<>();
+        this.rotationCache = new HashMap<>();
         this.ymlStorage = new PedestalYmlStorage(plugin);
 
         // Log storage initialization
@@ -46,7 +50,9 @@ public class PedestalDataStorage {
 
         if (item == null || item.getType().isAir()) {
             pedestalCache.remove(locationKey);
+            rotationCache.remove(locationKey);
             removePedestalFromChunk(location);
+            removeRotationFromChunk(location);
             ymlStorage.removePedestal(location);
             return;
         }
@@ -59,6 +65,149 @@ public class PedestalDataStorage {
 
         // Save to YAML backup
         ymlStorage.savePedestal(location, item);
+    }
+
+    /**
+     * Save rotation for a pedestal
+     */
+    public void savePedestalRotation(Location location, float yaw) {
+        String locationKey = getLocationKey(location);
+
+        // Save to cache
+        rotationCache.put(locationKey, yaw);
+
+        // Save to Chunk PDC
+        saveRotationToChunkPDC(location, yaw);
+
+        // Save to YAML
+        ymlStorage.savePedestalRotation(location, yaw);
+    }
+
+    /**
+     * Get rotation for a pedestal (tries cache → PDC → YAML)
+     */
+    public float getPedestalRotation(Location location) {
+        String locationKey = getLocationKey(location);
+
+        // Try cache first
+        if (rotationCache.containsKey(locationKey)) {
+            return rotationCache.get(locationKey);
+        }
+
+        // Try PDC
+        Float fromPDC = loadRotationFromChunkPDC(location);
+        if (fromPDC != null) {
+            rotationCache.put(locationKey, fromPDC);
+            return fromPDC;
+        }
+
+        // Try YAML backup
+        Float fromYML = ymlStorage.loadPedestalRotation(location);
+        if (fromYML != null) {
+            rotationCache.put(locationKey, fromYML);
+            return fromYML;
+        }
+
+        // Default rotation (North)
+        return 0.0f;
+    }
+
+    /**
+     * Save rotation to Chunk PDC
+     */
+    private void saveRotationToChunkPDC(Location location, float yaw) {
+        String locationKey = getLocationKey(location);
+        Chunk chunk = location.getChunk();
+        PersistentDataContainer pdc = chunk.getPersistentDataContainer();
+
+        String existingData = pdc.getOrDefault(rotationKey, PersistentDataType.STRING, "");
+        String newEntry = locationKey + ":" + yaw;
+
+        // Update or add entry
+        StringBuilder newData = new StringBuilder();
+        boolean found = false;
+
+        if (!existingData.isEmpty()) {
+            for (String entry : existingData.split(";")) {
+                if (entry.isEmpty()) continue;
+
+                String[] parts = entry.split(":", 2);
+                if (parts.length == 2) {
+                    if (parts[0].equals(locationKey)) {
+                        newData.append(newEntry);
+                        found = true;
+                    } else {
+                        newData.append(entry);
+                    }
+                    newData.append(";");
+                }
+            }
+        }
+
+        if (!found) {
+            newData.append(newEntry).append(";");
+        }
+
+        pdc.set(rotationKey, PersistentDataType.STRING, newData.toString());
+    }
+
+    /**
+     * Load rotation from Chunk PDC
+     */
+    private Float loadRotationFromChunkPDC(Location location) {
+        String locationKey = getLocationKey(location);
+        Chunk chunk = location.getChunk();
+        PersistentDataContainer pdc = chunk.getPersistentDataContainer();
+        String data = pdc.getOrDefault(rotationKey, PersistentDataType.STRING, "");
+
+        if (data.isEmpty()) {
+            return null;
+        }
+
+        for (String entry : data.split(";")) {
+            if (entry.isEmpty()) continue;
+
+            String[] parts = entry.split(":", 2);
+            if (parts.length == 2 && parts[0].equals(locationKey)) {
+                try {
+                    return Float.parseFloat(parts[1]);
+                } catch (NumberFormatException e) {
+                    plugin.getLogger().warning("Invalid rotation data: " + parts[1]);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Remove rotation from Chunk PDC
+     */
+    private void removeRotationFromChunk(Location location) {
+        String locationKey = getLocationKey(location);
+        Chunk chunk = location.getChunk();
+        PersistentDataContainer pdc = chunk.getPersistentDataContainer();
+        String data = pdc.getOrDefault(rotationKey, PersistentDataType.STRING, "");
+
+        if (data.isEmpty()) {
+            return;
+        }
+
+        StringBuilder newData = new StringBuilder();
+        for (String entry : data.split(";")) {
+            if (entry.isEmpty()) continue;
+
+            String[] parts = entry.split(":", 2);
+            if (parts.length == 2 && !parts[0].equals(locationKey)) {
+                newData.append(entry).append(";");
+            }
+        }
+
+        if (newData.length() == 0) {
+            pdc.remove(rotationKey);
+        } else {
+            pdc.set(rotationKey, PersistentDataType.STRING, newData.toString());
+        }
     }
 
     /**
@@ -190,20 +339,37 @@ public class PedestalDataStorage {
      */
     public void loadChunk(Chunk chunk) {
         PersistentDataContainer pdc = chunk.getPersistentDataContainer();
-        String data = pdc.getOrDefault(pedestalKey, PersistentDataType.STRING, "");
 
-        if (data.isEmpty()) {
-            return;
+        // Load items
+        String data = pdc.getOrDefault(pedestalKey, PersistentDataType.STRING, "");
+        if (!data.isEmpty()) {
+            for (String entry : data.split(";")) {
+                if (entry.isEmpty()) continue;
+
+                String[] parts = entry.split(":", 2);
+                if (parts.length == 2) {
+                    ItemStack item = deserializeItem(parts[1]);
+                    if (item != null) {
+                        pedestalCache.put(parts[0], item);
+                    }
+                }
+            }
         }
 
-        for (String entry : data.split(";")) {
-            if (entry.isEmpty()) continue;
+        // Load rotations
+        String rotationData = pdc.getOrDefault(rotationKey, PersistentDataType.STRING, "");
+        if (!rotationData.isEmpty()) {
+            for (String entry : rotationData.split(";")) {
+                if (entry.isEmpty()) continue;
 
-            String[] parts = entry.split(":", 2);
-            if (parts.length == 2) {
-                ItemStack item = deserializeItem(parts[1]);
-                if (item != null) {
-                    pedestalCache.put(parts[0], item);
+                String[] parts = entry.split(":", 2);
+                if (parts.length == 2) {
+                    try {
+                        float yaw = Float.parseFloat(parts[1]);
+                        rotationCache.put(parts[0], yaw);
+                    } catch (NumberFormatException e) {
+                        plugin.getLogger().warning("Invalid rotation data: " + parts[1]);
+                    }
                 }
             }
         }
@@ -215,6 +381,7 @@ public class PedestalDataStorage {
     public void unloadChunk(Chunk chunk) {
         String chunkKey = chunk.getWorld().getName() + "," + chunk.getX() + "," + chunk.getZ();
         pedestalCache.entrySet().removeIf(entry -> entry.getKey().startsWith(chunkKey));
+        rotationCache.entrySet().removeIf(entry -> entry.getKey().startsWith(chunkKey));
     }
 
     /**

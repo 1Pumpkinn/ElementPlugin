@@ -32,6 +32,15 @@ public class PedestalBlock {
 
         ArmorStand stand = getExistingDisplay(pedestalLocation);
 
+        // If armor stand exists but might be corrupted, remove and recreate
+        if (stand != null) {
+            if (!stand.isValid()) {
+                stand.remove();
+                stand = null;
+                plugin.getLogger().info("Removed invalid armor stand at " + pedestalLocation);
+            }
+        }
+
         if (stand == null) {
             stand = createDisplay(pedestalLocation, displayItem);
             if (stand == null) {
@@ -85,6 +94,7 @@ public class PedestalBlock {
         try {
             ArmorStand stand = (ArmorStand) pedestalLocation.getWorld().spawnEntity(spawnLoc, EntityType.ARMOR_STAND);
 
+            // CRITICAL: Set all properties to ensure armor stand is properly configured
             stand.setVisible(false);
             stand.setGravity(false);
             stand.setInvulnerable(true);
@@ -93,7 +103,7 @@ public class PedestalBlock {
             stand.setSmall(true);
             stand.setMarker(true);
             stand.setCustomNameVisible(false);
-            stand.setPersistent(false);
+            stand.setPersistent(true); // Changed to true to survive restarts
             stand.setCanPickupItems(false);
             stand.setCollidable(false);
 
@@ -101,8 +111,11 @@ public class PedestalBlock {
 
             stand.setMetadata(METADATA_KEY, new FixedMetadataValue(plugin, true));
 
+            plugin.getLogger().info("Created fresh armor stand at " + pedestalLocation);
+
             return stand;
         } catch (Exception e) {
+            plugin.getLogger().severe("Failed to create armor stand: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -169,6 +182,8 @@ public class PedestalBlock {
      * This is aggressive cleanup that works even when metadata is lost (e.g., after server restart).
      */
     public static void removeAllDisplays(Location pedestalLocation) {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin("ElementPlugin");
+
         // Search in the area directly above and around the pedestal block
         Location searchCenter = pedestalLocation.clone().add(0.5, 0.5, 0.5);
 
@@ -177,12 +192,15 @@ public class PedestalBlock {
         int pedestalY = pedestalLocation.getBlockY();
         int pedestalZ = pedestalLocation.getBlockZ();
 
+        int removed = 0;
+
         // Search nearby entities - wider radius to catch all possible armor stands
         for (Entity entity : pedestalLocation.getWorld().getNearbyEntities(searchCenter, 1.0, 1.5, 1.0)) {
             if (entity instanceof ArmorStand stand) {
                 // Remove if it has our metadata
                 if (stand.hasMetadata(METADATA_KEY)) {
                     stand.remove();
+                    removed++;
                     continue;
                 }
 
@@ -198,9 +216,14 @@ public class PedestalBlock {
 
                     if (sameXZ && correctHeight) {
                         stand.remove();
+                        removed++;
                     }
                 }
             }
+        }
+
+        if (removed > 0 && plugin != null) {
+            plugin.getLogger().info("Removed " + removed + " armor stands at " + pedestalLocation);
         }
 
         addGlowEffect(pedestalLocation, false);
