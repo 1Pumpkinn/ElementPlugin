@@ -29,7 +29,7 @@ public class MetalChainAbility extends BaseAbility {
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
 
-        // --- Target detection (cone-based) ---
+        // --- Target detection (cone-based with line-of-sight check) ---
         LivingEntity target = null;
         double range = 20;
         double coneAngle = Math.toRadians(25);
@@ -38,14 +38,21 @@ public class MetalChainAbility extends BaseAbility {
 
         for (LivingEntity entity : player.getWorld().getLivingEntities()) {
             if (entity.equals(player)) continue;
+
+            // Skip armor stands
+            if (entity instanceof org.bukkit.entity.ArmorStand) continue;
+
             if (eyeLoc.distanceSquared(entity.getLocation()) > range * range) continue;
 
             Vector toEntity = entity.getLocation().toVector().subtract(eyeLoc.toVector());
             double angle = lookDir.angle(toEntity);
 
             if (angle < coneAngle) {
-                target = entity;
-                break;
+                // Check line of sight - make sure there are no solid blocks between player and target
+                if (player.hasLineOfSight(entity)) {
+                    target = entity;
+                    break;
+                }
             }
         }
 
