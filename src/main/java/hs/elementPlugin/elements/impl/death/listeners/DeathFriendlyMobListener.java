@@ -51,8 +51,32 @@ public class DeathFriendlyMobListener implements Listener {
                                 // If too far, teleport closer
                                 if (distance > 30) {
                                     mob.teleport(owner.getLocation());
+                                    continue;
+                                }
+
+                                // Always look for enemies to attack (prioritize combat)
+                                Player nearestEnemy = null;
+                                double bestDistance = Double.MAX_VALUE;
+
+                                // Find nearest non-trusted player
+                                for (Player player : mob.getWorld().getPlayers()) {
+                                    if (player.getUniqueId().equals(ownerId)) continue;
+                                    if (trustManager.isTrusted(ownerId, player.getUniqueId())) continue;
+
+                                    double playerDistance = mob.getLocation().distanceSquared(player.getLocation());
+                                    if (playerDistance < bestDistance && playerDistance < 20*20) { // 20 block range
+                                        bestDistance = playerDistance;
+                                        nearestEnemy = player;
+                                    }
+                                }
+
+                                if (nearestEnemy != null) {
+                                    // Aggressively attack the nearest enemy
+                                    mob.setTarget(nearestEnemy);
+                                    // Ensure AI is enabled for combat
+                                    mob.setAware(true);
                                 } else if (distance > 3) {
-                                    // Follow the owner
+                                    // No enemies nearby, follow the owner
                                     mob.setTarget(null);
                                     mob.getPathfinder().moveTo(owner.getLocation(), 1.2);
                                 }
@@ -79,6 +103,22 @@ public class DeathFriendlyMobListener implements Listener {
                     // Don't target owner
                     if (target.getUniqueId().equals(ownerId)) {
                         e.setCancelled(true);
+
+                        // Retarget to nearest enemy instead
+                        Player nearestEnemy = null;
+                        double bestDistance = Double.MAX_VALUE;
+                        for (Player p : mob.getWorld().getPlayers()) {
+                            if (p.getUniqueId().equals(ownerId)) continue;
+                            if (trustManager.isTrusted(ownerId, p.getUniqueId())) continue;
+                            double d = p.getLocation().distanceSquared(mob.getLocation());
+                            if (d < bestDistance && d < 20*20) {
+                                bestDistance = d;
+                                nearestEnemy = p;
+                            }
+                        }
+                        if (nearestEnemy != null) {
+                            e.setTarget(nearestEnemy);
+                        }
                         return;
                     }
 

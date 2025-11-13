@@ -17,9 +17,10 @@ import java.util.Random;
 public class DeathSummonUndeadAbility extends BaseAbility {
     private final ElementPlugin plugin;
     private static final List<Class<? extends LivingEntity>> UNDEAD_TYPES = List.of(
-            Zombie.class, Skeleton.class, Husk.class, Stray.class // Bogged is 1.20+ only, add if available
+            Zombie.class, Skeleton.class, Husk.class, Stray.class
     );
-    public static final String META_FRIENDLY_UNDEAD_OWNER = "death_friendly_undead_owner";
+    public static final String META_FRIENDLY_UNDEAD_OWNER = "death_summoned_owner";
+    public static final String META_FRIENDLY_UNDEAD_UNTIL = "death_summoned_until";
     private final Random random = new Random();
 
     public DeathSummonUndeadAbility(ElementPlugin plugin) {
@@ -35,25 +36,61 @@ public class DeathSummonUndeadAbility extends BaseAbility {
 
         // Pick a random undead type
         Class<? extends LivingEntity> mobClass = UNDEAD_TYPES.get(random.nextInt(UNDEAD_TYPES.size()));
-        LivingEntity mob = (LivingEntity) player.getWorld().spawn(spawnLoc, mobClass);
-        mob.setCustomName(ChatColor.DARK_PURPLE + player.getName() + "'s Undead");
-        mob.setCustomNameVisible(true);
-        mob.getAttribute(Attribute.MAX_HEALTH).setBaseValue(40.0);
-        mob.setHealth(40.0);
-        mob.setMetadata(META_FRIENDLY_UNDEAD_OWNER, new FixedMetadataValue(plugin, player.getUniqueId().toString()));
-        mob.setRemoveWhenFarAway(false);
-        player.getWorld().playSound(spawnLoc, Sound.ENTITY_ZOMBIE_AMBIENT, 1f, 0.7f);
+        LivingEntity entity = (LivingEntity) player.getWorld().spawn(spawnLoc, mobClass);
 
-        // Remove after 30 seconds
+        // Configure the mob
+        entity.setCustomName(ChatColor.DARK_PURPLE + player.getName() + "'s Undead");
+        entity.setCustomNameVisible(true);
+        entity.getAttribute(Attribute.MAX_HEALTH).setBaseValue(40.0);
+        entity.setHealth(40.0);
+        entity.setRemoveWhenFarAway(false);
+
+        // CRITICAL: Set metadata with correct keys that match the listener
+        long expirationTime = System.currentTimeMillis() + 30_000L; // 30 seconds
+        entity.setMetadata(META_FRIENDLY_UNDEAD_OWNER, new FixedMetadataValue(plugin, player.getUniqueId().toString()));
+        entity.setMetadata(META_FRIENDLY_UNDEAD_UNTIL, new FixedMetadataValue(plugin, expirationTime));
+
+        // Ensure AI is enabled and mob can attack
+        if (entity instanceof Mob mob) {
+            mob.setAware(true);
+            mob.setCanPickupItems(false);
+
+            // Find nearest enemy to attack immediately
+            Player nearestEnemy = null;
+            double bestDistance = Double.MAX_VALUE;
+            for (Player p : player.getWorld().getPlayers()) {
+                if (p.getUniqueId().equals(player.getUniqueId())) continue;
+                if (context.getTrustManager().isTrusted(player.getUniqueId(), p.getUniqueId())) continue;
+
+                double dist = p.getLocation().distanceSquared(entity.getLocation());
+                if (dist < bestDistance && dist < 20*20) {
+                    bestDistance = dist;
+                    nearestEnemy = p;
+                }
+            }
+
+            // Set initial target if enemy found
+            if (nearestEnemy != null) {
+                mob.setTarget(nearestEnemy);
+            }
+        }
+
+        player.getWorld().playSound(spawnLoc, Sound.ENTITY_ZOMBIE_AMBIENT, 1f, 0.7f);
+        player.sendMessage(ChatColor.DARK_PURPLE + "Summoned an undead ally for 30 seconds!");
+
+        // Schedule removal after 30 seconds
         new BukkitRunnable() {
             @Override
             public void run() {
-                if (mob.isValid()) {
-                    mob.remove();
-                    player.sendMessage(ChatColor.DARK_PURPLE + "Your undead ally has despawned.");
+                if (entity.isValid() && !entity.isDead()) {
+                    entity.remove();
+                    if (player.isOnline()) {
+                        player.sendMessage(ChatColor.DARK_PURPLE + "Your undead ally has despawned.");
+                    }
                 }
             }
-        }.runTaskLater(plugin, 30 * 20L);
+        }.runTaskLater(plugin, 600L); // 30 seconds = 600 ticks
+
         return true;
     }
 
@@ -69,5 +106,9 @@ public class DeathSummonUndeadAbility extends BaseAbility {
 
     public static String getMetaFriendlyUndeadOwner() {
         return META_FRIENDLY_UNDEAD_OWNER;
+    }
+
+    public static String getMetaFriendlyUndeadUntil() {
+        return META_FRIENDLY_UNDEAD_UNTIL;
     }
 }

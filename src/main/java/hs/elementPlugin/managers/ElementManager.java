@@ -13,8 +13,6 @@ import hs.elementPlugin.elements.impl.death.DeathElement;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
@@ -179,8 +177,14 @@ public class ElementManager {
 
         Optional.ofNullable(player.getAttribute(Attribute.MAX_HEALTH))
                 .ifPresent(attr -> {
+                    double oldMaxHealth = attr.getBaseValue();
                     attr.setBaseValue(20.0);
-                    player.setHealth(Math.min(player.getHealth(), 20.0));
+
+                    // CRITICAL FIX: Only adjust health if player is alive and health would exceed new max
+                    // This prevents triggering death during element assignment
+                    if (!player.isDead() && player.getHealth() > 0 && player.getHealth() > 20.0) {
+                        player.setHealth(20.0);
+                    }
                 });
     }
 

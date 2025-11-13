@@ -93,6 +93,9 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                         if (entity.equals(player)) continue;
                         if (damagedEntities.contains(entity.getUniqueId())) continue;
 
+                        // Skip armor stands
+                        if (entity instanceof org.bukkit.entity.ArmorStand) continue;
+
                         // Check if valid target
                         if (entity instanceof Player targetPlayer) {
                             if (context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {

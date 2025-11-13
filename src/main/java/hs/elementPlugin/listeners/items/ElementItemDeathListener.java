@@ -6,13 +6,15 @@ import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public record ElementItemDeathListener(ElementPlugin plugin, ElementManager elements) implements Listener {
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDeath(PlayerDeathEvent e) {
         PlayerData pd = elements.data(e.getEntity().getUniqueId());
         ElementType currentElement = pd.getCurrentElement();
@@ -37,14 +39,22 @@ public record ElementItemDeathListener(ElementPlugin plugin, ElementManager elem
                 plugin.getDataStore().save(pd);
 
                 // Reapply upsides to remove any upgrade benefits
-                elements.applyUpsides(e.getEntity());
-
+                // Schedule this for next tick to avoid issues during death event
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        if (e.getEntity().isOnline()) {
+                            elements.applyUpsides(e.getEntity());
+                        }
+                    }
+                }.runTaskLater(plugin, 1L);
             }
         }
+
         // For life/death elements: reroll player to new element and drop the core
         if (shouldDropCore(currentElement)) {
             plugin.getLogger().info("Player " + e.getEntity().getName() + " died with " + currentElement + " element - dropping core");
-            
+
             // Create and drop the core item
             ItemStack coreItem = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, currentElement);
             if (coreItem != null) {
@@ -58,9 +68,16 @@ public record ElementItemDeathListener(ElementPlugin plugin, ElementManager elem
             pd.removeElementItem(currentElement);
             plugin.getDataStore().save(pd);
 
-            // Reroll a new element for the player
-            elements.assignRandomWithTitle(e.getEntity());
-            e.getEntity().sendMessage(ChatColor.YELLOW + "Your core dropped and you rolled a new element!");
+            // CRITICAL FIX: Schedule element reroll for after respawn to avoid death loop
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (e.getEntity().isOnline()) {
+                        elements.assignRandomWithTitle(e.getEntity());
+                        e.getEntity().sendMessage(ChatColor.YELLOW + "Your core dropped and you rolled a new element!");
+                    }
+                }
+            }.runTaskLater(plugin, 40L); // Wait 2 seconds after death (respawn time)
         } else {
             plugin.getLogger().info("Player " + e.getEntity().getName() + " died with " + currentElement + " element - no core drop");
         }
