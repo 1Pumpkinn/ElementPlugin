@@ -1,5 +1,6 @@
 package hs.elementPlugin;
 
+import hs.elementPlugin.commands.ElementInfoCommand;
 import hs.elementPlugin.elements.abilities.AbilityManager;
 import hs.elementPlugin.elements.abilities.impl.air.AirBlastAbility;
 import hs.elementPlugin.elements.abilities.impl.air.AirDashAbility;
@@ -74,6 +75,8 @@ public final class ElementPlugin extends JavaPlugin {
         this.pedestalStorage = new PedestalDataStorage(this);
         this.ownerStorage = new PedestalOwnerStorage(this);
 
+
+
         // ========== Register ALL Abilities ==========
         // NOTE: Mana costs are defined in the ability constructors as BaseAbility parameters
 
@@ -131,19 +134,25 @@ public final class ElementPlugin extends JavaPlugin {
      * Register all commands
      */
     private void registerCommands() {
-        // Element system commands
+        // === Player Info Commands ===
+        ElementInfoCommand elementInfoCmd = new ElementInfoCommand(this);
+        getCommand("elements").setExecutor(elementInfoCmd);
+        getCommand("elements").setTabCompleter(elementInfoCmd);
+
+        // === Element System/Admin Commands ===
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
         getCommand("element").setExecutor(new hs.elementPlugin.commands.ElementCommand(this));
         getCommand("mana").setExecutor(new hs.elementPlugin.commands.ManaCommand(manaManager, configManager));
         getCommand("util").setExecutor(new hs.elementPlugin.commands.UtilCommand(this));
         getCommand("damagetest").setExecutor(new hs.elementPlugin.util.DamageTester());
 
-        // Pedestal/Custom block commands
+        // === Pedestal/Custom Block Commands ===
         getCommand("customblock").setExecutor(new CustomBlockCommand(blockManager));
         getCommand("pedestal").setExecutor(new PedestalCommand(pedestalStorage, ownerStorage));
 
         getLogger().info("Commands registered successfully");
     }
+
 
     /**
      * Register all listeners

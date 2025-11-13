@@ -44,6 +44,12 @@ commands:
     usage: /damagetest <spawn>
     default: op
 
+  elements:
+    description: View information about all elements
+    usage: /elements [element_name]
+    aliases: [ elementinfo, elinfo ]
+
+
 
 permissions:
   element.admin:
