@@ -13,7 +13,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Random;
@@ -77,7 +76,7 @@ public class AdvancedRerollerListener implements Listener {
     }
 
     private void performAdvancedRoll(Player player, ElementType targetElement) {
-        plugin.getElementManager().data(player.getUniqueId()); // ensures player data is initialized
+        plugin.getElementManager().data(player.getUniqueId());
         player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
 
         String[] names = {"METAL", "FROST"};
@@ -95,7 +94,6 @@ public class AdvancedRerollerListener implements Listener {
                     return;
                 }
 
-                // Always AQUA text color during roll
                 String name = names[tick % 2];
                 player.sendTitle(
                         ChatColor.GOLD + "Rolling...",
@@ -109,14 +107,15 @@ public class AdvancedRerollerListener implements Listener {
 
     private void assignAdvancedElement(Player player, ElementType element) {
         PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
-        clearAllEffects(player, pd);
+
+        // FIXED: Only clear the old element's specific effects
+        clearOldElementEffects(player, pd);
 
         int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
         pd.setCurrentElementWithoutReset(element);
         pd.setCurrentElementUpgradeLevel(currentUpgradeLevel);
         plugin.getDataStore().save(pd);
 
-        // Always show AQUA title color for both elements
         var title = net.kyori.adventure.title.Title.title(
                 net.kyori.adventure.text.Component.text("Element Chosen!")
                         .color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
@@ -133,22 +132,31 @@ public class AdvancedRerollerListener implements Listener {
         plugin.getElementManager().applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
 
-        // Message also always uses AQUA for consistency
         player.sendMessage(ChatColor.GREEN + "Your element has been rerolled");
     }
 
+    /**
+     * FIXED: Only clear element-specific passive effects, not ALL effects
+     */
+    private void clearOldElementEffects(Player player, PlayerData pd) {
+        ElementType oldElement = pd.getCurrentElement();
 
+        if (oldElement == null) return;
 
-    private void clearAllEffects(Player player, PlayerData pd) {
-        for (PotionEffect effect : player.getActivePotionEffects()) {
-            player.removePotionEffect(effect.getType());
+        // Use the Element's clearEffects method which only removes element-specific effects
+        var element = plugin.getElementManager().get(oldElement);
+        if (element != null) {
+            element.clearEffects(player);
         }
 
-        if (pd.getCurrentElement() == ElementType.LIFE) {
+        // Special handling for Life element - reset max health
+        if (oldElement == ElementType.LIFE) {
             var attr = player.getAttribute(Attribute.MAX_HEALTH);
             if (attr != null) {
                 attr.setBaseValue(20.0);
-                player.setHealth(Math.min(player.getHealth(), 20.0));
+                if (!player.isDead() && player.getHealth() > 0 && player.getHealth() > 20.0) {
+                    player.setHealth(20.0);
+                }
             }
         }
     }
