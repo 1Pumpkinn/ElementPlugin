@@ -167,8 +167,8 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         map.put(ElementType.DEATH, new ElementInfo(
                 "Masters of decay and darkness",
                 Arrays.asList("Permanent Night Vision", "Raw/undead foods heal you"),
-                "Wither Skull", "Fire an explosive wither skull", 50,
-                "Summon Undead", "Summon undead ally for 30s", 75
+                "Summon Undead", "Summon undead ally for 30s", 50,
+                "Wither Skull", "Fire an explosive wither skull", 75
         ));
 
         map.put(ElementType.METAL, new ElementInfo(
