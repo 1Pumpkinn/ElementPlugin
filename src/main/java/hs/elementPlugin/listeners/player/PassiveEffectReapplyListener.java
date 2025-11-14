@@ -60,8 +60,12 @@ public class PassiveEffectReapplyListener implements Listener {
         Player player = event.getPlayer();
 
         // Delay to ensure player is fully loaded
-        scheduleReapply(player, 10L, "join");
+        // REMOVED: We don't need to reapply on every join unless effects are actually missing
+        // The JoinListener already handles this
+        // Only reapply if player is missing their element effects
+        scheduleReapply(player, 20L, "join"); // Increased delay to 20 ticks (1 second)
     }
+
 
     /**
      * Schedule a task to reapply element passive effects

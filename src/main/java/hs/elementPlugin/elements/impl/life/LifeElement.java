@@ -7,19 +7,27 @@ import hs.elementPlugin.elements.abilities.impl.life.LifeRegenAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
+
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class LifeElement extends BaseElement {
+
     private final ElementPlugin plugin;
     private final Ability ability1;
     private final Ability ability2;
-    private final java.util.Map<java.util.UUID, org.bukkit.scheduler.BukkitTask> passiveTasks = new java.util.HashMap<>();
+
+    // Fixed: only ONE passive task map
+    private final Map<UUID, BukkitTask> passiveTasks = new HashMap<>();
 
     public LifeElement(ElementPlugin plugin) {
         super(plugin);
@@ -29,68 +37,84 @@ public class LifeElement extends BaseElement {
     }
 
     @Override
-    public ElementType getType() { return ElementType.LIFE; }
+    public ElementType getType() {
+        return ElementType.LIFE;
+    }
 
+    // =====================================================================
+    // APPLY UPSIDES — fixed to prevent duplicate tasks
+    // =====================================================================
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Cancel any existing passive task for this player
+
+        // Cancel previous task to prevent stacking
         cancelPassiveTask(player);
-        
+
         // Upside 1: 15 hearts (30 HP)
         var attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null) {
             if (attr.getBaseValue() < 30.0) attr.setBaseValue(30.0);
-            if (player.getHealth() > attr.getBaseValue()) player.setHealth(attr.getBaseValue());
+            if (player.getHealth() > attr.getBaseValue()) {
+                player.setHealth(attr.getBaseValue());
+            }
         }
-        
-        // Upside 2: Crops within 5x5 radius instantly grow (passive effect)
+
+        // Upside 2: crop growth aura (upgrade level 2+)
         if (upgradeLevel >= 2) {
-            org.bukkit.scheduler.BukkitTask task = new BukkitRunnable() {
+            BukkitTask task = new BukkitRunnable() {
                 @Override
                 public void run() {
                     if (!player.isOnline()) {
-                        cancel();
-                        passiveTasks.remove(player.getUniqueId());
+                        cancelPassiveTask(player);
                         return;
                     }
-                    
-                    // Grow crops in 5x5 around player every 2 seconds
+
                     int radius = 5;
-                    int cropsGrown = 0;
+
+                    // Force-grow crops within 5x5 around the player
                     for (int dx = -radius; dx <= radius; dx++) {
                         for (int dz = -radius; dz <= radius; dz++) {
-                            for (int dy = -1; dy <= 1; dy++) { // Check 3 levels vertically
-                                Block b = player.getLocation().clone().add(dx, dy, dz).getBlock();
-                                if (growIfCrop(b)) {
-                                    cropsGrown++;
-                                }
+                            for (int dy = -1; dy <= 1; dy++) {
+                                Block block = player.getLocation().clone().add(dx, dy, dz).getBlock();
+                                growIfCrop(block);
                             }
                         }
                     }
-                    if (cropsGrown > 0) {
-                    }
                 }
             }.runTaskTimer(plugin, 0L, 40L); // Every 2 seconds
-            
-            // Store the task reference
+
+            // Store the running task
             passiveTasks.put(player.getUniqueId(), task);
-        } else {
         }
     }
 
+    // =====================================================================
+    // Crop Growth Helper
+    // =====================================================================
     private boolean growIfCrop(Block block) {
         if (block.getBlockData() instanceof Ageable ageable) {
             if (ageable.getAge() < ageable.getMaximumAge()) {
                 ageable.setAge(ageable.getMaximumAge());
                 block.setBlockData(ageable);
-                // Debug message to confirm crop growth
-                plugin.getLogger().info("Grew crop at " + block.getLocation());
                 return true;
             }
         }
         return false;
     }
 
+    // =====================================================================
+    // Cancel passive task
+    // =====================================================================
+    private void cancelPassiveTask(Player player) {
+        BukkitTask task = passiveTasks.remove(player.getUniqueId());
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
+        }
+    }
+
+    // =====================================================================
+    // Abilities
+    // =====================================================================
     @Override
     protected boolean executeAbility1(ElementContext context) {
         return ability1.execute(context);
@@ -101,32 +125,31 @@ public class LifeElement extends BaseElement {
         return ability2.execute(context);
     }
 
+    // =====================================================================
+    // Clearing Effects
+    // =====================================================================
     @Override
     public void clearEffects(Player player) {
-        // Cancel passive task
+
+        // Stop aura
         cancelPassiveTask(player);
-        
-        // Reset max health to default
+
+        // Reset health to normal
         var attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null) {
             attr.setBaseValue(20.0);
-            if (player.getHealth() > 20.0) player.setHealth(20.0);
+            if (player.getHealth() > 20.0) {
+                player.setHealth(20.0);
+            }
         }
+
         ability1.setActive(player, false);
         ability2.setActive(player, false);
     }
-    
-    /**
-     * Cancel the passive task for a player
-     * @param player The player to cancel the task for
-     */
-    private void cancelPassiveTask(Player player) {
-        org.bukkit.scheduler.BukkitTask task = passiveTasks.remove(player.getUniqueId());
-        if (task != null && !task.isCancelled()) {
-            task.cancel();
-        }
-    }
 
+    // =====================================================================
+    // Display
+    // =====================================================================
     @Override
     public String getDisplayName() {
         return ChatColor.GREEN + "Life";

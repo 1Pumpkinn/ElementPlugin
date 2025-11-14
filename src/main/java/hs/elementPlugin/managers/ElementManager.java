@@ -10,6 +10,7 @@ import hs.elementPlugin.elements.impl.fire.FireElement;
 import hs.elementPlugin.elements.impl.earth.EarthElement;
 import hs.elementPlugin.elements.impl.life.LifeElement;
 import hs.elementPlugin.elements.impl.death.DeathElement;
+
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
@@ -20,31 +21,56 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public class ElementManager {
+
+    // --------------------------------------------------------------------
+    // BASIC ELEMENTS
+    // --------------------------------------------------------------------
     private static final ElementType[] BASIC_ELEMENTS = {
             ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH
     };
+
     private static final int ROLL_STEPS = 16;
     private static final long ROLL_DELAY_TICKS = 3L;
 
-    private final ElementPlugin plugin;
+    // --------------------------------------------------------------------
+    // INTERNAL DATA
+    // --------------------------------------------------------------------
+    private final ElementPlugin plugin;  // <-- you needed a getter for this
     private final DataStore store;
     private final ManaManager manaManager;
     private final TrustManager trustManager;
     private final ConfigManager configManager;
+
     private final Map<ElementType, Element> registry = new EnumMap<>(ElementType.class);
     private final Set<UUID> currentlyRolling = new HashSet<>();
     private final Random random = new Random();
 
+    // --------------------------------------------------------------------
+    // CONSTRUCTOR
+    // --------------------------------------------------------------------
     public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager,
                           TrustManager trustManager, ConfigManager configManager) {
+
         this.plugin = plugin;
         this.store = store;
         this.manaManager = manaManager;
         this.trustManager = trustManager;
         this.configManager = configManager;
+
         registerAllElements();
     }
 
+    // --------------------------------------------------------------------
+    // *** THE FIXED METHOD ***
+    // --------------------------------------------------------------------
+    /** Required by Upside classes */
+    public ElementPlugin getPlugin() {
+        return plugin;
+    }
+
+    // --------------------------------------------------------------------
+    // ELEMENT REGISTRATION
+    // --------------------------------------------------------------------
     private void registerAllElements() {
         registerElement(ElementType.AIR, () -> new AirElement(plugin));
         registerElement(ElementType.WATER, () -> new WaterElement(plugin));
@@ -60,7 +86,9 @@ public class ElementManager {
         registry.put(type, supplier.get());
     }
 
-    // Public API
+    // --------------------------------------------------------------------
+    // PUBLIC API
+    // --------------------------------------------------------------------
     public PlayerData data(@NotNull UUID uuid) {
         return store.getPlayerData(uuid);
     }
@@ -85,7 +113,9 @@ public class ElementManager {
         return currentlyRolling.contains(player.getUniqueId());
     }
 
-    // Element Assignment Methods
+    // --------------------------------------------------------------------
+    // ELEMENT ASSIGNMENT
+    // --------------------------------------------------------------------
     public void rollAndAssign(Player player) {
         if (!beginRoll(player)) return;
 
@@ -108,6 +138,7 @@ public class ElementManager {
 
     public void assignRandomDifferentElement(Player player) {
         ElementType current = getPlayerElement(player);
+
         List<ElementType> available = Arrays.stream(BASIC_ELEMENTS)
                 .filter(type -> type != current)
                 .toList();
@@ -123,16 +154,15 @@ public class ElementManager {
         assignElementInternal(player, type, "Element Chosen!", true);
     }
 
+    // --------------------------------------------------------------------
+    // CRITICAL FIX: No double clearing
+    // --------------------------------------------------------------------
     public void setElement(Player player, ElementType type) {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
-        if (old != type) {
-            returnLifeOrDeathCore(player, old);
-        }
-
-        // Only clear old element's effects if switching elements
         if (old != null && old != type) {
+            returnLifeOrDeathCore(player, old);
             clearOldElementEffects(player, old);
         }
 
@@ -151,6 +181,7 @@ public class ElementManager {
     }
 
     private void assignElementInternal(Player player, ElementType type, String titleText, boolean resetLevel) {
+
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
@@ -158,7 +189,6 @@ public class ElementManager {
             returnLifeOrDeathCore(player, old);
         }
 
-        // Only clear old element's effects if switching elements
         if (old != null && old != type) {
             clearOldElementEffects(player, old);
         }
@@ -172,31 +202,31 @@ public class ElementManager {
         }
 
         store.save(pd);
+
         showElementTitle(player, type, titleText);
         applyUpsides(player);
+
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
 
-    // Effect Management
-    /**
-     * Clear only the specific effects from the old element
-     * This preserves player-applied potion effects from potions, beacons, etc.
-     */
+    // --------------------------------------------------------------------
+    // EFFECT MANAGEMENT
+    // --------------------------------------------------------------------
     private void clearOldElementEffects(Player player, ElementType oldElement) {
+        if (oldElement == null) return;
+
         Element element = registry.get(oldElement);
         if (element != null) {
-            // Each element's clearEffects() method removes only its own passive effects
             element.clearEffects(player);
         }
 
-        // Special handling for Life element - reset max health
+        // Reset life max health
         if (oldElement == ElementType.LIFE) {
             Optional.ofNullable(player.getAttribute(Attribute.MAX_HEALTH))
                     .ifPresent(attr -> {
                         attr.setBaseValue(20.0);
-                        // Only adjust health if player is alive and health would exceed new max
-                        if (!player.isDead() && player.getHealth() > 0 && player.getHealth() > 20.0) {
-                            player.setHealth(20.0);
+                        if (!player.isDead() && player.getHealth() > attr.getBaseValue()) {
+                            player.setHealth(attr.getBaseValue());
                         }
                     });
         }
@@ -206,12 +236,17 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType type = pd.getCurrentElement();
 
-        Optional.ofNullable(type)
-                .map(registry::get)
-                .ifPresent(element -> element.applyUpsides(player, pd.getUpgradeLevel(type)));
+        if (type == null) return;
+
+        Element element = registry.get(type);
+        if (element != null) {
+            element.applyUpsides(player, pd.getUpgradeLevel(type));
+        }
     }
 
-    // Ability Execution
+    // --------------------------------------------------------------------
+    // ABILITY EXECUTION
+    // --------------------------------------------------------------------
     public boolean useAbility1(Player player) {
         return useAbility(player, 1);
     }
@@ -220,7 +255,7 @@ public class ElementManager {
         return useAbility(player, 2);
     }
 
-    private boolean useAbility(Player player, int abilityNumber) {
+    private boolean useAbility(Player player, int number) {
         PlayerData pd = data(player.getUniqueId());
         ElementType type = pd.getCurrentElement();
         Element element = registry.get(type);
@@ -237,10 +272,12 @@ public class ElementManager {
                 .plugin(plugin)
                 .build();
 
-        return abilityNumber == 1 ? element.ability1(ctx) : element.ability2(ctx);
+        return number == 1 ? element.ability1(ctx) : element.ability2(ctx);
     }
 
-    // Item Management
+    // --------------------------------------------------------------------
+    // ITEM MANAGEMENT
+    // --------------------------------------------------------------------
     public void giveElementItem(Player player, ElementType type) {
         Optional.ofNullable(hs.elementPlugin.items.ElementCoreItem.createCore(plugin, type))
                 .ifPresent(item -> {
@@ -250,7 +287,6 @@ public class ElementManager {
                 });
     }
 
-    // Helper Methods
     private void showElementTitle(Player player, ElementType type, String title) {
         var titleObj = net.kyori.adventure.title.Title.title(
                 net.kyori.adventure.text.Component.text(title)
@@ -261,8 +297,7 @@ public class ElementManager {
                         java.time.Duration.ofMillis(500),
                         java.time.Duration.ofMillis(2000),
                         java.time.Duration.ofMillis(500)
-                )
-        );
+                ));
         player.showTitle(titleObj);
     }
 
@@ -279,6 +314,9 @@ public class ElementManager {
                 });
     }
 
+    // --------------------------------------------------------------------
+    // ROLLING SYSTEM
+    // --------------------------------------------------------------------
     private boolean beginRoll(Player player) {
         if (isCurrentlyRolling(player)) {
             player.sendMessage(ChatColor.RED + "You are already rerolling your element!");
@@ -292,10 +330,11 @@ public class ElementManager {
         currentlyRolling.remove(player.getUniqueId());
     }
 
-    // Inner class for rolling animation
     private class RollingAnimation {
+
         private final Player player;
         private final ElementType[] elements;
+
         private int steps = 16;
         private long delayTicks = 3L;
         private Runnable onComplete;
@@ -332,7 +371,9 @@ public class ElementManager {
                         return;
                     }
 
-                    String randomName = elements[random.nextInt(elements.length)].name();
+                    String randomName =
+                            elements[random.nextInt(elements.length)].name();
+
                     player.sendTitle(
                             ChatColor.GOLD + "Rolling...",
                             ChatColor.AQUA + randomName,

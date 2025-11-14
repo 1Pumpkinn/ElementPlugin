@@ -3,6 +3,7 @@ package hs.elementPlugin.elements.impl.frost.listeners;
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -13,11 +14,12 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 /**
- * Handles Frost element passive effects that need continuous checking
- * - Speed 2 when wearing leather boots (Upside 1)
- * - Speed 3 on ice (Upside 2, requires upgrade level 2)
+ * Handles Frost element passive effects that need continuous checking:
+ *  - Speed 1 with leather boots (Upside 1)
+ *  - Speed 2 on ice (Upside 2, requires upgrade level 2)
  */
 public class FrostPassiveListener implements Listener {
+
     private final ElementPlugin plugin;
     private final ElementManager elementManager;
 
@@ -28,14 +30,16 @@ public class FrostPassiveListener implements Listener {
     }
 
     /**
-     * Start a task that continuously checks and applies Frost passive effects
+     * Passive effect task — runs once per second
      */
     private void startPassiveEffectTask() {
         new BukkitRunnable() {
             @Override
             public void run() {
+
                 for (Player player : Bukkit.getOnlinePlayers()) {
-                    // Check if player has Frost element
+
+                    // Only apply to Frost players
                     if (elementManager.getPlayerElement(player) != ElementType.FROST) {
                         continue;
                     }
@@ -43,44 +47,54 @@ public class FrostPassiveListener implements Listener {
                     var playerData = elementManager.data(player.getUniqueId());
                     int upgradeLevel = playerData.getUpgradeLevel(ElementType.FROST);
 
-                    // Check for leather boots (Upside 1)
                     boolean hasLeatherBoots = isWearingLeatherBoots(player);
-
-                    // Check if on ice (Upside 2, requires upgrade level 2)
                     boolean onIce = upgradeLevel >= 2 && isOnIce(player);
 
-                    // Remove any existing speed effects first to avoid conflicts
-                    player.removePotionEffect(PotionEffectType.SPEED);
+                    // Determine the CORRECT effect level (-1 = none)
+                    int desiredLevel = onIce ? 2 : (hasLeatherBoots ? 1 : -1);
 
-                    // Apply appropriate speed effect
-                    if (onIce) {
-                        // Speed 3 on ice (takes priority) - 3 seconds duration, reapplied every second
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 2, true, false, false));
-                    } else if (hasLeatherBoots) {
-                        // Speed 2 with leather boots - 3 seconds duration, reapplied every second
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 1, true, false, false));
+                    PotionEffect current = player.getPotionEffect(PotionEffectType.SPEED);
+
+                    if (desiredLevel == -1) {
+                        // Should have NO speed
+                        // Only remove if the effect was applied by THIS system
+                        if (current != null && current.getDuration() > 1000) {
+                            player.removePotionEffect(PotionEffectType.SPEED);
+                        }
+                        continue;
+                    }
+
+                    // Should have speed of specific level
+                    boolean needsRefresh = (current == null) ||
+                            (current.getAmplifier() != desiredLevel) ||
+                            (current.getDuration() < 40);
+
+                    if (needsRefresh) {
+                        // Remove any conflicting speed effect first
+                        if (current != null) {
+                            player.removePotionEffect(PotionEffectType.SPEED);
+                        }
+
+                        // Reapply with long duration so we can detect our own effect later
+                        player.addPotionEffect(
+                                new PotionEffect(PotionEffectType.SPEED, 2000, desiredLevel, true, false, false)
+                        );
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0L, 20L); // Run every second (20 ticks)
+        }.runTaskTimer(plugin, 0L, 20L); // Runs every second
     }
 
-    /**
-     * Check if player is wearing leather boots
-     */
     private boolean isWearingLeatherBoots(Player player) {
         ItemStack boots = player.getInventory().getBoots();
         return boots != null && boots.getType() == Material.LEATHER_BOOTS;
     }
 
-    /**
-     * Check if player is standing on ice
-     */
     private boolean isOnIce(Player player) {
-        Material blockBelow = player.getLocation().subtract(0, 1, 0).getBlock().getType();
-        return blockBelow == Material.ICE ||
-                blockBelow == Material.PACKED_ICE ||
-                blockBelow == Material.BLUE_ICE ||
-                blockBelow == Material.FROSTED_ICE;
+        Material blockBelow = player.getLocation().add(0, -1, 0).getBlock().getType();
+        return switch (blockBelow) {
+            case ICE, PACKED_ICE, BLUE_ICE, FROSTED_ICE -> true;
+            default -> false;
+        };
     }
 }
