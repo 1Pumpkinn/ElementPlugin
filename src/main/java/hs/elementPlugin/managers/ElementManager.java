@@ -131,7 +131,11 @@ public class ElementManager {
             returnLifeOrDeathCore(player, old);
         }
 
-        clearAllEffects(player);
+        // Only clear old element's effects if switching elements
+        if (old != null && old != type) {
+            clearOldElementEffects(player, old);
+        }
+
         pd.setCurrentElement(type);
         store.save(pd);
 
@@ -154,7 +158,10 @@ public class ElementManager {
             returnLifeOrDeathCore(player, old);
         }
 
-        clearAllEffects(player);
+        // Only clear old element's effects if switching elements
+        if (old != null && old != type) {
+            clearOldElementEffects(player, old);
+        }
 
         if (resetLevel) {
             pd.setCurrentElement(type);
@@ -171,21 +178,28 @@ public class ElementManager {
     }
 
     // Effect Management
-    private void clearAllEffects(Player player) {
-        player.getActivePotionEffects()
-                .forEach(effect -> player.removePotionEffect(effect.getType()));
+    /**
+     * Clear only the specific effects from the old element
+     * This preserves player-applied potion effects from potions, beacons, etc.
+     */
+    private void clearOldElementEffects(Player player, ElementType oldElement) {
+        Element element = registry.get(oldElement);
+        if (element != null) {
+            // Each element's clearEffects() method removes only its own passive effects
+            element.clearEffects(player);
+        }
 
-        Optional.ofNullable(player.getAttribute(Attribute.MAX_HEALTH))
-                .ifPresent(attr -> {
-                    double oldMaxHealth = attr.getBaseValue();
-                    attr.setBaseValue(20.0);
-
-                    // CRITICAL FIX: Only adjust health if player is alive and health would exceed new max
-                    // This prevents triggering death during element assignment
-                    if (!player.isDead() && player.getHealth() > 0 && player.getHealth() > 20.0) {
-                        player.setHealth(20.0);
-                    }
-                });
+        // Special handling for Life element - reset max health
+        if (oldElement == ElementType.LIFE) {
+            Optional.ofNullable(player.getAttribute(Attribute.MAX_HEALTH))
+                    .ifPresent(attr -> {
+                        attr.setBaseValue(20.0);
+                        // Only adjust health if player is alive and health would exceed new max
+                        if (!player.isDead() && player.getHealth() > 0 && player.getHealth() > 20.0) {
+                            player.setHealth(20.0);
+                        }
+                    });
+        }
     }
 
     public void applyUpsides(Player player) {

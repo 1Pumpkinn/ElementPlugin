@@ -10,4 +10,6 @@ public interface Element {
     boolean ability1(ElementContext context);
 
     boolean ability2(ElementContext context);
+
+    void clearEffects(Player player);
 }
