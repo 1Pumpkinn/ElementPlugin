@@ -22,13 +22,14 @@ public class DamageTester implements CommandExecutor {
 
         Player player = (Player) sender;
 
-        if (args.length == 0) {
-            player.sendMessage("§cUsage: /damagetest <spawn>");
+        // Check if player is OP
+        if (!player.isOp()) {
+            player.sendMessage("§cYou must be an operator to use this command.");
             return true;
         }
 
-        if (args[0].equalsIgnoreCase("spawn")) {
-            spawnTestVillager(player);
+        if (args.length == 0) {
+            player.sendMessage("§cUsage: /damagetest <spawn>");
             return true;
         }
 
