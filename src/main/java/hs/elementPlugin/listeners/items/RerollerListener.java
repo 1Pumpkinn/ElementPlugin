@@ -1,7 +1,11 @@
 package hs.elementPlugin.listeners.items;
 
 import hs.elementPlugin.ElementPlugin;
+import hs.elementPlugin.data.PlayerData;
+import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.items.ItemKeys;
+import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -57,6 +61,13 @@ public class RerollerListener implements Listener {
                 return;
             }
 
+            // CRITICAL FIX: Clear old element effects BEFORE rerolling
+            PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
+            ElementType oldElement = pd.getCurrentElement();
+            if (oldElement != null) {
+                clearOldElementEffects(player, oldElement);
+            }
+
             // Remove one reroller item
             if (item.getAmount() > 1) {
                 item.setAmount(item.getAmount() - 1);
@@ -69,6 +80,28 @@ public class RerollerListener implements Listener {
             player.sendMessage(net.kyori.adventure.text.Component.text("Your element has been rerolled!").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
         }
     }
+
+    /**
+     * Clear old element effects properly
+     */
+    private void clearOldElementEffects(Player player, ElementType oldElement) {
+        if (oldElement == null) return;
+
+        // Use the Element's clearEffects method
+        var element = plugin.getElementManager().get(oldElement);
+        if (element != null) {
+            element.clearEffects(player);
+        }
+
+        // Special handling for Life element - reset max health
+        if (oldElement == ElementType.LIFE) {
+            var attr = player.getAttribute(Attribute.MAX_HEALTH);
+            if (attr != null) {
+                attr.setBaseValue(20.0);
+                if (!player.isDead() && player.getHealth() > 0 && player.getHealth() > 20.0) {
+                    player.setHealth(20.0);
+                }
+            }
+        }
+    }
 }
-
-

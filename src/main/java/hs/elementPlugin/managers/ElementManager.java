@@ -22,9 +22,6 @@ import java.util.function.Supplier;
 
 public class ElementManager {
 
-    // --------------------------------------------------------------------
-    // BASIC ELEMENTS
-    // --------------------------------------------------------------------
     private static final ElementType[] BASIC_ELEMENTS = {
             ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH
     };
@@ -32,10 +29,7 @@ public class ElementManager {
     private static final int ROLL_STEPS = 16;
     private static final long ROLL_DELAY_TICKS = 3L;
 
-    // --------------------------------------------------------------------
-    // INTERNAL DATA
-    // --------------------------------------------------------------------
-    private final ElementPlugin plugin;  // <-- you needed a getter for this
+    private final ElementPlugin plugin;
     private final DataStore store;
     private final ManaManager manaManager;
     private final TrustManager trustManager;
@@ -45,9 +39,6 @@ public class ElementManager {
     private final Set<UUID> currentlyRolling = new HashSet<>();
     private final Random random = new Random();
 
-    // --------------------------------------------------------------------
-    // CONSTRUCTOR
-    // --------------------------------------------------------------------
     public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager,
                           TrustManager trustManager, ConfigManager configManager) {
 
@@ -60,17 +51,10 @@ public class ElementManager {
         registerAllElements();
     }
 
-    // --------------------------------------------------------------------
-    // *** THE FIXED METHOD ***
-    // --------------------------------------------------------------------
-    /** Required by Upside classes */
     public ElementPlugin getPlugin() {
         return plugin;
     }
 
-    // --------------------------------------------------------------------
-    // ELEMENT REGISTRATION
-    // --------------------------------------------------------------------
     private void registerAllElements() {
         registerElement(ElementType.AIR, () -> new AirElement(plugin));
         registerElement(ElementType.WATER, () -> new WaterElement(plugin));
@@ -86,9 +70,6 @@ public class ElementManager {
         registry.put(type, supplier.get());
     }
 
-    // --------------------------------------------------------------------
-    // PUBLIC API
-    // --------------------------------------------------------------------
     public PlayerData data(@NotNull UUID uuid) {
         return store.getPlayerData(uuid);
     }
@@ -125,15 +106,42 @@ public class ElementManager {
                 .withSteps(ROLL_STEPS)
                 .withDelay(ROLL_DELAY_TICKS)
                 .onComplete(() -> {
-                    assignRandomWithTitle(player);
+                    assignRandomWithTitle(player); // <-- calls wrapper
                     endRoll(player);
                 })
                 .start();
     }
 
-    public void assignRandomWithTitle(Player player) {
+    /**
+     * NEW WRAPPER — restores missing method
+     */
+    private void assignRandomWithTitle(Player player) {
         ElementType randomType = BASIC_ELEMENTS[random.nextInt(BASIC_ELEMENTS.length)];
-        assignElementInternal(player, randomType, "Element Chosen!");
+        assignRandomWithTitle(player, randomType);
+    }
+
+    /**
+     * NEW INTERNAL METHOD (your code)
+     */
+    private void assignRandomWithTitle(Player player, ElementType targetElement) {
+        PlayerData pd = data(player.getUniqueId());
+        ElementType oldElement = pd.getCurrentElement();
+
+        if (oldElement != null && oldElement != targetElement) {
+            clearOldElementEffects(player, oldElement);
+            returnLifeOrDeathCore(player, oldElement);
+        }
+
+        int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
+
+        pd.setCurrentElementWithoutReset(targetElement);
+        pd.setCurrentElementUpgradeLevel(currentUpgradeLevel);
+        store.save(pd);
+
+        showElementTitle(player, targetElement, "Element Assigned!");
+        applyUpsides(player);
+        player.getWorld().playSound(player.getLocation(),
+                Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
 
     public void assignRandomDifferentElement(Player player) {
@@ -154,9 +162,6 @@ public class ElementManager {
         assignElementInternal(player, type, "Element Chosen!", true);
     }
 
-    // --------------------------------------------------------------------
-    // CRITICAL FIX: No double clearing
-    // --------------------------------------------------------------------
     public void setElement(Player player, ElementType type) {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
@@ -220,7 +225,6 @@ public class ElementManager {
             element.clearEffects(player);
         }
 
-        // Reset life max health
         if (oldElement == ElementType.LIFE) {
             Optional.ofNullable(player.getAttribute(Attribute.MAX_HEALTH))
                     .ifPresent(attr -> {

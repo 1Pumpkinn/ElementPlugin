@@ -16,7 +16,7 @@ import org.bukkit.scheduler.BukkitRunnable;
  * This handles:
  * - Player respawn (after death)
  * - Totem of Undying usage (clears potion effects)
- * - Player join (ensures effects are present on login)
+ * - Player join (ensures effects are present on login AND clears stacked effects)
  */
 public class PassiveEffectReapplyListener implements Listener {
     private final ElementPlugin plugin;
@@ -53,17 +53,14 @@ public class PassiveEffectReapplyListener implements Listener {
 
     /**
      * Reapply effects when player joins the server
-     * Ensures effects are present even if something went wrong during logout
+     * CRITICAL: Clear ALL old effects first to prevent stacking
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
         // Delay to ensure player is fully loaded
-        // REMOVED: We don't need to reapply on every join unless effects are actually missing
-        // The JoinListener already handles this
-        // Only reapply if player is missing their element effects
-        scheduleReapply(player, 20L, "join"); // Increased delay to 20 ticks (1 second)
+        scheduleReapplyWithValidation(player, 20L, "join");
     }
 
 
@@ -85,5 +82,61 @@ public class PassiveEffectReapplyListener implements Listener {
                 }
             }
         }.runTaskLater(plugin, delayTicks);
+    }
+
+    /**
+     * Schedule a task to reapply element passive effects with validation
+     * This clears ALL element effects first, then applies only the current element's effects
+     *
+     * @param player The player to reapply effects for
+     * @param delayTicks Delay in ticks before reapplying
+     * @param reason Reason for reapplying (for logging)
+     */
+    private void scheduleReapplyWithValidation(Player player, long delayTicks, String reason) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (player.isOnline()) {
+                    // CRITICAL: Clear ALL element effects first
+                    clearAllElementEffects(player);
+
+                    // Then apply only the current element's effects
+                    elementManager.applyUpsides(player);
+                    plugin.getLogger().fine("Validated and reapplied element effects for " + player.getName() + " after " + reason);
+                }
+            }
+        }.runTaskLater(plugin, delayTicks);
+    }
+
+    /**
+     * Clear ALL possible element effects from a player
+     * This prevents effect stacking when switching elements
+     */
+    private void clearAllElementEffects(Player player) {
+        // Get current element
+        hs.elementPlugin.data.PlayerData pd = elementManager.data(player.getUniqueId());
+        hs.elementPlugin.elements.ElementType currentElement = pd.getCurrentElement();
+
+        // Clear effects from ALL elements (to prevent stacking)
+        for (hs.elementPlugin.elements.ElementType type : hs.elementPlugin.elements.ElementType.values()) {
+            // Skip the current element - we'll apply those effects next
+            if (type == currentElement) continue;
+
+            hs.elementPlugin.elements.Element element = elementManager.get(type);
+            if (element != null) {
+                element.clearEffects(player);
+            }
+        }
+
+        // Reset Life max health if player is NOT Life element
+        if (currentElement != hs.elementPlugin.elements.ElementType.LIFE) {
+            var attr = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+            if (attr != null && attr.getBaseValue() > 20.0) {
+                attr.setBaseValue(20.0);
+                if (!player.isDead() && player.getHealth() > 20.0) {
+                    player.setHealth(20.0);
+                }
+            }
+        }
     }
 }
