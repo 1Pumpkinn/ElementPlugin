@@ -4,6 +4,7 @@ import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.gui.ElementSelectionGUI;
 import hs.elementPlugin.managers.ElementManager;
 import hs.elementPlugin.managers.ManaManager;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -24,11 +25,12 @@ public class JoinListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
+
         // Check if player has an element
         boolean first = (elements.data(p.getUniqueId()).getCurrentElement() == null);
-        
+
         plugin.getLogger().info("Player " + p.getName() + " joined. Has element: " + !first);
-        
+
         if (first) {
             plugin.getLogger().info("Opening element selection GUI for " + p.getName());
             // Open element selection GUI after a short delay
@@ -43,8 +45,21 @@ public class JoinListener implements Listener {
                     }
                 }
             }.runTaskLater(plugin, 20L); // 1 second delay
+        } else {
+            // Cap health to max health on join (in case they logged out with Life element)
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (p.isOnline()) {
+                        var attr = p.getAttribute(Attribute.MAX_HEALTH);
+                        if (attr != null && p.getHealth() > attr.getBaseValue()) {
+                            p.setHealth(attr.getBaseValue());
+                        }
+                    }
+                }
+            }.runTaskLater(plugin, 5L); // Small delay to ensure health loads
         }
-        
+
         // Ensure mana loaded
         mana.get(p.getUniqueId());
     }
