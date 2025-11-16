@@ -73,7 +73,8 @@ public record ElementItemDeathListener(ElementPlugin plugin, ElementManager elem
                 @Override
                 public void run() {
                     if (e.getEntity().isOnline()) {
-                        elements.assignRandomWithTitle(e.getEntity());
+                        // Use the public method that assigns a different element
+                        elements.assignRandomDifferentElement(e.getEntity());
                         e.getEntity().sendMessage(ChatColor.YELLOW + "Your core dropped and you rolled a new element!");
                     }
                 }
