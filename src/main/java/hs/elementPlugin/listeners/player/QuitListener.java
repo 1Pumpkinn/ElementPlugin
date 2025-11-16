@@ -8,6 +8,7 @@ import hs.elementPlugin.managers.ManaManager;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -22,10 +23,13 @@ public class QuitListener implements Listener {
         this.mana = mana;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
         Player player = e.getPlayer();
         UUID uuid = player.getUniqueId();
+
+        // CRITICAL: Cancel any ongoing rolling animation
+        plugin.getElementManager().cancelRolling(player);
 
         // Save mana data
         mana.save(uuid);

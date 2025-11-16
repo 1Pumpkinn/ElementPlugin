@@ -1,7 +1,11 @@
 package hs.elementPlugin.listeners.player;
 
 import hs.elementPlugin.ElementPlugin;
+import hs.elementPlugin.data.PlayerData;
+import hs.elementPlugin.elements.Element;
+import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -35,7 +39,7 @@ public class PassiveEffectReapplyListener implements Listener {
         Player player = event.getPlayer();
 
         // Delay the effect reapplication to ensure the player is fully respawned
-        scheduleReapply(player, 5L, "respawn");
+        scheduleReapplyWithValidation(player, 5L, "respawn");
     }
 
     /**
@@ -48,7 +52,7 @@ public class PassiveEffectReapplyListener implements Listener {
         if (!(event.getEntity() instanceof Player player)) return;
 
         // Delay slightly to let the totem effects apply first
-        scheduleReapply(player, 10L, "totem usage");
+        scheduleReapplyWithValidation(player, 10L, "totem usage");
     }
 
     /**
@@ -87,6 +91,7 @@ public class PassiveEffectReapplyListener implements Listener {
     /**
      * Schedule a task to reapply element passive effects with validation
      * This clears ALL element effects first, then applies only the current element's effects
+     * CRITICAL FIX: This prevents the reroller bug where old effects stack with new ones
      *
      * @param player The player to reapply effects for
      * @param delayTicks Delay in ticks before reapplying
@@ -111,30 +116,46 @@ public class PassiveEffectReapplyListener implements Listener {
     /**
      * Clear ALL possible element effects from a player
      * This prevents effect stacking when switching elements
+     * CRITICAL FIX: This is the key to fixing the reroller disconnect bug
      */
     private void clearAllElementEffects(Player player) {
         // Get current element
-        hs.elementPlugin.data.PlayerData pd = elementManager.data(player.getUniqueId());
-        hs.elementPlugin.elements.ElementType currentElement = pd.getCurrentElement();
+        PlayerData pd = elementManager.data(player.getUniqueId());
+        ElementType currentElement = pd.getCurrentElement();
+
+        if (currentElement == null) {
+            plugin.getLogger().warning("Attempted to clear effects for player " + player.getName() + " with no element");
+            return;
+        }
 
         // Clear effects from ALL elements (to prevent stacking)
-        for (hs.elementPlugin.elements.ElementType type : hs.elementPlugin.elements.ElementType.values()) {
+        for (ElementType type : ElementType.values()) {
             // Skip the current element - we'll apply those effects next
             if (type == currentElement) continue;
 
-            hs.elementPlugin.elements.Element element = elementManager.get(type);
+            Element element = elementManager.get(type);
             if (element != null) {
                 element.clearEffects(player);
             }
         }
 
         // Reset Life max health if player is NOT Life element
-        if (currentElement != hs.elementPlugin.elements.ElementType.LIFE) {
-            var attr = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        if (currentElement != ElementType.LIFE) {
+            var attr = player.getAttribute(Attribute.MAX_HEALTH);
             if (attr != null && attr.getBaseValue() > 20.0) {
                 attr.setBaseValue(20.0);
                 if (!player.isDead() && player.getHealth() > 20.0) {
                     player.setHealth(20.0);
+                }
+            }
+        } else {
+            // Ensure Life element has 30 HP
+            var attr = player.getAttribute(Attribute.MAX_HEALTH);
+            if (attr != null && attr.getBaseValue() != 30.0) {
+                attr.setBaseValue(30.0);
+                // Don't modify current health, just cap it if needed
+                if (!player.isDead() && player.getHealth() > 30.0) {
+                    player.setHealth(30.0);
                 }
             }
         }

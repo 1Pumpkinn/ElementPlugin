@@ -94,6 +94,15 @@ public class ElementManager {
         return currentlyRolling.contains(player.getUniqueId());
     }
 
+    /**
+     * CRITICAL: Cancel any ongoing rolling animation for a player
+     * This is called when a player quits to prevent stacked effects
+     */
+    public void cancelRolling(Player player) {
+        currentlyRolling.remove(player.getUniqueId());
+        plugin.getLogger().info("Cancelled rolling for " + player.getName());
+    }
+
     // --------------------------------------------------------------------
     // ELEMENT ASSIGNMENT
     // --------------------------------------------------------------------
@@ -369,6 +378,15 @@ public class ElementManager {
 
                 @Override
                 public void run() {
+                    // CRITICAL FIX: Check if player is still online and rolling
+                    if (!player.isOnline() || !isCurrentlyRolling(player)) {
+                        // Player disconnected or rolling was cancelled
+                        endRoll(player);
+                        cancel();
+                        plugin.getLogger().info("Rolling cancelled for " + player.getName() + " (disconnected or cancelled)");
+                        return;
+                    }
+
                     if (tick >= steps) {
                         if (onComplete != null) onComplete.run();
                         cancel();
