@@ -1,25 +1,18 @@
 package hs.elementPlugin;
 
-import hs.elementPlugin.commands.ElementInfoCommand;
-import hs.elementPlugin.elements.abilities.AbilityManager;
-import hs.elementPlugin.elements.abilities.impl.air.AirBlastAbility;
-import hs.elementPlugin.elements.abilities.impl.air.AirDashAbility;
-import hs.elementPlugin.elements.abilities.impl.frost.FrostCircleAbility;
-import hs.elementPlugin.elements.abilities.impl.frost.FrostPunchAbility;
-import hs.elementPlugin.elements.abilities.impl.water.WaterBeamAbility;
-import hs.elementPlugin.elements.abilities.impl.water.WaterGeyserAbility;
-import hs.elementPlugin.elements.abilities.impl.death.DeathSummonUndeadAbility;
-import hs.elementPlugin.elements.abilities.impl.death.DeathWitherSkullAbility;
-import hs.elementPlugin.elements.abilities.impl.fire.FireballAbility;
-import hs.elementPlugin.elements.abilities.impl.fire.MeteorShowerAbility;
-import hs.elementPlugin.elements.abilities.impl.earth.EarthTunnelAbility;
-import hs.elementPlugin.elements.abilities.impl.earth.EarthCharmAbility;
-import hs.elementPlugin.elements.abilities.impl.life.LifeRegenAbility;
-import hs.elementPlugin.elements.abilities.impl.life.LifeHealingBeamAbility;
-import hs.elementPlugin.commands.TrustCommand;
+import hs.elementPlugin.commands.*;
 import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.elements.ElementRegistry;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.elements.abilities.AbilityManager;
+import hs.elementPlugin.elements.abilities.impl.air.*;
+import hs.elementPlugin.elements.abilities.impl.frost.*;
+import hs.elementPlugin.elements.abilities.impl.water.*;
+import hs.elementPlugin.elements.abilities.impl.death.*;
+import hs.elementPlugin.elements.abilities.impl.fire.*;
+import hs.elementPlugin.elements.abilities.impl.earth.*;
+import hs.elementPlugin.elements.abilities.impl.life.*;
+import hs.elementPlugin.elements.abilities.impl.metal.*;
 import hs.elementPlugin.elements.impl.earth.listeners.EarthOreDropListener;
 import hs.elementPlugin.elements.impl.metal.listeners.MetalChainStunListener;
 import hs.elementPlugin.listeners.player.*;
@@ -50,7 +43,6 @@ public final class ElementPlugin extends JavaPlugin {
     private AbilityManager abilityManager;
     private ElementRegistry elementRegistry;
 
-    // Pedestal/Custom Block System
     private CustomBlockManager blockManager;
     private BlockDataStorage blockStorage;
     private PedestalDataStorage pedestalStorage;
@@ -59,8 +51,21 @@ public final class ElementPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        initializeManagers();
+        registerAbilities();
+        registerCommands();
+        registerListeners();
+        registerRecipes();
+        manaManager.start();
+    }
 
-        // Initialize core systems
+    @Override
+    public void onDisable() {
+        if (dataStore != null) dataStore.flushAll();
+        if (manaManager != null) manaManager.stop();
+    }
+
+    private void initializeManagers() {
         this.configManager = new ConfigManager(this);
         this.dataStore = new DataStore(this);
         this.trustManager = new TrustManager(this);
@@ -69,206 +74,141 @@ public final class ElementPlugin extends JavaPlugin {
         this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager, configManager);
         this.itemManager = new ItemManager(this, manaManager, configManager);
 
-        // Initialize pedestal/custom block system
         this.blockManager = new CustomBlockManager(this);
         this.blockStorage = new BlockDataStorage(this, blockManager);
         this.pedestalStorage = new PedestalDataStorage(this);
         this.ownerStorage = new PedestalOwnerStorage(this);
-
-
-
-        // ========== Register ALL Abilities ==========
-        // NOTE: Mana costs are defined in the ability constructors as BaseAbility parameters
-
-        this.abilityManager.registerAbility(ElementType.AIR, 1, new AirBlastAbility(this));
-        this.abilityManager.registerAbility(ElementType.AIR, 2, new AirDashAbility(this));
-
-        this.abilityManager.registerAbility(ElementType.WATER, 2, new WaterBeamAbility(this));
-        this.abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility(this));
-
-        this.abilityManager.registerAbility(ElementType.FIRE, 1, new FireballAbility(this));
-        this.abilityManager.registerAbility(ElementType.FIRE, 2, new MeteorShowerAbility(this));
-
-        this.abilityManager.registerAbility(ElementType.EARTH, 1, new EarthTunnelAbility(this));
-        this.abilityManager.registerAbility(ElementType.EARTH, 2, new EarthCharmAbility(this));
-
-        this.abilityManager.registerAbility(ElementType.LIFE, 1, new LifeRegenAbility(this));
-        this.abilityManager.registerAbility(ElementType.LIFE, 2, new LifeHealingBeamAbility(this));
-
-        this.abilityManager.registerAbility(ElementType.DEATH, 1, new DeathSummonUndeadAbility(this));
-        this.abilityManager.registerAbility(ElementType.DEATH, 2, new DeathWitherSkullAbility(this));
-
-        this.abilityManager.registerAbility(ElementType.METAL, 1, new hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility(this));
-        this.abilityManager.registerAbility(ElementType.METAL, 2, new hs.elementPlugin.elements.abilities.impl.metal.MetalDashAbility(this));
-
-        this.abilityManager.registerAbility(ElementType.FROST, 1, new FrostCircleAbility(this));
-        this.abilityManager.registerAbility(ElementType.FROST, 2, new FrostPunchAbility(this));
-
-
-        getLogger().info("Registered all element abilities:");
-
-        // Register commands
-        registerCommands();
-        // Register listeners
-        registerListeners();
-        // ========== Register Recipes ==========
-        registerRecipes();
-
-        // Start mana system
-        this.manaManager.start();
     }
 
-    @Override
-    public void onDisable() {
-        // Save data and stop background tasks
-        if (dataStore != null) {
-            dataStore.flushAll();
-        }
+    private void registerAbilities() {
+        abilityManager.registerAbility(ElementType.AIR, 1, new AirBlastAbility(this));
+        abilityManager.registerAbility(ElementType.AIR, 2, new AirDashAbility(this));
 
-        if (manaManager != null) {
-            manaManager.stop();
-        }
+        abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility(this));
+        abilityManager.registerAbility(ElementType.WATER, 2, new WaterBeamAbility(this));
+
+        abilityManager.registerAbility(ElementType.FIRE, 1, new FireballAbility(this));
+        abilityManager.registerAbility(ElementType.FIRE, 2, new MeteorShowerAbility(this));
+
+        abilityManager.registerAbility(ElementType.EARTH, 1, new EarthTunnelAbility(this));
+        abilityManager.registerAbility(ElementType.EARTH, 2, new EarthCharmAbility(this));
+
+        abilityManager.registerAbility(ElementType.LIFE, 1, new LifeRegenAbility(this));
+        abilityManager.registerAbility(ElementType.LIFE, 2, new LifeHealingBeamAbility(this));
+
+        abilityManager.registerAbility(ElementType.DEATH, 1, new DeathSummonUndeadAbility(this));
+        abilityManager.registerAbility(ElementType.DEATH, 2, new DeathWitherSkullAbility(this));
+
+        abilityManager.registerAbility(ElementType.METAL, 1, new hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility(this));
+        abilityManager.registerAbility(ElementType.METAL, 2, new hs.elementPlugin.elements.abilities.impl.metal.MetalDashAbility(this));
+
+        abilityManager.registerAbility(ElementType.FROST, 1, new FrostCircleAbility(this));
+        abilityManager.registerAbility(ElementType.FROST, 2, new FrostPunchAbility(this));
+
+        getLogger().info("Registered all element abilities");
     }
 
-    /**
-     * Register all commands
-     */
     private void registerCommands() {
-        // === Player Info Commands ===
         ElementInfoCommand elementInfoCmd = new ElementInfoCommand(this);
         getCommand("elements").setExecutor(elementInfoCmd);
         getCommand("elements").setTabCompleter(elementInfoCmd);
 
-        // === Element System/Admin Commands ===
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
-        getCommand("element").setExecutor(new hs.elementPlugin.commands.ElementCommand(this));
-        getCommand("mana").setExecutor(new hs.elementPlugin.commands.ManaCommand(manaManager, configManager));
-        getCommand("util").setExecutor(new hs.elementPlugin.commands.UtilCommand(this));
+        getCommand("element").setExecutor(new ElementCommand(this));
+        getCommand("mana").setExecutor(new ManaCommand(manaManager, configManager));
+        getCommand("util").setExecutor(new UtilCommand(this));
         getCommand("damagetest").setExecutor(new hs.elementPlugin.util.DamageTester());
 
-        // === Pedestal/Custom Block Commands ===
         getCommand("customblock").setExecutor(new CustomBlockCommand(blockManager));
         getCommand("pedestal").setExecutor(new PedestalCommand(pedestalStorage, ownerStorage));
 
         getLogger().info("Commands registered successfully");
     }
 
-
-    /**
-     * Register all listeners
-     */
     private void registerListeners() {
-        // ========== Register Core Listeners ==========
-        Bukkit.getPluginManager().registerEvents(new JoinListener(this, elementManager, manaManager), this);
-        Bukkit.getPluginManager().registerEvents(new CombatListener(trustManager, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.ElementItemDeathListener(this, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.AbilityListener(this, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.ElementItemCraftListener(this, elementManager), this);
+        var pm = Bukkit.getPluginManager();
 
-        // Item listeners
-        Bukkit.getPluginManager().registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);
-        Bukkit.getPluginManager().registerEvents(new ElementInventoryProtectionListener(this, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new ElementItemDropListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new ElementItemPickupListener(this, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new ElementCombatProjectileListener(itemManager), this);
+        pm.registerEvents(new JoinListener(this, elementManager, manaManager), this);
+        pm.registerEvents(new CombatListener(trustManager, elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.listeners.items.ElementItemDeathListener(this, elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.listeners.AbilityListener(this, elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.listeners.items.ElementItemCraftListener(this, elementManager), this);
 
-        // ========== Air Element ==========
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.air.listeners.FallDamageListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.air.listeners.AirJoinListener(elementManager), this);
-        // REMOVE THIS LINE - it's causing double activation:
-        // Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.air.listeners.AirAbilityListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.air.listeners.AirCombatListener(elementManager), this);
+        pm.registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);
+        pm.registerEvents(new ElementInventoryProtectionListener(this, elementManager), this);
+        pm.registerEvents(new ElementItemDropListener(this), this);
+        pm.registerEvents(new ElementItemPickupListener(this, elementManager), this);
+        pm.registerEvents(new ElementCombatProjectileListener(itemManager), this);
 
-        // ========== Water Element ==========
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterDrowningImmunityListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterJoinListener(elementManager), this);
-        // REMOVE THIS LINE:
-        // Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterAbilityListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.air.listeners.FallDamageListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.air.listeners.AirJoinListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.air.listeners.AirCombatListener(elementManager), this);
 
-        // ========== Fire Element ==========
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireImmunityListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireJoinListener(elementManager), this);
-        // REMOVE THIS LINE:
-        // Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireAbilityListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireCombatListener(elementManager, trustManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireballProtectionListener(), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterDrowningImmunityListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterJoinListener(elementManager), this);
 
-        // ========== Earth Element ==========
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthCharmListener(elementManager, this), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthFriendlyMobListener(this, trustManager), this);
-        Bukkit.getPluginManager().registerEvents(new EarthOreDropListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireImmunityListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireJoinListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireCombatListener(elementManager, trustManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireballProtectionListener(), this);
 
-        // ========== Life Element ==========
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeRegenListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthCharmListener(elementManager, this), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthFriendlyMobListener(this, trustManager), this);
+        pm.registerEvents(new EarthOreDropListener(elementManager), this);
 
-        // ========== Death Element ==========
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathRawFoodListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathFriendlyMobListener(this, trustManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeRegenListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
 
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.death.DeathElementCraftListener(this, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.life.LifeElementCraftListener(this, elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathRawFoodListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathFriendlyMobListener(this, trustManager), this);
 
-        // Misc listeners
-        Bukkit.getPluginManager().registerEvents(new QuitListener(this, manaManager), this);
-        Bukkit.getPluginManager().registerEvents(new GameModeListener(manaManager, configManager), this);
-        Bukkit.getPluginManager().registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.GUIListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.AdvancedRerollerListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.death.DeathElementCraftListener(this, elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.life.LifeElementCraftListener(this, elementManager), this);
 
-        Bukkit.getPluginManager().registerEvents(new BlockPlacementListener(blockManager, blockStorage, ownerStorage), this);
-        Bukkit.getPluginManager().registerEvents(new BlockBreakListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
-        Bukkit.getPluginManager().registerEvents(new PedestalInteractionListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
-        Bukkit.getPluginManager().registerEvents(new ChunkListener(blockStorage, pedestalStorage, ownerStorage), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementSmpUtility.listeners.PedestalProtectionListener(blockStorage), this);
+        pm.registerEvents(new QuitListener(this, manaManager), this);
+        pm.registerEvents(new GameModeListener(manaManager, configManager), this);
+        pm.registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);
+        pm.registerEvents(new PassiveEffectMonitor(this, elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.listeners.GUIListener(this), this);
+        pm.registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
+        pm.registerEvents(new hs.elementPlugin.listeners.items.AdvancedRerollerListener(this), this);
+        pm.registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
 
-        // ========== Metal Element ==========
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalJoinListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalArrowImmunityListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalChainStunListener(), this);
-        getServer().getPluginManager().registerEvents(new MetalChainStunListener(), this);
+        pm.registerEvents(new BlockPlacementListener(blockManager, blockStorage, ownerStorage), this);
+        pm.registerEvents(new BlockBreakListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
+        pm.registerEvents(new PedestalInteractionListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
+        pm.registerEvents(new ChunkListener(blockStorage, pedestalStorage, ownerStorage), this);
+        pm.registerEvents(new hs.elementSmpUtility.listeners.PedestalProtectionListener(blockStorage), this);
 
-        // ========== Frost Element ==========
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostFrozenPunchListener(this, elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalJoinListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalArrowImmunityListener(elementManager), this);
+        pm.registerEvents(new MetalChainStunListener(), this);
+
+        pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostFrozenPunchListener(this, elementManager), this);
 
         getLogger().info("Listeners registered successfully");
     }
 
-    /**
-     * Register all recipes
-     */
     private void registerRecipes() {
         Bukkit.getScheduler().runTaskLater(this, () -> {
             getLogger().info("Registering recipes...");
-
-            // Utility recipes
             hs.elementPlugin.recipes.util.UtilRecipes.registerRecipes(this);
-
-            // Pedestal recipe
-            PedestalRecipe pedestalRecipe = new PedestalRecipe(this, blockManager);
-            pedestalRecipe.register();
-
+            new PedestalRecipe(this, blockManager).register();
             hs.elementSmpUtility.recipes.ShulkerBoxRecipe.register(this);
             hs.elementSmpUtility.recipes.ElytraRecipe.register(this);
-
             getLogger().info("Recipes registered successfully");
-        }, 20L); // 1-second delay
+        }, 20L);
     }
 
-    // ====== Getters ======
     public DataStore getDataStore() { return dataStore; }
     public ConfigManager getConfigManager() { return configManager; }
     public ElementManager getElementManager() { return elementManager; }
     public ManaManager getManaManager() { return manaManager; }
     public TrustManager getTrustManager() { return trustManager; }
     public ItemManager getItemManager() { return itemManager; }
-
-    // Pedestal/Custom Block System Getters
     public CustomBlockManager getBlockManager() { return blockManager; }
     public BlockDataStorage getBlockStorage() { return blockStorage; }
     public PedestalDataStorage getPedestalStorage() { return pedestalStorage; }

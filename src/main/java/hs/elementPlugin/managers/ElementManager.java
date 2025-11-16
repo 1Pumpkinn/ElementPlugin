@@ -10,7 +10,6 @@ import hs.elementPlugin.elements.impl.fire.FireElement;
 import hs.elementPlugin.elements.impl.earth.EarthElement;
 import hs.elementPlugin.elements.impl.life.LifeElement;
 import hs.elementPlugin.elements.impl.death.DeathElement;
-
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
@@ -34,26 +33,21 @@ public class ElementManager {
     private final ManaManager manaManager;
     private final TrustManager trustManager;
     private final ConfigManager configManager;
-
     private final Map<ElementType, Element> registry = new EnumMap<>(ElementType.class);
     private final Set<UUID> currentlyRolling = new HashSet<>();
     private final Random random = new Random();
 
     public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager,
                           TrustManager trustManager, ConfigManager configManager) {
-
         this.plugin = plugin;
         this.store = store;
         this.manaManager = manaManager;
         this.trustManager = trustManager;
         this.configManager = configManager;
-
         registerAllElements();
     }
 
-    public ElementPlugin getPlugin() {
-        return plugin;
-    }
+    public ElementPlugin getPlugin() { return plugin; }
 
     private void registerAllElements() {
         registerElement(ElementType.AIR, () -> new AirElement(plugin));
@@ -94,18 +88,10 @@ public class ElementManager {
         return currentlyRolling.contains(player.getUniqueId());
     }
 
-    /**
-     * CRITICAL: Cancel any ongoing rolling animation for a player
-     * This is called when a player quits to prevent stacked effects
-     */
     public void cancelRolling(Player player) {
         currentlyRolling.remove(player.getUniqueId());
-        plugin.getLogger().info("Cancelled rolling for " + player.getName());
     }
 
-    // --------------------------------------------------------------------
-    // ELEMENT ASSIGNMENT
-    // --------------------------------------------------------------------
     public void rollAndAssign(Player player) {
         if (!beginRoll(player)) return;
 
@@ -115,23 +101,17 @@ public class ElementManager {
                 .withSteps(ROLL_STEPS)
                 .withDelay(ROLL_DELAY_TICKS)
                 .onComplete(() -> {
-                    assignRandomWithTitle(player); // <-- calls wrapper
+                    assignRandomWithTitle(player);
                     endRoll(player);
                 })
                 .start();
     }
 
-    /**
-     * NEW WRAPPER — restores missing method
-     */
     private void assignRandomWithTitle(Player player) {
         ElementType randomType = BASIC_ELEMENTS[random.nextInt(BASIC_ELEMENTS.length)];
         assignRandomWithTitle(player, randomType);
     }
 
-    /**
-     * NEW INTERNAL METHOD (your code)
-     */
     private void assignRandomWithTitle(Player player, ElementType targetElement) {
         PlayerData pd = data(player.getUniqueId());
         ElementType oldElement = pd.getCurrentElement();
@@ -142,15 +122,13 @@ public class ElementManager {
         }
 
         int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
-
         pd.setCurrentElementWithoutReset(targetElement);
         pd.setCurrentElementUpgradeLevel(currentUpgradeLevel);
         store.save(pd);
 
         showElementTitle(player, targetElement, "Element Assigned!");
         applyUpsides(player);
-        player.getWorld().playSound(player.getLocation(),
-                Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+        player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
 
     public void assignRandomDifferentElement(Player player) {
@@ -183,10 +161,7 @@ public class ElementManager {
         pd.setCurrentElement(type);
         store.save(pd);
 
-        plugin.getLogger().info(String.format("[ElementManager] Set element for %s to %s",
-                player.getName(), type));
         player.sendMessage(ChatColor.GOLD + "Your element is now " + ChatColor.AQUA + type.name());
-
         applyUpsides(player);
     }
 
@@ -195,7 +170,6 @@ public class ElementManager {
     }
 
     private void assignElementInternal(Player player, ElementType type, String titleText, boolean resetLevel) {
-
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
@@ -216,16 +190,11 @@ public class ElementManager {
         }
 
         store.save(pd);
-
         showElementTitle(player, type, titleText);
         applyUpsides(player);
-
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
 
-    // --------------------------------------------------------------------
-    // EFFECT MANAGEMENT
-    // --------------------------------------------------------------------
     private void clearOldElementEffects(Player player, ElementType oldElement) {
         if (oldElement == null) return;
 
@@ -257,9 +226,6 @@ public class ElementManager {
         }
     }
 
-    // --------------------------------------------------------------------
-    // ABILITY EXECUTION
-    // --------------------------------------------------------------------
     public boolean useAbility1(Player player) {
         return useAbility(player, 1);
     }
@@ -288,9 +254,6 @@ public class ElementManager {
         return number == 1 ? element.ability1(ctx) : element.ability2(ctx);
     }
 
-    // --------------------------------------------------------------------
-    // ITEM MANAGEMENT
-    // --------------------------------------------------------------------
     public void giveElementItem(Player player, ElementType type) {
         Optional.ofNullable(hs.elementPlugin.items.ElementCoreItem.createCore(plugin, type))
                 .ifPresent(item -> {
@@ -327,9 +290,6 @@ public class ElementManager {
                 });
     }
 
-    // --------------------------------------------------------------------
-    // ROLLING SYSTEM
-    // --------------------------------------------------------------------
     private boolean beginRoll(Player player) {
         if (isCurrentlyRolling(player)) {
             player.sendMessage(ChatColor.RED + "You are already rerolling your element!");
@@ -344,10 +304,8 @@ public class ElementManager {
     }
 
     private class RollingAnimation {
-
         private final Player player;
         private final ElementType[] elements;
-
         private int steps = 16;
         private long delayTicks = 3L;
         private Runnable onComplete;
@@ -378,12 +336,9 @@ public class ElementManager {
 
                 @Override
                 public void run() {
-                    // CRITICAL FIX: Check if player is still online and rolling
                     if (!player.isOnline() || !isCurrentlyRolling(player)) {
-                        // Player disconnected or rolling was cancelled
                         endRoll(player);
                         cancel();
-                        plugin.getLogger().info("Rolling cancelled for " + player.getName() + " (disconnected or cancelled)");
                         return;
                     }
 
@@ -393,14 +348,8 @@ public class ElementManager {
                         return;
                     }
 
-                    String randomName =
-                            elements[random.nextInt(elements.length)].name();
-
-                    player.sendTitle(
-                            ChatColor.GOLD + "Rolling...",
-                            ChatColor.AQUA + randomName,
-                            0, 10, 0
-                    );
+                    String randomName = elements[random.nextInt(elements.length)].name();
+                    player.sendTitle(ChatColor.GOLD + "Rolling...", ChatColor.AQUA + randomName, 0, 10, 0);
                     tick++;
                 }
             }.runTaskTimer(plugin, 0L, delayTicks);
