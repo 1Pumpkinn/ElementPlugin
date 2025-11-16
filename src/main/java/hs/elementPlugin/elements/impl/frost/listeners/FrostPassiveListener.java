@@ -13,15 +13,18 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 /**
- * Handles Frost element passive effects that need continuous checking:
- *  - Speed 1 with leather boots (Upside 1)
- *  - Speed 2 on ice (Upside 2, requires upgrade level 2)
+ * Handles Frost element passive speed effects
  */
 public class FrostPassiveListener implements Listener {
 
     private final ElementPlugin plugin;
     private final ElementManager elementManager;
+    private final Set<UUID> frostSpeedPlayers = new HashSet<>();
 
     public FrostPassiveListener(ElementPlugin plugin, ElementManager elementManager) {
         this.plugin = plugin;
@@ -29,18 +32,13 @@ public class FrostPassiveListener implements Listener {
         startPassiveEffectTask();
     }
 
-    /**
-     * Passive effect task — runs once per second
-     */
     private void startPassiveEffectTask() {
         new BukkitRunnable() {
             @Override
             public void run() {
-
                 for (Player player : Bukkit.getOnlinePlayers()) {
-
-                    // Only apply to Frost players
                     if (elementManager.getPlayerElement(player) != ElementType.FROST) {
+                        frostSpeedPlayers.remove(player.getUniqueId());
                         continue;
                     }
 
@@ -50,39 +48,50 @@ public class FrostPassiveListener implements Listener {
                     boolean hasLeatherBoots = isWearingLeatherBoots(player);
                     boolean onIce = upgradeLevel >= 2 && isOnIce(player);
 
-                    // Determine the CORRECT effect level (-1 = none)
                     int desiredLevel = onIce ? 2 : (hasLeatherBoots ? 1 : -1);
-
                     PotionEffect current = player.getPotionEffect(PotionEffectType.SPEED);
 
                     if (desiredLevel == -1) {
-                        // Should have NO speed
-                        // Only remove if the effect was applied by THIS system
-                        if (current != null && current.getDuration() > 1000) {
+                        if (frostSpeedPlayers.contains(player.getUniqueId())) {
                             player.removePotionEffect(PotionEffectType.SPEED);
+                            frostSpeedPlayers.remove(player.getUniqueId());
                         }
                         continue;
                     }
 
-                    // Should have speed of specific level
-                    boolean needsRefresh = (current == null) ||
-                            (current.getAmplifier() != desiredLevel) ||
-                            (current.getDuration() < 40);
+                    boolean hasFrostSpeed = frostSpeedPlayers.contains(player.getUniqueId());
+                    boolean needsRefresh = false;
+
+                    if (!hasFrostSpeed) {
+                        if (current == null) {
+                            needsRefresh = true;
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        if (current == null) {
+                            needsRefresh = true;
+                        } else if (current.getAmplifier() != desiredLevel) {
+                            needsRefresh = true;
+                        } else if (current.getDuration() < 30) {
+                            needsRefresh = true;
+                        }
+                    }
 
                     if (needsRefresh) {
-                        // Remove any conflicting speed effect first
                         if (current != null) {
                             player.removePotionEffect(PotionEffectType.SPEED);
                         }
 
-                        // Reapply with long duration so we can detect our own effect later
                         player.addPotionEffect(
-                                new PotionEffect(PotionEffectType.SPEED, 2000, desiredLevel, true, false, false)
+                                new PotionEffect(PotionEffectType.SPEED, 40, desiredLevel, true, false, false)
                         );
+
+                        frostSpeedPlayers.add(player.getUniqueId());
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0L, 20L); // Runs every second
+        }.runTaskTimer(plugin, 0L, 20L);
     }
 
     private boolean isWearingLeatherBoots(Player player) {
