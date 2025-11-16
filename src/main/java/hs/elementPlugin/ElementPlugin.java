@@ -195,7 +195,6 @@ public final class ElementPlugin extends JavaPlugin {
 
         // ========== Earth Element ==========
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthCharmListener(elementManager, this), this);
-        Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthJoinListener(elementManager), this);
         Bukkit.getPluginManager().registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthFriendlyMobListener(this, trustManager), this);
         Bukkit.getPluginManager().registerEvents(new EarthOreDropListener(elementManager), this);
 
