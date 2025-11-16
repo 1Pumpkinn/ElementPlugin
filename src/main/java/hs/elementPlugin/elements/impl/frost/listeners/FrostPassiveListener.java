@@ -99,11 +99,13 @@ public class FrostPassiveListener implements Listener {
         return boots != null && boots.getType() == Material.LEATHER_BOOTS;
     }
 
+    //Checks if Frost User is on Ice
     private boolean isOnIce(Player player) {
         Material blockBelow = player.getLocation().add(0, -1, 0).getBlock().getType();
         return switch (blockBelow) {
             case ICE, PACKED_ICE, BLUE_ICE, FROSTED_ICE -> true;
             default -> false;
+
         };
     }
 }
