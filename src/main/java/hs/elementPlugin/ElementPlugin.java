@@ -188,7 +188,7 @@ public final class ElementPlugin extends JavaPlugin {
 
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
-
+        pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostNovaMovementListener(this), this);
         getLogger().info("Listeners registered successfully");
     }
 
