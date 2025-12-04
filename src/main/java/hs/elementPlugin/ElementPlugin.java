@@ -84,8 +84,8 @@ public final class ElementPlugin extends JavaPlugin {
         abilityManager.registerAbility(ElementType.AIR, 1, new AirBlastAbility(this));
         abilityManager.registerAbility(ElementType.AIR, 2, new AirDashAbility(this));
 
-        abilityManager.registerAbility(ElementType.WATER, 1, new WaterGeyserAbility(this));
-        abilityManager.registerAbility(ElementType.WATER, 2, new WaterBeamAbility(this));
+        abilityManager.registerAbility(ElementType.WATER, 1, new WaterPrisonAbility(this));
+        abilityManager.registerAbility(ElementType.WATER, 2, new WaterWhirlpoolAbility(this));
 
         abilityManager.registerAbility(ElementType.FIRE, 1, new FireballAbility(this));
         abilityManager.registerAbility(ElementType.FIRE, 2, new MeteorShowerAbility(this));

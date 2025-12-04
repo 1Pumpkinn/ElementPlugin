@@ -2,11 +2,11 @@ package hs.elementPlugin.elements.impl.water;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.water.WaterBeamAbility;
-import hs.elementPlugin.elements.abilities.impl.water.WaterGeyserAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.elements.abilities.impl.water.WaterPrisonAbility;
+import hs.elementPlugin.elements.abilities.impl.water.WaterWhirlpoolAbility;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -20,8 +20,8 @@ public class WaterElement extends BaseElement {
     public WaterElement(ElementPlugin plugin) {
         super(plugin);
         this.plugin = plugin;
-        this.ability1 = new WaterGeyserAbility(plugin);
-        this.ability2 = new WaterBeamAbility(plugin);
+        this.ability1 = new WaterPrisonAbility(plugin);
+        this.ability2 = new WaterWhirlpoolAbility(plugin);
     }
 
     @Override
