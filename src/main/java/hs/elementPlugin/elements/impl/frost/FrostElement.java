@@ -2,11 +2,11 @@ package hs.elementPlugin.elements.impl.frost;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.frost.FrostCircleAbility;
-import hs.elementPlugin.elements.abilities.impl.frost.FrostPunchAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.elements.abilities.impl.frost.FrostNovaAbility;
+import hs.elementPlugin.elements.abilities.impl.frost.IceShardVolleyAbility;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
@@ -20,8 +20,8 @@ public class FrostElement extends BaseElement {
     public FrostElement(ElementPlugin plugin) {
         super(plugin);
         this.plugin = plugin;
-        this.ability1 = new FrostCircleAbility(plugin);
-        this.ability2 = new FrostPunchAbility(plugin);
+        this.ability1 = new IceShardVolleyAbility(plugin);
+        this.ability2 = new FrostNovaAbility(plugin);
     }
 
     @Override

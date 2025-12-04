@@ -102,8 +102,8 @@ public final class ElementPlugin extends JavaPlugin {
         abilityManager.registerAbility(ElementType.METAL, 1, new hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility(this));
         abilityManager.registerAbility(ElementType.METAL, 2, new hs.elementPlugin.elements.abilities.impl.metal.MetalDashAbility(this));
 
-        abilityManager.registerAbility(ElementType.FROST, 1, new FrostCircleAbility(this));
-        abilityManager.registerAbility(ElementType.FROST, 2, new FrostPunchAbility(this));
+        abilityManager.registerAbility(ElementType.FROST, 1, new IceShardVolleyAbility(this));
+        abilityManager.registerAbility(ElementType.FROST, 2, new FrostNovaAbility(this));
 
         getLogger().info("Registered all element abilities");
     }
@@ -188,7 +188,6 @@ public final class ElementPlugin extends JavaPlugin {
 
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostFrozenPunchListener(this, elementManager), this);
 
         getLogger().info("Listeners registered successfully");
     }

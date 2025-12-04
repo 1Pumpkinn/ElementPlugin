@@ -181,8 +181,8 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         map.put(ElementType.FROST, new ElementInfo(
                 "Controllers of ice and cold",
                 Arrays.asList("Speed II on snow", "Speed III on ice (Upgrade II)"),
-                "Freezing Circle", "Slow enemies around you", 50,
-                "Frozen Punch", "Freeze an enemy for 5s", 75
+                "Frost Nova", "Create an explosion of ice around you, freezing ground and enemies", 50,
+                "Ice Shard Volley", "Fire 5 ice shards in a cone that pierce and slow", 75
         ));
 
         return map;
