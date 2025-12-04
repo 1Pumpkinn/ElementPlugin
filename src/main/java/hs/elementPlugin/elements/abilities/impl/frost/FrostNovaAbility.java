@@ -34,14 +34,15 @@ public class FrostNovaAbility extends BaseAbility {
         player.getWorld().playSound(center, Sound.BLOCK_GLASS_BREAK, 2f, 0.5f);
         player.getWorld().playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1f, 1.5f);
 
-        // --- EXPANDING RING EFFECT (lasts 5 seconds) ---
+        // --- EXPANDING RING EFFECT (lasts 1 second for visual effect) ---
         new BukkitRunnable() {
             double currentRadius = 0;
             int ticks = 0;
+            final int maxTicks = 20; // Only 1 second for the expanding ring animation
 
             @Override
             public void run() {
-                if (ticks >= durationSeconds * 20) {
+                if (ticks >= maxTicks || currentRadius > radius) {
                     cancel();
                     return;
                 }
@@ -54,9 +55,12 @@ public class FrostNovaAbility extends BaseAbility {
 
                     Location particleLoc = center.clone().add(x, 0.1, z);
 
-                    // More particles (as requested)
-                    player.getWorld().spawnParticle(Particle.SNOWFLAKE, particleLoc, 3, 0, 0, 0, 0);
-                    player.getWorld().spawnParticle(Particle.FIREWORK, particleLoc, 1, 0, 0, 0, 0);
+                    // Snowflake particles
+                    player.getWorld().spawnParticle(Particle.SNOWFLAKE, particleLoc, 2, 0.1, 0.1, 0.1, 0);
+                    // Add some sparkle with fireworks
+                    if (ticks % 2 == 0) {
+                        player.getWorld().spawnParticle(Particle.FIREWORK, particleLoc, 1, 0, 0, 0, 0);
+                    }
                 }
 
                 // Vertical ice spikes every few ticks
@@ -66,15 +70,15 @@ public class FrostNovaAbility extends BaseAbility {
                         double x = Math.cos(rad) * currentRadius;
                         double z = Math.sin(rad) * currentRadius;
 
-                        for (double height = 0; height <= 1.4; height += 0.35) {
+                        for (double height = 0; height <= 1.5; height += 0.3) {
                             Location spikeLoc = center.clone().add(x, height, z);
                             player.getWorld().spawnParticle(Particle.SNOWFLAKE, spikeLoc, 1, 0, 0, 0, 0);
                         }
                     }
                 }
 
-                // Expand outward
-                currentRadius += 0.25;
+                // Expand outward faster to reach full radius in 1 second
+                currentRadius += radius / maxTicks;
                 ticks++;
             }
         }.runTaskTimer(plugin, 0L, 1L);
@@ -96,7 +100,14 @@ public class FrostNovaAbility extends BaseAbility {
             entity.getWorld().spawnParticle(
                     Particle.SNOWFLAKE,
                     entity.getLocation().add(0, 1, 0),
-                    25, 0.3, 0.5, 0.3, 0.05
+                    30, 0.3, 0.5, 0.3, 0.05
+            );
+            // Add ice block particles
+            entity.getWorld().spawnParticle(
+                    Particle.BLOCK,
+                    entity.getLocation().add(0, 1, 0),
+                    15, 0.3, 0.5, 0.3, 0.05,
+                    org.bukkit.Material.ICE.createBlockData()
             );
         }
 
@@ -104,30 +115,41 @@ public class FrostNovaAbility extends BaseAbility {
     }
 
     /**
-     * Freezes a target for X seconds without affecting the player.
+     * Freezes a target for exactly X seconds.
      */
     private void freezeEntity(LivingEntity entity, int durationSeconds) {
         long freezeUntil = System.currentTimeMillis() + (durationSeconds * 1000L);
         entity.setMetadata(META_NOVA_FROZEN, new FixedMetadataValue(plugin, freezeUntil));
 
-        // Continuously refresh freeze ticks (visual freeze)
-        new BukkitRunnable() {
+        // Store the task ID so we can cancel it properly
+        final BukkitRunnable freezeTask = new BukkitRunnable() {
             @Override
             public void run() {
-                if (!entity.isValid() || !entity.hasMetadata(META_NOVA_FROZEN)) {
+                if (!entity.isValid()) {
+                    cancel();
+                    return;
+                }
+
+                if (!entity.hasMetadata(META_NOVA_FROZEN)) {
+                    entity.setFreezeTicks(0);
                     cancel();
                     return;
                 }
 
                 long end = entity.getMetadata(META_NOVA_FROZEN).get(0).asLong();
                 if (System.currentTimeMillis() >= end) {
+                    // Freeze expired - cleanup and allow movement
+                    entity.removeMetadata(META_NOVA_FROZEN, plugin);
+                    entity.setFreezeTicks(0);
                     cancel();
                     return;
                 }
 
-                entity.setFreezeTicks(durationSeconds * 20);
+                // Keep entity frozen visually
+                entity.setFreezeTicks(140);
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+        };
+        freezeTask.runTaskTimer(plugin, 0L, 1L);
 
         // Disable mob AI
         if (entity instanceof Mob mob) {
@@ -142,16 +164,6 @@ public class FrostNovaAbility extends BaseAbility {
                 }
             }.runTaskLater(plugin, durationSeconds * 20L);
         }
-
-        // Metadata cleanup
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (entity.isValid()) {
-                    entity.removeMetadata(META_NOVA_FROZEN, plugin);
-                }
-            }
-        }.runTaskLater(plugin, durationSeconds * 20L);
     }
 
     @Override
