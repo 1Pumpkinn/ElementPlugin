@@ -28,19 +28,20 @@ public class FrostNovaAbility extends BaseAbility {
         Player player = context.getPlayer();
         Location center = player.getLocation();
         double radius = 6.0;
+        int durationSeconds = 5;
 
-        // Sounds
-        player.getWorld().playSound(center, Sound.BLOCK_GLASS_BREAK, 2.0f, 0.5f);
-        player.getWorld().playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.5f);
+        // --- SOUND EFFECTS ---
+        player.getWorld().playSound(center, Sound.BLOCK_GLASS_BREAK, 2f, 0.5f);
+        player.getWorld().playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1f, 1.5f);
 
-        // Expanding frost ring animation
+        // --- EXPANDING RING EFFECT (lasts 5 seconds) ---
         new BukkitRunnable() {
             double currentRadius = 0;
             int ticks = 0;
 
             @Override
             public void run() {
-                if (currentRadius >= radius || ticks >= 20) {
+                if (ticks >= durationSeconds * 20) {
                     cancel();
                     return;
                 }
@@ -53,41 +54,32 @@ public class FrostNovaAbility extends BaseAbility {
 
                     Location particleLoc = center.clone().add(x, 0.1, z);
 
+                    // More particles (as requested)
+                    player.getWorld().spawnParticle(Particle.SNOWFLAKE, particleLoc, 3, 0, 0, 0, 0);
                     player.getWorld().spawnParticle(Particle.FIREWORK, particleLoc, 1, 0, 0, 0, 0);
-                    player.getWorld().spawnParticle(Particle.SNOWFLAKE, particleLoc, 2, 0.05, 0.05, 0.05, 0.01);
                 }
 
-                // Vertical ice spikes
+                // Vertical ice spikes every few ticks
                 if (ticks % 3 == 0) {
-                    for (int angle = 0; angle < 360; angle += 45) {
+                    for (int angle = 0; angle < 360; angle += 30) {
                         double rad = Math.toRadians(angle);
                         double x = Math.cos(rad) * currentRadius;
                         double z = Math.sin(rad) * currentRadius;
 
-                        for (double height = 0; height <= 1.2; height += 0.25) {
+                        for (double height = 0; height <= 1.4; height += 0.35) {
                             Location spikeLoc = center.clone().add(x, height, z);
-                            player.getWorld().spawnParticle(Particle.FIREWORK, spikeLoc, 1, 0, 0, 0, 0);
+                            player.getWorld().spawnParticle(Particle.SNOWFLAKE, spikeLoc, 1, 0, 0, 0, 0);
                         }
                     }
                 }
 
-                // Ambient frost mist
-                player.getWorld().spawnParticle(
-                        Particle.SNOWFLAKE,
-                        center.clone().add(0, 0.2 + (currentRadius / 12), 0),
-                        10,
-                        currentRadius / 7,
-                        0.25,
-                        currentRadius / 7,
-                        0.01
-                );
-
-                currentRadius += 0.4;
+                // Expand outward
+                currentRadius += 0.25;
                 ticks++;
             }
         }.runTaskTimer(plugin, 0L, 1L);
 
-        // Apply freeze
+        // --- FREEZE NEARBY ENTITIES ---
         for (LivingEntity entity : center.getNearbyLivingEntities(radius)) {
             if (entity.equals(player)) continue;
 
@@ -98,24 +90,27 @@ public class FrostNovaAbility extends BaseAbility {
                 }
             }
 
-            freezeEntity(entity, 5);
+            freezeEntity(entity, durationSeconds);
 
-            // Visual burst on hit
-            entity.getWorld().spawnParticle(Particle.FIREWORK, entity.getLocation().add(0, 1, 0),
-                    15, 0.3, 0.5, 0.3, 0.02);
+            // Burst effect on each frozen target
+            entity.getWorld().spawnParticle(
+                    Particle.SNOWFLAKE,
+                    entity.getLocation().add(0, 1, 0),
+                    25, 0.3, 0.5, 0.3, 0.05
+            );
         }
 
         return true;
     }
 
-    // =====================================================
-    // FREEZE FUNCTION (5 seconds guaranteed)
-    // =====================================================
+    /**
+     * Freezes a target for X seconds without affecting the player.
+     */
     private void freezeEntity(LivingEntity entity, int durationSeconds) {
         long freezeUntil = System.currentTimeMillis() + (durationSeconds * 1000L);
         entity.setMetadata(META_NOVA_FROZEN, new FixedMetadataValue(plugin, freezeUntil));
 
-        // Maintain freeze ticks visually for entire duration
+        // Continuously refresh freeze ticks (visual freeze)
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -130,13 +125,14 @@ public class FrostNovaAbility extends BaseAbility {
                     return;
                 }
 
-                entity.setFreezeTicks(20 * durationSeconds);
+                entity.setFreezeTicks(durationSeconds * 20);
             }
         }.runTaskTimer(plugin, 0L, 1L);
 
         // Disable mob AI
         if (entity instanceof Mob mob) {
             mob.setAware(false);
+
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -147,7 +143,7 @@ public class FrostNovaAbility extends BaseAbility {
             }.runTaskLater(plugin, durationSeconds * 20L);
         }
 
-        // Remove frozen metadata
+        // Metadata cleanup
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -165,6 +161,6 @@ public class FrostNovaAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return "Create an explosion of ice, freezing enemies for 5 seconds.";
+        return "Unleash a blast of freezing wind, stunning nearby enemies in ice for 5 seconds.";
     }
 }
