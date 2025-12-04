@@ -16,6 +16,7 @@ import org.bukkit.util.Vector;
 
 /**
  * Water Prison - Traps an enemy in a sphere of water, drowning them temporarily
+ * Extended duration: 10 seconds for full particle animation
  */
 public class WaterPrisonAbility extends BaseAbility {
     private final ElementPlugin plugin;
@@ -69,12 +70,12 @@ public class WaterPrisonAbility extends BaseAbility {
         target.getWorld().playSound(prisonCenter, Sound.BLOCK_WATER_AMBIENT, 2.0f, 0.5f);
         target.getWorld().playSound(prisonCenter, Sound.ENTITY_PLAYER_SPLASH, 1.5f, 1.0f);
 
-        // Duration: 6 seconds
-        final int durationTicks = 120;
+        // Duration: 10 seconds (extended for full particle animation)
+        final int durationTicks = 200;
         final double radius = 2.0;
 
         // Mark entity as trapped
-        long trapUntil = System.currentTimeMillis() + 6000L; // 6 seconds
+        long trapUntil = System.currentTimeMillis() + 10000L; // 10 seconds
         target.setMetadata(META_WATER_PRISON, new FixedMetadataValue(plugin, trapUntil));
 
         // Disable AI for mobs
@@ -85,6 +86,7 @@ public class WaterPrisonAbility extends BaseAbility {
         new BukkitRunnable() {
             int ticks = 0;
             final Location startLoc = target.getLocation().clone();
+            double particleY = radius; // Start particles at top of sphere
 
             @Override
             public void run() {
@@ -126,7 +128,7 @@ public class WaterPrisonAbility extends BaseAbility {
                     target.teleport(startLoc);
                 }
 
-                // Apply drowning effect
+                // Apply drowning effect every second
                 if (ticks % 20 == 0) {
                     // Deal drowning damage
                     target.damage(1.0, caster);
@@ -142,9 +144,14 @@ public class WaterPrisonAbility extends BaseAbility {
                     target.setRemainingAir(Math.max(0, target.getRemainingAir() - 10));
                 }
 
-                // Create water sphere particles
+                // Create water sphere particles (every 2 ticks for smooth animation)
                 if (ticks % 2 == 0) {
-                    createWaterSphere(startLoc.clone().add(0, 1, 0), radius);
+                    createWaterSphereWithFall(startLoc.clone().add(0, 1, 0), radius, particleY);
+
+                    // Slowly drop particles from top to bottom over the duration
+                    // particleY decreases from radius (top) to -radius (bottom)
+                    double fallSpeed = (2 * radius) / (durationTicks / 2.0); // Fall speed per tick
+                    particleY -= fallSpeed;
                 }
 
                 // Add bubble particles inside
@@ -161,7 +168,10 @@ public class WaterPrisonAbility extends BaseAbility {
         }.runTaskTimer(plugin, 0L, 1L);
     }
 
-    private void createWaterSphere(Location center, double radius) {
+    /**
+     * Create water sphere with particles falling from top to bottom
+     */
+    private void createWaterSphereWithFall(Location center, double radius, double currentY) {
         World world = center.getWorld();
 
         // Create sphere using spherical coordinates
@@ -175,22 +185,42 @@ public class WaterPrisonAbility extends BaseAbility {
                 double y = radius * Math.cos(theta);
                 double z = radius * Math.sin(theta) * Math.sin(phi);
 
-                Location particleLoc = center.clone().add(x, y, z);
+                // Only render particles above currentY (creates falling effect)
+                if (y >= currentY - radius) {
+                    Location particleLoc = center.clone().add(x, y, z);
 
-                world.spawnParticle(
-                        Particle.DRIPPING_WATER,
-                        particleLoc,
-                        1, 0.0, 0.0, 0.0, 0.0, null, true
-                );
-
-                // Add some falling water particles
-                if (Math.random() < 0.3) {
                     world.spawnParticle(
-                            Particle.FALLING_WATER,
+                            Particle.DRIPPING_WATER,
                             particleLoc,
                             1, 0.0, 0.0, 0.0, 0.0, null, true
                     );
+
+                    // Add some falling water particles
+                    if (Math.random() < 0.3) {
+                        world.spawnParticle(
+                                Particle.FALLING_WATER,
+                                particleLoc,
+                                1, 0.0, 0.0, 0.0, 0.0, null, true
+                        );
+                    }
                 }
+            }
+        }
+
+        // Add extra particles at the current fall line for visual emphasis
+        if (currentY > -radius) {
+            int ringPoints = 20;
+            for (int i = 0; i < ringPoints; i++) {
+                double angle = 2 * Math.PI * i / ringPoints;
+                double x = radius * Math.cos(angle);
+                double z = radius * Math.sin(angle);
+
+                Location ringLoc = center.clone().add(x, currentY, z);
+                world.spawnParticle(
+                        Particle.SPLASH,
+                        ringLoc,
+                        2, 0.1, 0.1, 0.1, 0.0, null, true
+                );
             }
         }
     }
@@ -202,6 +232,6 @@ public class WaterPrisonAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return "Trap an enemy in a sphere of water, drowning them for 6 seconds.";
+        return "Trap an enemy in a sphere of water, drowning them for 10 seconds with falling particles.";
     }
 }
