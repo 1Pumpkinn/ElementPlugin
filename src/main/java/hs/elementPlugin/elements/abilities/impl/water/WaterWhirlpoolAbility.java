@@ -88,10 +88,19 @@ public class WaterWhirlpoolAbility extends BaseAbility {
                     Vector pullIn = toEntity.normalize().multiply(-0.3);
                     Vector spin = tangent.multiply(spinSpeed * distance);
 
-                    // Upward component for visual effect
-                    Vector upward = new Vector(0, 0.1, 0);
+                    // FIXED: Keep entities grounded - no upward component
+                    // Check if entity is on ground, if so keep them on ground
+                    Vector finalVelocity;
+                    if (entity.isOnGround()) {
+                        // On ground - only horizontal movement
+                        finalVelocity = pullIn.add(spin);
+                        finalVelocity.setY(-0.1); // Slight downward force to keep grounded
+                    } else {
+                        // In air - allow slight upward movement but cap it
+                        finalVelocity = pullIn.add(spin);
+                        finalVelocity.setY(Math.min(finalVelocity.getY(), 0.1)); // Cap upward velocity
+                    }
 
-                    Vector finalVelocity = pullIn.add(spin).add(upward);
                     entity.setVelocity(finalVelocity);
 
                     // Deal damage every 10 ticks (0.5 seconds)
@@ -199,6 +208,6 @@ public class WaterWhirlpoolAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return "Create a spinning vortex that pulls enemies in circles, dealing damage over 8 seconds.";
+        return ChatColor.GRAY + "Create a spinning vortex that pulls enemies in circles, dealing damage over 8 seconds.";
     }
 }

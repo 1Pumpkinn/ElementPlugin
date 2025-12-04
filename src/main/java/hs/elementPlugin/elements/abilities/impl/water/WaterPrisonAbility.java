@@ -5,7 +5,9 @@ import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
 import org.bukkit.*;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -17,6 +19,9 @@ import org.bukkit.util.Vector;
  */
 public class WaterPrisonAbility extends BaseAbility {
     private final ElementPlugin plugin;
+
+    // Metadata key for tracking imprisoned entities
+    public static final String META_WATER_PRISON = "water_prison_trapped";
 
     public WaterPrisonAbility(ElementPlugin plugin) {
         super("water_prison", 75, 15, 1);
@@ -68,6 +73,15 @@ public class WaterPrisonAbility extends BaseAbility {
         final int durationTicks = 120;
         final double radius = 2.0;
 
+        // Mark entity as trapped
+        long trapUntil = System.currentTimeMillis() + 6000L; // 6 seconds
+        target.setMetadata(META_WATER_PRISON, new FixedMetadataValue(plugin, trapUntil));
+
+        // Disable AI for mobs
+        if (target instanceof Mob mob) {
+            mob.setAware(false);
+        }
+
         new BukkitRunnable() {
             int ticks = 0;
             final Location startLoc = target.getLocation().clone();
@@ -76,6 +90,12 @@ public class WaterPrisonAbility extends BaseAbility {
             public void run() {
                 if (!target.isValid() || target.isDead() || ticks >= durationTicks) {
                     setActive(caster, false);
+
+                    // Remove metadata and restore AI
+                    target.removeMetadata(META_WATER_PRISON, plugin);
+                    if (target instanceof Mob mob) {
+                        mob.setAware(true);
+                    }
 
                     // Final particle burst when prison breaks
                     if (target.isValid()) {
@@ -97,10 +117,13 @@ public class WaterPrisonAbility extends BaseAbility {
 
                 Location currentLoc = target.getLocation();
 
-                // Keep target near starting location (prevent escape)
-                if (currentLoc.distance(startLoc) > 1.5) {
-                    Vector pullBack = startLoc.toVector().subtract(currentLoc.toVector()).normalize().multiply(0.5);
-                    target.setVelocity(pullBack);
+                // FIXED: Completely freeze entity in place
+                // Cancel all velocity and teleport back to start if they moved
+                target.setVelocity(new Vector(0, 0, 0));
+
+                // If entity moved from starting position, teleport them back
+                if (currentLoc.distance(startLoc) > 0.5) {
+                    target.teleport(startLoc);
                 }
 
                 // Apply drowning effect
@@ -110,7 +133,7 @@ public class WaterPrisonAbility extends BaseAbility {
 
                     // Apply slowness
                     target.addPotionEffect(
-                            new PotionEffect(PotionEffectType.SLOWNESS, 25, 3, false, false, false)
+                            new PotionEffect(PotionEffectType.SLOWNESS, 25, 4, false, false, false)
                     );
                 }
 
@@ -121,14 +144,14 @@ public class WaterPrisonAbility extends BaseAbility {
 
                 // Create water sphere particles
                 if (ticks % 2 == 0) {
-                    createWaterSphere(currentLoc.clone().add(0, 1, 0), radius);
+                    createWaterSphere(startLoc.clone().add(0, 1, 0), radius);
                 }
 
                 // Add bubble particles inside
                 if (ticks % 3 == 0) {
                     target.getWorld().spawnParticle(
                             Particle.BUBBLE_POP,
-                            currentLoc.clone().add(0, 1, 0),
+                            startLoc.clone().add(0, 1, 0),
                             20, 0.5, 0.5, 0.5, 0.1, null, true
                     );
                 }

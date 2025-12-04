@@ -146,6 +146,7 @@ public final class ElementPlugin extends JavaPlugin {
 
         pm.registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterDrowningImmunityListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterJoinListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterPrisonMovementListener(), this);
 
         pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireImmunityListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireJoinListener(elementManager), this);
