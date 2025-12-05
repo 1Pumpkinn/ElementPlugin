@@ -27,22 +27,9 @@ commands:
     usage: /util
     permission: element.admin
 
-  customblock:
-    description: Manage custom blocks (pedestals, reinforced blocks, etc.)
-    usage: /customblock <give|list> [block_id] [amount]
-    permission: elementsmp.customblock
-    aliases: [ cb, cblock ]
-
-  pedestal:
-    description: Admin commands for managing pedestals
-    usage: /pedestal <info|reload|check|claim|transfer> [player|uuid]
-    permission: elementsmp.pedestal.admin
-    aliases: [ ped ]
-
   damagetest:
-    description: Spawn test dummies for damage testing
-    usage: /damagetest <spawn>
-    default: op
+    description: Damage testing command
+
 
   elements:
     description: View information about all elements
