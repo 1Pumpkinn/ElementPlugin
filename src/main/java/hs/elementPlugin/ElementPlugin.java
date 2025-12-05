@@ -76,8 +76,8 @@ public final class ElementPlugin extends JavaPlugin {
         abilityManager.registerAbility(ElementType.LIFE, 1, new LifeRegenAbility(this));
         abilityManager.registerAbility(ElementType.LIFE, 2, new LifeHealingBeamAbility(this));
 
-        abilityManager.registerAbility(ElementType.DEATH, 1, new DeathSummonUndeadAbility(this));
-        abilityManager.registerAbility(ElementType.DEATH, 2, new DeathWitherSkullAbility(this));
+        abilityManager.registerAbility(ElementType.DEATH, 1, new DeathClockAbility(this));
+        abilityManager.registerAbility(ElementType.DEATH, 2, new DeathSlashAbility(this));
 
         abilityManager.registerAbility(ElementType.METAL, 1, new hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility(this));
         abilityManager.registerAbility(ElementType.METAL, 2, new hs.elementPlugin.elements.abilities.impl.metal.MetalDashAbility(this));
@@ -111,6 +111,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new DeathListener(this, elementManager), this);
         pm.registerEvents(new hs.elementPlugin.listeners.AbilityListener(this, elementManager), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.ElementItemCraftListener(this, elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager), this);
 
         pm.registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);
         pm.registerEvents(new ElementItemDropListener(this), this);

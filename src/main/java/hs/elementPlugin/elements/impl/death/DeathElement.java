@@ -2,19 +2,16 @@ package hs.elementPlugin.elements.impl.death;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.death.DeathWitherSkullAbility;
-import hs.elementPlugin.elements.abilities.impl.death.DeathSummonUndeadAbility;
+import hs.elementPlugin.elements.abilities.impl.death.DeathClockAbility;
+import hs.elementPlugin.elements.abilities.impl.death.DeathSlashAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
 import org.bukkit.ChatColor;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import java.util.Collection;
 
 public class DeathElement extends BaseElement {
     private final ElementPlugin plugin;
@@ -25,8 +22,8 @@ public class DeathElement extends BaseElement {
     public DeathElement(ElementPlugin plugin) {
         super(plugin);
         this.plugin = plugin;
-        this.ability1 = new DeathWitherSkullAbility(plugin);
-        this.ability2 = new DeathSummonUndeadAbility(plugin);
+        this.ability1 = new DeathClockAbility(plugin);
+        this.ability2 = new DeathSlashAbility(plugin);
     }
 
     @Override
@@ -38,8 +35,17 @@ public class DeathElement extends BaseElement {
     public void applyUpsides(Player player, int upgradeLevel) {
         // Cancel any existing passive task for this player
         cancelPassiveTask(player);
-        
-        // Upside 1: Any raw or undead foods act as golden apples (handled in a listener)
+
+        // Upside 1: Permanent Night Vision
+        player.addPotionEffect(new PotionEffect(
+                PotionEffectType.NIGHT_VISION,
+                Integer.MAX_VALUE,
+                0,
+                true,
+                false,
+                false
+        ));
+
         // Upside 2: Nearby enemies get hunger 1 in a 5x5 radius (if upgradeLevel >= 2)
         if (upgradeLevel >= 2) {
             // Start a repeating task to continuously apply hunger to nearby enemies
@@ -51,7 +57,7 @@ public class DeathElement extends BaseElement {
                         passiveTasks.remove(player.getUniqueId());
                         return;
                     }
-                    
+
                     // Apply hunger to nearby players and mobs in 5x5 radius
                     int radius = 5;
                     for (Player other : player.getWorld().getNearbyPlayers(player.getLocation(), radius)) {
@@ -61,7 +67,7 @@ public class DeathElement extends BaseElement {
                     }
                 }
             }.runTaskTimer(plugin, 0L, 20L); // Every second
-            
+
             // Store the task reference
             passiveTasks.put(player.getUniqueId(), task);
         }
@@ -81,11 +87,19 @@ public class DeathElement extends BaseElement {
     public void clearEffects(Player player) {
         // Cancel passive task
         cancelPassiveTask(player);
-        
+
+        // Remove Night Vision
+        player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+
+        // Clear ability metadata
+        player.removeMetadata(DeathClockAbility.META_DEATH_CLOCK_ACTIVE, plugin);
+        player.removeMetadata(DeathSlashAbility.META_SLASH_ACTIVE, plugin);
+        player.removeMetadata(DeathSlashAbility.META_BLEEDING, plugin);
+
         ability1.setActive(player, false);
         ability2.setActive(player, false);
     }
-    
+
     /**
      * Cancel the passive task for a player
      * @param player The player to cancel the task for
@@ -104,7 +118,7 @@ public class DeathElement extends BaseElement {
 
     @Override
     public String getDescription() {
-        return ChatColor.GRAY + "Master of decay and the undead. Death users can corrupt food and summon wither powers.";
+        return ChatColor.GRAY + "Master of curses and afflictions. Death users can curse enemies and cause bleeding.";
     }
 
     @Override

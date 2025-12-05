@@ -5,7 +5,6 @@ import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.upsides.BaseUpsides;
 import hs.elementPlugin.managers.ElementManager;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -21,7 +20,7 @@ public class DeathUpsides extends BaseUpsides {
 
     public DeathUpsides(ElementManager elementManager) {
         super(elementManager);
-        this.plugin = elementManager.getPlugin();  // ✅ FIX: now plugin is available
+        this.plugin = elementManager.getPlugin();
     }
 
     @Override
@@ -33,6 +32,17 @@ public class DeathUpsides extends BaseUpsides {
     public void applyUpsides(Player player, int upgradeLevel) {
         cancelPassiveTask(player);
 
+        // Upside 1: Permanent Night Vision
+        player.addPotionEffect(new PotionEffect(
+                PotionEffectType.NIGHT_VISION,
+                Integer.MAX_VALUE,
+                0,
+                true,
+                false,
+                false
+        ));
+
+        // Upside 2: Hunger aura (requires upgrade level 2)
         if (upgradeLevel >= 2) {
             startHungerAura(player);
         }
@@ -56,7 +66,7 @@ public class DeathUpsides extends BaseUpsides {
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0L, 20L); // ✅ fixed — plugin now resolves properly
+        }.runTaskTimer(plugin, 0L, 20L);
 
         passiveTasks.put(player.getUniqueId(), task);
     }
@@ -68,20 +78,21 @@ public class DeathUpsides extends BaseUpsides {
         }
     }
 
-    public boolean shouldActAsGoldenApple(Player player, Material foodType) {
-        if (!hasElement(player)) return false;
-        return isRawOrUndeadFood(foodType);
+    /**
+     * Check if player should have Night Vision
+     * @param player The player to check
+     * @return true if player should have Night Vision
+     */
+    public boolean shouldHaveNightVision(Player player) {
+        return hasElement(player);
     }
 
-    public void applyGoldenAppleEffects(Player player) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 5 * 20, 1));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 120 * 20, 0));
-    }
-
-    private boolean isRawOrUndeadFood(Material food) {
-        return switch (food) {
-            case ROTTEN_FLESH, CHICKEN, BEEF, PORKCHOP, MUTTON, RABBIT, COD, SALMON -> true;
-            default -> false;
-        };
+    /**
+     * Check if player should apply hunger aura (Upside 2)
+     * @param player The player to check
+     * @return true if hunger aura should be active
+     */
+    public boolean shouldApplyHungerAura(Player player) {
+        return hasElement(player) && getUpgradeLevel(player) >= 2;
     }
 }
