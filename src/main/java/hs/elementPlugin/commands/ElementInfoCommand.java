@@ -139,8 +139,8 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         map.put(ElementType.FIRE, new ElementInfo(
                 "Wielders of flame and destruction",
                 Arrays.asList("Immune to fire/lava damage", "Apply Fire Aspect to all attacks (Upgrade II)"),
-                "Fireball", "Launch an explosive fireball", 50,
-                "Meteor Shower", "Rain down fireballs from the sky", 75
+                "Hellish Flames", "Set enemies ablaze with inextinguishable flames for 10s", 50,
+                "Phoenix Form", "Revive from death with 1 HP, explode and become invincible for 3s (5min cooldown)", 75
         ));
 
         map.put(ElementType.WATER, new ElementInfo(

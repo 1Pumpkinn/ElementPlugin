@@ -2,8 +2,8 @@ package hs.elementPlugin.elements.impl.fire;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.fire.FireballAbility;
-import hs.elementPlugin.elements.abilities.impl.fire.MeteorShowerAbility;
+import hs.elementPlugin.elements.abilities.impl.fire.HellishFlamesAbility;
+import hs.elementPlugin.elements.abilities.impl.fire.PhoenixFormAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
@@ -18,8 +18,8 @@ public class FireElement extends BaseElement {
 
     public FireElement(ElementPlugin plugin) {
         super(plugin);
-        this.ability1 = new FireballAbility(plugin);
-        this.ability2 = new MeteorShowerAbility(plugin);
+        this.ability1 = new HellishFlamesAbility(plugin);
+        this.ability2 = new PhoenixFormAbility(plugin);
     }
 
     @Override
@@ -49,6 +49,14 @@ public class FireElement extends BaseElement {
     @Override
     public void clearEffects(Player player) {
         player.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
+
+        // Clear Phoenix Form metadata
+        player.removeMetadata(PhoenixFormAbility.META_PHOENIX_ACTIVE, plugin);
+        player.removeMetadata(PhoenixFormAbility.META_PHOENIX_INVULNERABLE, plugin);
+
+        // Clear Hellish Flames metadata
+        player.removeMetadata(HellishFlamesAbility.META_HELLISH_FLAMES, plugin);
+
         ability1.setActive(player, false);
         ability2.setActive(player, false);
     }
