@@ -135,7 +135,6 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new hs.elementPlugin.listeners.items.ElementItemCraftListener(this, elementManager), this);
 
         pm.registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);
-        pm.registerEvents(new ElementInventoryProtectionListener(this, elementManager), this);
         pm.registerEvents(new ElementItemDropListener(this), this);
         pm.registerEvents(new ElementItemPickupListener(this, elementManager), this);
         pm.registerEvents(new ElementCombatProjectileListener(itemManager), this);
@@ -164,8 +163,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathFriendlyMobListener(this, trustManager), this);
 
-        pm.registerEvents(new hs.elementPlugin.elements.impl.death.DeathElementCraftListener(this, elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.elements.impl.life.LifeElementCraftListener(this, elementManager), this);
+        // REMOVED: Life and Death element craft listeners - no longer needed
 
         pm.registerEvents(new QuitListener(this, manaManager), this);
         pm.registerEvents(new GameModeListener(manaManager, configManager), this);

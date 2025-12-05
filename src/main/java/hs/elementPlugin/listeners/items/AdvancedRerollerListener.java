@@ -16,10 +16,20 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AdvancedRerollerListener implements Listener {
     private final ElementPlugin plugin;
     private final Random random = new Random();
+
+    // Advanced elements include METAL, FROST, LIFE, and DEATH
+    private static final ElementType[] ADVANCED_ELEMENTS = {
+            ElementType.METAL,
+            ElementType.FROST,
+            ElementType.LIFE,
+            ElementType.DEATH
+    };
 
     public AdvancedRerollerListener(ElementPlugin plugin) {
         this.plugin = plugin;
@@ -68,18 +78,29 @@ public class AdvancedRerollerListener implements Listener {
     }
 
     private ElementType determineNewElement(ElementType current) {
-        return switch (current) {
-            case METAL -> ElementType.FROST;
-            case FROST -> ElementType.METAL;
-            default -> random.nextBoolean() ? ElementType.METAL : ElementType.FROST;
-        };
+        // Filter out current element from choices
+        List<ElementType> availableElements = new ArrayList<>();
+
+        for (ElementType element : ADVANCED_ELEMENTS) {
+            if (element != current) {
+                availableElements.add(element);
+            }
+        }
+
+        // If no elements available (shouldn't happen), return random
+        if (availableElements.isEmpty()) {
+            return ADVANCED_ELEMENTS[random.nextInt(ADVANCED_ELEMENTS.length)];
+        }
+
+        // Pick from available elements (excluding current)
+        return availableElements.get(random.nextInt(availableElements.size()));
     }
 
     private void performAdvancedRoll(Player player, ElementType targetElement) {
         plugin.getElementManager().data(player.getUniqueId());
         player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
 
-        String[] names = {"METAL", "FROST"};
+        String[] names = {"METAL", "FROST", "LIFE", "DEATH"};
         int steps = 20;
         long interval = 3L;
 
@@ -94,7 +115,7 @@ public class AdvancedRerollerListener implements Listener {
                     return;
                 }
 
-                String name = names[tick % 2];
+                String name = names[tick % 4];
                 player.sendTitle(
                         ChatColor.GOLD + "Rolling...",
                         ChatColor.AQUA + name,
@@ -108,7 +129,7 @@ public class AdvancedRerollerListener implements Listener {
     private void assignAdvancedElement(Player player, ElementType element) {
         PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
 
-        // FIXED: Only clear the old element's specific effects
+        // Clear old element effects
         clearOldElementEffects(player, pd);
 
         int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
@@ -132,18 +153,16 @@ public class AdvancedRerollerListener implements Listener {
         plugin.getElementManager().applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
 
-        player.sendMessage(ChatColor.GREEN + "Your element has been rerolled");
+        player.sendMessage(ChatColor.GREEN + "Your element has been rerolled to " +
+                ChatColor.AQUA + element.name() + ChatColor.GREEN + "!");
     }
 
-    /**
-     * FIXED: Only clear element-specific passive effects, not ALL effects
-     */
     private void clearOldElementEffects(Player player, PlayerData pd) {
         ElementType oldElement = pd.getCurrentElement();
 
         if (oldElement == null) return;
 
-        // Use the Element's clearEffects method which only removes element-specific effects
+        // Use the Element's clearEffects method
         var element = plugin.getElementManager().get(oldElement);
         if (element != null) {
             element.clearEffects(player);

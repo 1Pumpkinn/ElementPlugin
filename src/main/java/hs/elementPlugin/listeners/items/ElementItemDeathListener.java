@@ -9,7 +9,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public record ElementItemDeathListener(ElementPlugin plugin, ElementManager elements) implements Listener {
@@ -51,41 +50,29 @@ public record ElementItemDeathListener(ElementPlugin plugin, ElementManager elem
             }
         }
 
-        // For life/death elements: reroll player to new element and drop the core
-        if (shouldDropCore(currentElement)) {
-            plugin.getLogger().info("Player " + e.getEntity().getName() + " died with " + currentElement + " element - dropping core");
+        // For advanced elements (Life/Death/Metal/Frost): reroll to basic element
+        if (shouldRerollOnDeath(currentElement)) {
+            plugin.getLogger().info("Player " + e.getEntity().getName() +
+                    " died with advanced element " + currentElement + " - rerolling to basic element");
 
-            // Create and drop the core item
-            ItemStack coreItem = hs.elementPlugin.items.ElementCoreItem.createCore(plugin, currentElement);
-            if (coreItem != null) {
-                e.getDrops().add(coreItem);
-                plugin.getLogger().info("Added " + currentElement + " core to death drops");
-            } else {
-                plugin.getLogger().warning("Failed to create " + currentElement + " core item");
-            }
-
-            // Remove the element item flag so they don't have it anymore
-            pd.removeElementItem(currentElement);
-            plugin.getDataStore().save(pd);
-
-            // CRITICAL FIX: Schedule element reroll for after respawn to avoid death loop
+            // Schedule element reroll for after respawn to avoid death loop
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     if (e.getEntity().isOnline()) {
-                        // Use the public method that assigns a different element
+                        // Reroll to a basic element (AIR, WATER, FIRE, EARTH)
                         elements.assignRandomDifferentElement(e.getEntity());
-                        e.getEntity().sendMessage(ChatColor.YELLOW + "Your core dropped and you rolled a new element!");
+                        e.getEntity().sendMessage(ChatColor.YELLOW +
+                                "You lost your advanced element and rolled a new basic element!");
                     }
                 }
             }.runTaskLater(plugin, 40L); // Wait 2 seconds after death (respawn time)
-        } else {
-            plugin.getLogger().info("Player " + e.getEntity().getName() + " died with " + currentElement + " element - no core drop");
         }
     }
 
-    // Utility: easily add more elements that drop cores in the future
-    private boolean shouldDropCore(ElementType t) {
-        return t == ElementType.LIFE || t == ElementType.DEATH;
+    // Advanced elements (Life, Death, Metal, Frost) cause reroll on death
+    private boolean shouldRerollOnDeath(ElementType t) {
+        return t == ElementType.LIFE || t == ElementType.DEATH ||
+                t == ElementType.METAL || t == ElementType.FROST;
     }
 }

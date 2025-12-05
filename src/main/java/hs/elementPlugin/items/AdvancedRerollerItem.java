@@ -22,7 +22,8 @@ public final class AdvancedRerollerItem {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(ChatColor.DARK_PURPLE + "Advanced Reroller");
         meta.setLore(List.of(
-                ChatColor.GRAY + "Unlocks advanced elements",
+                ChatColor.GRAY + "Rerolls to advanced elements:",
+                ChatColor.AQUA + "Metal, Frost, Life, Death",
                 ChatColor.YELLOW + "Right-click to reroll"
         ));
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
@@ -54,4 +55,3 @@ public final class AdvancedRerollerItem {
         }
     }
 }
-

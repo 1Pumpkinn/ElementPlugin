@@ -146,8 +146,8 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         map.put(ElementType.WATER, new ElementInfo(
                 "Controllers of water and ocean currents",
                 Arrays.asList("Infinite Water Breathing", "Conduit Power permanently"),
-                "Water Geyser", "Launch enemies upward with water pressure", 75,
-                "Water Beam", "Fire a damaging water beam", 50
+                "Water Prison", "Trap an enemy in a sphere of water", 75,
+                "Water Whirlpool", "Create a spinning vortex", 50
         ));
 
         map.put(ElementType.EARTH, new ElementInfo(
@@ -158,31 +158,31 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         ));
 
         map.put(ElementType.LIFE, new ElementInfo(
-                "Healers with power over vitality",
+                "Healers with power over vitality (Advanced Reroller)",
                 Arrays.asList("15 hearts total", "Regeneration I", "Crops grow faster (Upgrade II)"),
                 "Regeneration Aura", "Heals you and allies around you", 50,
                 "Healing Beam", "Heal an ally directly", 75
         ));
 
         map.put(ElementType.DEATH, new ElementInfo(
-                "Masters of decay and darkness",
+                "Masters of decay and darkness (Advanced Reroller)",
                 Arrays.asList("Permanent Night Vision", "Raw/undead foods heal you"),
-                "Summon Undead", "Summon undead ally for 30s", 50,
-                "Wither Skull", "Fire an explosive wither skull", 75
+                "Wither Skull", "Fire an explosive wither skull", 75,
+                "Summon Undead", "Summon undead ally for 30s", 50
         ));
 
         map.put(ElementType.METAL, new ElementInfo(
-                "Warriors of steel and chains",
+                "Warriors of steel and chains (Advanced Reroller)",
                 Arrays.asList("Haste I", "Arrow immunity (Upgrade II)"),
                 "Chain Reel", "Pull an enemy toward you", 50,
                 "Metal Dash", "Dash forward, damaging enemies", 75
         ));
 
         map.put(ElementType.FROST, new ElementInfo(
-                "Controllers of ice and cold",
+                "Controllers of ice and cold (Advanced Reroller)",
                 Arrays.asList("Speed II on snow", "Speed III on ice (Upgrade II)"),
-                "Frost Nova", "Create an explosion of ice around you, freezing ground and enemies", 50,
-                "Ice Shard Volley", "Fire 5 ice shards in a cone that pierce and slow", 75
+                "Frost Nova", "Create an explosion of ice around you", 50,
+                "Ice Shard Volley", "Fire 5 ice shards in a cone", 75
         ));
 
         return map;

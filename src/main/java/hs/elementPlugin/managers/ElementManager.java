@@ -118,7 +118,6 @@ public class ElementManager {
 
         if (oldElement != null && oldElement != targetElement) {
             clearOldElementEffects(player, oldElement);
-            returnLifeOrDeathCore(player, oldElement);
         }
 
         int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
@@ -153,11 +152,6 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
-        if (old != null && old != type) {
-            returnLifeOrDeathCore(player, old);
-            clearOldElementEffects(player, old);
-        }
-
         pd.setCurrentElement(type);
         store.save(pd);
 
@@ -173,9 +167,6 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
-        if (old != type) {
-            returnLifeOrDeathCore(player, old);
-        }
 
         if (old != null && old != type) {
             clearOldElementEffects(player, old);
@@ -254,14 +245,6 @@ public class ElementManager {
         return number == 1 ? element.ability1(ctx) : element.ability2(ctx);
     }
 
-    public void giveElementItem(Player player, ElementType type) {
-        Optional.ofNullable(hs.elementPlugin.items.ElementCoreItem.createCore(plugin, type))
-                .ifPresent(item -> {
-                    player.getInventory().addItem(item);
-                    player.sendMessage(ChatColor.GREEN + "You received a " +
-                            hs.elementPlugin.items.ElementCoreItem.getDisplayName(type) + " item!");
-                });
-    }
 
     private void showElementTitle(Player player, ElementType type, String title) {
         var titleObj = net.kyori.adventure.title.Title.title(
@@ -277,18 +260,6 @@ public class ElementManager {
         player.showTitle(titleObj);
     }
 
-    private void returnLifeOrDeathCore(Player player, ElementType oldElement) {
-        if (oldElement != ElementType.LIFE && oldElement != ElementType.DEATH) return;
-        if (!data(player.getUniqueId()).hasElementItem(oldElement)) return;
-
-        Optional.ofNullable(hs.elementPlugin.items.ElementCoreItem.createCore(plugin, oldElement))
-                .ifPresent(core -> {
-                    player.getInventory().addItem(core);
-                    player.sendMessage(ChatColor.YELLOW + "Your " +
-                            hs.elementPlugin.items.ElementCoreItem.getDisplayName(oldElement) +
-                            ChatColor.YELLOW + " has been returned to you!");
-                });
-    }
 
     private boolean beginRoll(Player player) {
         if (isCurrentlyRolling(player)) {
