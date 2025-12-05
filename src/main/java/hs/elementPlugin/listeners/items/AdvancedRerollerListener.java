@@ -50,13 +50,6 @@ public class AdvancedRerollerListener implements Listener {
         Action action = event.getAction();
         if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) return;
 
-        // Prevent using reroller on pedestal blocks
-        if (action == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock() != null &&
-                event.getClickedBlock().getType() == Material.LODESTONE) {
-            var blockStorage = plugin.getBlockStorage();
-            String blockId = blockStorage.getCustomBlockIdCached(event.getClickedBlock().getLocation());
-            if ("pedestal".equalsIgnoreCase(blockId)) return;
-        }
 
         event.setCancelled(true);
 

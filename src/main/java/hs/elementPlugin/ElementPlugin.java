@@ -18,17 +18,6 @@ import hs.elementPlugin.listeners.items.DeathListener;
 import hs.elementPlugin.listeners.player.*;
 import hs.elementPlugin.listeners.items.listeners.*;
 import hs.elementPlugin.managers.*;
-import hs.elementSmpUtility.blocks.CustomBlockManager;
-import hs.elementSmpUtility.commands.CustomBlockCommand;
-import hs.elementSmpUtility.commands.PedestalCommand;
-import hs.elementSmpUtility.listeners.ChunkListener;
-import hs.elementSmpUtility.listeners.PedestalInteractionListener;
-import hs.elementSmpUtility.listeners.block.BlockBreakListener;
-import hs.elementSmpUtility.listeners.block.BlockPlacementListener;
-import hs.elementSmpUtility.recipes.PedestalRecipe;
-import hs.elementSmpUtility.storage.BlockDataStorage;
-import hs.elementSmpUtility.storage.pedestal.PedestalDataStorage;
-import hs.elementSmpUtility.storage.pedestal.PedestalOwnerStorage;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -42,11 +31,6 @@ public final class ElementPlugin extends JavaPlugin {
     private ItemManager itemManager;
     private AbilityManager abilityManager;
     private ElementRegistry elementRegistry;
-
-    private CustomBlockManager blockManager;
-    private BlockDataStorage blockStorage;
-    private PedestalDataStorage pedestalStorage;
-    private PedestalOwnerStorage ownerStorage;
 
     @Override
     public void onEnable() {
@@ -74,10 +58,6 @@ public final class ElementPlugin extends JavaPlugin {
         this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager, configManager);
         this.itemManager = new ItemManager(this, manaManager, configManager);
 
-        this.blockManager = new CustomBlockManager(this);
-        this.blockStorage = new BlockDataStorage(this, blockManager);
-        this.pedestalStorage = new PedestalDataStorage(this);
-        this.ownerStorage = new PedestalOwnerStorage(this);
     }
 
     private void registerAbilities() {
@@ -119,8 +99,6 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("util").setExecutor(new UtilCommand(this));
         getCommand("damagetest").setExecutor(new hs.elementPlugin.util.DamageTester());
 
-        getCommand("customblock").setExecutor(new CustomBlockCommand(blockManager));
-        getCommand("pedestal").setExecutor(new PedestalCommand(pedestalStorage, ownerStorage));
 
         getLogger().info("Commands registered successfully");
     }
@@ -173,12 +151,6 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new hs.elementPlugin.listeners.items.AdvancedRerollerListener(this), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
 
-        pm.registerEvents(new BlockPlacementListener(blockManager, blockStorage, ownerStorage), this);
-        pm.registerEvents(new BlockBreakListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
-        pm.registerEvents(new PedestalInteractionListener(blockManager, blockStorage, pedestalStorage, ownerStorage), this);
-        pm.registerEvents(new ChunkListener(blockStorage, pedestalStorage, ownerStorage), this);
-        pm.registerEvents(new hs.elementSmpUtility.listeners.PedestalProtectionListener(blockStorage), this);
-
         pm.registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalJoinListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalArrowImmunityListener(elementManager), this);
         pm.registerEvents(new MetalChainStunListener(), this);
@@ -193,9 +165,7 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getScheduler().runTaskLater(this, () -> {
             getLogger().info("Registering recipes...");
             hs.elementPlugin.recipes.util.UtilRecipes.registerRecipes(this);
-            new PedestalRecipe(this, blockManager).register();
-            hs.elementSmpUtility.recipes.ShulkerBoxRecipe.register(this);
-            hs.elementSmpUtility.recipes.ElytraRecipe.register(this);
+
             getLogger().info("Recipes registered successfully");
         }, 20L);
     }
@@ -206,8 +176,4 @@ public final class ElementPlugin extends JavaPlugin {
     public ManaManager getManaManager() { return manaManager; }
     public TrustManager getTrustManager() { return trustManager; }
     public ItemManager getItemManager() { return itemManager; }
-    public CustomBlockManager getBlockManager() { return blockManager; }
-    public BlockDataStorage getBlockStorage() { return blockStorage; }
-    public PedestalDataStorage getPedestalStorage() { return pedestalStorage; }
-    public PedestalOwnerStorage getOwnerStorage() { return ownerStorage; }
 }

@@ -36,24 +36,6 @@ public class RerollerListener implements Listener {
                 return;
             }
 
-            // CRITICAL: Check if clicking on a pedestal - if so, don't use the reroller
-            if (action == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
-                org.bukkit.block.Block clickedBlock = event.getClickedBlock();
-                if (clickedBlock != null && clickedBlock.getType() == org.bukkit.Material.LODESTONE) {
-                    // Check if it's a custom block (pedestal) using BlockDataStorage
-                    hs.elementSmpUtility.storage.BlockDataStorage blockStorage =
-                            ((hs.elementPlugin.ElementPlugin) plugin).getBlockStorage();
-                    String blockId = blockStorage.getCustomBlockIdCached(clickedBlock.getLocation());
-
-                    if ("pedestal".equals(blockId)) {
-                        // This is a pedestal - don't use the reroller here
-                        // The PedestalInteractionListener will handle placing it on the pedestal
-                        return;
-                    }
-                }
-            }
-
-            event.setCancelled(true);
 
             // Check if player is already rolling
             if (plugin.getElementManager().isCurrentlyRolling(player)) {
@@ -61,7 +43,7 @@ public class RerollerListener implements Listener {
                 return;
             }
 
-            // CRITICAL FIX: Clear old element effects BEFORE rerolling
+            // Clear old element effects BEFORE rerolling
             PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
             ElementType oldElement = pd.getCurrentElement();
             if (oldElement != null) {
