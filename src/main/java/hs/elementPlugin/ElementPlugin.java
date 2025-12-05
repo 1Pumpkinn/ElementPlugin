@@ -12,9 +12,9 @@ import hs.elementPlugin.elements.abilities.impl.death.*;
 import hs.elementPlugin.elements.abilities.impl.fire.*;
 import hs.elementPlugin.elements.abilities.impl.earth.*;
 import hs.elementPlugin.elements.abilities.impl.life.*;
-import hs.elementPlugin.elements.abilities.impl.metal.*;
 import hs.elementPlugin.elements.impl.earth.listeners.EarthOreDropListener;
 import hs.elementPlugin.elements.impl.metal.listeners.MetalChainStunListener;
+import hs.elementPlugin.listeners.items.DeathListener;
 import hs.elementPlugin.listeners.player.*;
 import hs.elementPlugin.listeners.items.listeners.*;
 import hs.elementPlugin.managers.*;
@@ -130,7 +130,7 @@ public final class ElementPlugin extends JavaPlugin {
 
         pm.registerEvents(new JoinListener(this, elementManager, manaManager), this);
         pm.registerEvents(new CombatListener(trustManager, elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.listeners.items.ElementItemDeathListener(this, elementManager), this);
+        pm.registerEvents(new DeathListener(this, elementManager), this);
         pm.registerEvents(new hs.elementPlugin.listeners.AbilityListener(this, elementManager), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.ElementItemCraftListener(this, elementManager), this);
 
@@ -163,8 +163,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathFriendlyMobListener(this, trustManager), this);
 
-        // REMOVED: Life and Death element craft listeners - no longer needed
-
+        
         pm.registerEvents(new QuitListener(this, manaManager), this);
         pm.registerEvents(new GameModeListener(manaManager, configManager), this);
         pm.registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);

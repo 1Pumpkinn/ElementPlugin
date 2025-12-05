@@ -4,14 +4,13 @@ import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.PlayerData;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
-import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public record ElementItemDeathListener(ElementPlugin plugin, ElementManager elements) implements Listener {
+public record DeathListener(ElementPlugin plugin, ElementManager elements) implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDeath(PlayerDeathEvent e) {
@@ -49,30 +48,5 @@ public record ElementItemDeathListener(ElementPlugin plugin, ElementManager elem
                 }.runTaskLater(plugin, 1L);
             }
         }
-
-        // For advanced elements (Life/Death/Metal/Frost): reroll to basic element
-        if (shouldRerollOnDeath(currentElement)) {
-            plugin.getLogger().info("Player " + e.getEntity().getName() +
-                    " died with advanced element " + currentElement + " - rerolling to basic element");
-
-            // Schedule element reroll for after respawn to avoid death loop
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (e.getEntity().isOnline()) {
-                        // Reroll to a basic element (AIR, WATER, FIRE, EARTH)
-                        elements.assignRandomDifferentElement(e.getEntity());
-                        e.getEntity().sendMessage(ChatColor.YELLOW +
-                                "You lost your advanced element and rolled a new basic element!");
-                    }
-                }
-            }.runTaskLater(plugin, 40L); // Wait 2 seconds after death (respawn time)
-        }
-    }
-
-    // Advanced elements (Life, Death, Metal, Frost) cause reroll on death
-    private boolean shouldRerollOnDeath(ElementType t) {
-        return t == ElementType.LIFE || t == ElementType.DEATH ||
-                t == ElementType.METAL || t == ElementType.FROST;
     }
 }

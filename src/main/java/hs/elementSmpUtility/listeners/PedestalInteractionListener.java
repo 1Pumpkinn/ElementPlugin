@@ -164,15 +164,6 @@ public class PedestalInteractionListener implements Listener {
             return false;
         }
 
-        // Check for Life/Death cores
-        NamespacedKey lifeKey = new NamespacedKey(blockManager.getPlugin(), "life_core");
-        NamespacedKey deathKey = new NamespacedKey(blockManager.getPlugin(), "death_core");
-
-        if (item.getItemMeta().getPersistentDataContainer().has(lifeKey, PersistentDataType.BYTE) ||
-                item.getItemMeta().getPersistentDataContainer().has(deathKey, PersistentDataType.BYTE)) {
-            return true;
-        }
-
         // Check for Upgraders
         NamespacedKey upgraderKey = new NamespacedKey(blockManager.getPlugin(), "upgrader_level");
         if (item.getItemMeta().getPersistentDataContainer().has(upgraderKey, PersistentDataType.INTEGER)) {
@@ -182,6 +173,12 @@ public class PedestalInteractionListener implements Listener {
         // Check for Reroller
         NamespacedKey rerollerKey = new NamespacedKey(blockManager.getPlugin(), "element_reroller");
         if (item.getItemMeta().getPersistentDataContainer().has(rerollerKey, PersistentDataType.BYTE)) {
+            return true;
+        }
+
+        // Check for Advanced Reroller
+        NamespacedKey advancedRerollerKey = new NamespacedKey(blockManager.getPlugin(), "advanced_reroller");
+        if (item.getItemMeta().getPersistentDataContainer().has(advancedRerollerKey, PersistentDataType.BYTE)) {
             return true;
         }
 
