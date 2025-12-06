@@ -29,13 +29,17 @@ public class DeathSlashAbility extends BaseAbility {
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
 
-        // Mark player as having Slash active
         player.setMetadata(META_SLASH_ACTIVE, new FixedMetadataValue(plugin, true));
 
-        // Visual and audio feedback
         player.sendMessage(ChatColor.RED + "Slash activated! Your next hit will cause bleeding.");
-        player.sendMessage(ChatColor.GRAY + "[DEBUG] Metadata set: " + player.hasMetadata(META_SLASH_ACTIVE));
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0f, 0.8f);
+
+        player.getWorld().spawnParticle(
+                Particle.BLOCK,
+                player.getLocation().add(0, 1, 0),
+                15, 0.3, 0.3, 0.3, 0.1,
+                org.bukkit.Material.REDSTONE_BLOCK.createBlockData()
+        );
 
         setActive(player, true);
         return true;

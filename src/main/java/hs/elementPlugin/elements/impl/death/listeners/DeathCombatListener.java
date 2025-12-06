@@ -22,11 +22,6 @@ public class DeathCombatListener implements Listener {
     public DeathCombatListener(ElementPlugin plugin, ElementManager elementManager) {
         this.plugin = plugin;
         this.elementManager = elementManager;
-
-        // Log that this listener was created
-        plugin.getLogger().info("=================================");
-        plugin.getLogger().info("DeathCombatListener CREATED!");
-        plugin.getLogger().info("=================================");
     }
 
     @EventHandler(priority = EventPriority.LOWEST)

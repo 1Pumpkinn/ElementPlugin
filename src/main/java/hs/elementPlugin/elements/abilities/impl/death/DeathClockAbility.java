@@ -28,13 +28,16 @@ public class DeathClockAbility extends BaseAbility {
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
 
-        // Mark player as having Death Clock active
         player.setMetadata(META_DEATH_CLOCK_ACTIVE, new FixedMetadataValue(plugin, true));
 
-        // Visual and audio feedback
         player.sendMessage(ChatColor.DARK_PURPLE + "Death Clock activated! Your next hit will curse the target.");
-        player.sendMessage(ChatColor.GRAY + "[DEBUG] Metadata set: " + player.hasMetadata(META_DEATH_CLOCK_ACTIVE));
         player.playSound(player.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 1.0f, 0.8f);
+
+        player.getWorld().spawnParticle(
+                org.bukkit.Particle.SMOKE,
+                player.getLocation().add(0, 1, 0),
+                20, 0.5, 0.5, 0.5, 0.05
+        );
 
         setActive(player, true);
         return true;
@@ -45,11 +48,10 @@ public class DeathClockAbility extends BaseAbility {
      * Called from combat listener when player hits an enemy
      */
     public static void applyEffects(ElementPlugin plugin, Player attacker, LivingEntity target) {
-        // Apply blindness, weakness, and wither for 3 seconds
-        int duration = 60; // 3 seconds = 60 ticks
+        int duration = 200;
 
         target.addPotionEffect(new PotionEffect(
-                PotionEffectType.BLINDNESS, duration, 0, false, true, true
+                PotionEffectType.DARKNESS, duration, 0, false, true, true
         ));
         target.addPotionEffect(new PotionEffect(
                 PotionEffectType.WEAKNESS, duration, 0, false, true, true
