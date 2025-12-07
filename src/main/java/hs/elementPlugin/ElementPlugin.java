@@ -157,7 +157,6 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new GameModeListener(manaManager), this);
         pm.registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);
         pm.registerEvents(new PassiveEffectMonitor(this, elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.gui.GUIListener(this), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.AdvancedRerollerListener(this), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);

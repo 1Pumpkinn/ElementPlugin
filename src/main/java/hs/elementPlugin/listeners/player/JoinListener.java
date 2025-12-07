@@ -4,7 +4,6 @@ import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.PlayerData;
 import hs.elementPlugin.elements.Element;
 import hs.elementPlugin.elements.ElementType;
-import hs.elementPlugin.gui.ElementSelectionGUI;
 import hs.elementPlugin.managers.ElementManager;
 import hs.elementPlugin.managers.ManaManager;
 import org.bukkit.attribute.Attribute;
@@ -37,16 +36,15 @@ public class JoinListener implements Listener {
         plugin.getLogger().info("Player " + p.getName() + " joined. Has element: " + !first);
 
         if (first) {
-            plugin.getLogger().info("Opening element selection GUI for " + p.getName());
-            // Open element selection GUI after a short delay
+            plugin.getLogger().info("Assigning random element to " + p.getName());
+            // Automatically roll and assign a random element after a short delay
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     if (p.isOnline()) {
-                        ElementSelectionGUI gui = new ElementSelectionGUI(plugin, p, false);
-                        gui.open();
-                        p.sendMessage(net.kyori.adventure.text.Component.text("Welcome! Please select your element.").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
-                        plugin.getLogger().info("GUI opened for " + p.getName());
+                        elements.rollAndAssign(p);
+                        p.sendMessage(net.kyori.adventure.text.Component.text("Welcome! You have been assigned a random element.").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
+                        plugin.getLogger().info("Element assigned to " + p.getName());
                     }
                 }
             }.runTaskLater(plugin, 20L); // 1 second delay
