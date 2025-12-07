@@ -1,19 +1,14 @@
 package hs.elementPlugin.elements.abilities.impl.death;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
-import org.bukkit.ChatColor;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
+import hs.elementPlugin.elements.abilities.BaseAbility;
+import org.bukkit.*;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 
-/**
- * Slash - Next hit makes enemies bleed, dealing 0.5 hearts per second for 5 seconds
- */
 public class DeathSlashAbility extends BaseAbility {
     private final ElementPlugin plugin;
 
@@ -25,6 +20,17 @@ public class DeathSlashAbility extends BaseAbility {
         this.plugin = plugin;
     }
 
+    private void bloodBurst(Location loc) {
+        loc.getWorld().spawnParticle(
+                Particle.BLOCK,
+                loc,
+                80,
+                0.6, 0.6, 0.6,
+                0.15,
+                Material.REDSTONE_BLOCK.createBlockData()
+        );
+    }
+
     @Override
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
@@ -34,45 +40,33 @@ public class DeathSlashAbility extends BaseAbility {
         player.sendMessage(ChatColor.RED + "Slash activated! Your next hit will cause bleeding.");
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0f, 0.8f);
 
-        player.getWorld().spawnParticle(
-                Particle.BLOCK,
-                player.getLocation().add(0, 1, 0),
-                15, 0.3, 0.3, 0.3, 0.1,
-                org.bukkit.Material.REDSTONE_BLOCK.createBlockData()
-        );
+        // activation blood
+        bloodBurst(player.getLocation().add(0, 1, 0));
 
         setActive(player, true);
         return true;
     }
 
-    /**
-     * Apply bleeding effect to a target
-     * Called from combat listener when player hits an enemy
-     */
     public static void applyBleeding(ElementPlugin plugin, Player attacker, LivingEntity target) {
-        // Mark target as bleeding
-        long bleedUntil = System.currentTimeMillis() + 5000L; // 5 seconds
+
+        long bleedUntil = System.currentTimeMillis() + 5000L;
         target.setMetadata(META_BLEEDING, new FixedMetadataValue(plugin, bleedUntil));
 
-        // Visual effect on hit
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 0.8f);
-        target.getWorld().spawnParticle(
-                Particle.BLOCK,
-                target.getLocation().add(0, 1, 0),
-                20, 0.3, 0.5, 0.3, 0.1,
-                org.bukkit.Material.REDSTONE_BLOCK.createBlockData()
-        );
 
-        // Remove the active marker
+        // Get THIS ability instance
+        DeathSlashAbility ability =
+                (DeathSlashAbility) plugin.getAbilityManager().getAbility("death_slash");
+
+        // Initial blood burst
+        ability.bloodBurst(target.getLocation().add(0, 1, 0));
+
         attacker.removeMetadata(META_SLASH_ACTIVE, plugin);
-
-        // Feedback to attacker
         attacker.sendMessage(ChatColor.RED + "Slash applied! Target is bleeding.");
 
-        // Start bleeding damage task
         new BukkitRunnable() {
             int ticks = 0;
-            final int maxTicks = 100; // 5 seconds = 100 ticks
+            final int maxTicks = 100;
 
             @Override
             public void run() {
@@ -82,30 +76,33 @@ public class DeathSlashAbility extends BaseAbility {
                     return;
                 }
 
-                // Check if bleeding is still active
                 if (!target.hasMetadata(META_BLEEDING)) {
                     cancel();
                     return;
                 }
 
-                long bleedEndTime = target.getMetadata(META_BLEEDING).get(0).asLong();
-                if (System.currentTimeMillis() >= bleedEndTime) {
+                long end = target.getMetadata(META_BLEEDING).get(0).asLong();
+                if (System.currentTimeMillis() >= end) {
                     target.removeMetadata(META_BLEEDING, plugin);
                     cancel();
                     return;
                 }
 
-                // Deal 0.5 hearts (1.0 damage) per second = every 20 ticks
                 if (ticks % 20 == 0) {
+                    // TRUE DAMAGE with knockback (1.0 damage = 0.5 hearts)
+                    // Store absorption hearts to restore them (true damage ignores absorption)
+                    double absorption = target.getAbsorptionAmount();
+
+                    // Deal damage (bypasses armor but triggers knockback)
                     target.damage(1.0, attacker);
 
-                    // Blood particles
-                    target.getWorld().spawnParticle(
-                            Particle.BLOCK,
-                            target.getLocation().add(0, 1, 0),
-                            5, 0.2, 0.3, 0.2, 0.05,
-                            org.bukkit.Material.REDSTONE_BLOCK.createBlockData()
-                    );
+                    // Restore absorption hearts (optional - remove if you want true damage to also bypass absorption)
+                    if (absorption > 0.0) {
+                        target.setAbsorptionAmount(absorption);
+                    }
+
+                    // BLEED TICK BLOOD
+                    ability.bloodBurst(target.getLocation().add(0, 1, 0));
                 }
 
                 ticks++;

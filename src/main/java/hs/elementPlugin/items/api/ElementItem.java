@@ -5,8 +5,8 @@ import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.ManaManager;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
 public interface ElementItem {

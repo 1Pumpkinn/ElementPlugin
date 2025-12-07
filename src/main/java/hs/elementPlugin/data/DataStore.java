@@ -132,7 +132,7 @@ public class DataStore {
             sec.set("mana", pd.getMana());
             sec.set("currentUpgradeLevel", pd.getCurrentElementUpgradeLevel());
 
-            java.util.List<String> items = new java.util.ArrayList<>();
+            List<String> items = new ArrayList<>();
             for (ElementType t : pd.getOwnedItems()) items.add(t.name());
             sec.set("items", items);
 

@@ -2,9 +2,9 @@ package hs.elementPlugin.commands;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.items.AdvancedRerollerItem;
+import hs.elementPlugin.items.RerollerItem;
 import hs.elementPlugin.items.Upgrader1Item;
 import hs.elementPlugin.items.Upgrader2Item;
-import hs.elementPlugin.items.RerollerItem;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

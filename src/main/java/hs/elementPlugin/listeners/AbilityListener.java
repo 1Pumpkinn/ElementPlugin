@@ -1,8 +1,7 @@
 package hs.elementPlugin.listeners;
 
-import hs.elementPlugin.managers.ElementManager;
 import hs.elementPlugin.data.PlayerData;
-import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.managers.ElementManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

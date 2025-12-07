@@ -1,13 +1,12 @@
 package hs.elementPlugin.elements.impl.life;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.life.LifeHealingBeamAbility;
-import hs.elementPlugin.elements.abilities.impl.life.LifeRegenAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
-
+import hs.elementPlugin.elements.abilities.Ability;
+import hs.elementPlugin.elements.abilities.impl.life.LifeHealingBeamAbility;
+import hs.elementPlugin.elements.abilities.impl.life.LifeRegenAbility;
 import org.bukkit.ChatColor;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;

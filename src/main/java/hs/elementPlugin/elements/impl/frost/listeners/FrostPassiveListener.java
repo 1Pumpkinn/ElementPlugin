@@ -3,7 +3,6 @@ package hs.elementPlugin.elements.impl.frost.listeners;
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;

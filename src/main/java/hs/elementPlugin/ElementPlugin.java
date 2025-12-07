@@ -5,18 +5,28 @@ import hs.elementPlugin.data.DataStore;
 import hs.elementPlugin.elements.ElementRegistry;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.abilities.AbilityManager;
-import hs.elementPlugin.elements.abilities.impl.air.*;
-import hs.elementPlugin.elements.abilities.impl.frost.*;
-import hs.elementPlugin.elements.abilities.impl.water.*;
-import hs.elementPlugin.elements.abilities.impl.death.*;
-import hs.elementPlugin.elements.abilities.impl.fire.*;
-import hs.elementPlugin.elements.abilities.impl.earth.*;
-import hs.elementPlugin.elements.abilities.impl.life.*;
+import hs.elementPlugin.elements.abilities.impl.air.AirBlastAbility;
+import hs.elementPlugin.elements.abilities.impl.air.AirDashAbility;
+import hs.elementPlugin.elements.abilities.impl.death.DeathClockAbility;
+import hs.elementPlugin.elements.abilities.impl.death.DeathSlashAbility;
+import hs.elementPlugin.elements.abilities.impl.earth.EarthCharmAbility;
+import hs.elementPlugin.elements.abilities.impl.earth.EarthTunnelAbility;
+import hs.elementPlugin.elements.abilities.impl.fire.HellishFlamesAbility;
+import hs.elementPlugin.elements.abilities.impl.fire.PhoenixFormAbility;
+import hs.elementPlugin.elements.abilities.impl.frost.FrostNovaAbility;
+import hs.elementPlugin.elements.abilities.impl.frost.IceShardVolleyAbility;
+import hs.elementPlugin.elements.abilities.impl.life.LifeHealingBeamAbility;
+import hs.elementPlugin.elements.abilities.impl.life.LifeRegenAbility;
+import hs.elementPlugin.elements.abilities.impl.water.WaterPrisonAbility;
+import hs.elementPlugin.elements.abilities.impl.water.WaterWhirlpoolAbility;
 import hs.elementPlugin.elements.impl.earth.listeners.EarthOreDropListener;
 import hs.elementPlugin.elements.impl.metal.listeners.MetalChainStunListener;
 import hs.elementPlugin.listeners.items.DeathListener;
+import hs.elementPlugin.listeners.items.listeners.ElementCombatProjectileListener;
+import hs.elementPlugin.listeners.items.listeners.ElementItemDropListener;
+import hs.elementPlugin.listeners.items.listeners.ElementItemPickupListener;
+import hs.elementPlugin.listeners.items.listeners.ElementItemUseListener;
 import hs.elementPlugin.listeners.player.*;
-import hs.elementPlugin.listeners.items.listeners.*;
 import hs.elementPlugin.managers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -31,6 +41,7 @@ public final class ElementPlugin extends JavaPlugin {
     private ItemManager itemManager;
     private AbilityManager abilityManager;
     private ElementRegistry elementRegistry;
+
 
     @Override
     public void onEnable() {
@@ -177,4 +188,7 @@ public final class ElementPlugin extends JavaPlugin {
     public ManaManager getManaManager() { return manaManager; }
     public TrustManager getTrustManager() { return trustManager; }
     public ItemManager getItemManager() { return itemManager; }
+    public AbilityManager getAbilityManager() {return abilityManager; }
+
+
 }

@@ -1,7 +1,7 @@
 package hs.elementPlugin.elements.abilities.impl.earth;
 
-import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.ElementContext;
+import hs.elementPlugin.elements.abilities.BaseAbility;
 import hs.elementPlugin.elements.impl.earth.EarthElement;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;

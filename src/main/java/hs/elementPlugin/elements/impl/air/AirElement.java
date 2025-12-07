@@ -1,12 +1,12 @@
 package hs.elementPlugin.elements.impl.air;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.air.AirBlastAbility;
-import hs.elementPlugin.elements.abilities.impl.air.AirDashAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.elements.abilities.Ability;
+import hs.elementPlugin.elements.abilities.impl.air.AirBlastAbility;
+import hs.elementPlugin.elements.abilities.impl.air.AirDashAbility;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 

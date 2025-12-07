@@ -1,10 +1,10 @@
 package hs.elementPlugin.elements.impl.water;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.elements.abilities.Ability;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.elements.abilities.Ability;
 import hs.elementPlugin.elements.abilities.impl.water.WaterPrisonAbility;
 import hs.elementPlugin.elements.abilities.impl.water.WaterWhirlpoolAbility;
 import org.bukkit.ChatColor;

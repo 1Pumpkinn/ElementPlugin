@@ -1,12 +1,12 @@
 package hs.elementPlugin.elements.impl.fire;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.fire.HellishFlamesAbility;
-import hs.elementPlugin.elements.abilities.impl.fire.PhoenixFormAbility;
 import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
+import hs.elementPlugin.elements.abilities.Ability;
+import hs.elementPlugin.elements.abilities.impl.fire.HellishFlamesAbility;
+import hs.elementPlugin.elements.abilities.impl.fire.PhoenixFormAbility;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
