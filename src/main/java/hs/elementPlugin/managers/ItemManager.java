@@ -14,13 +14,11 @@ import java.util.Map;
 public class ItemManager {
     private final ElementPlugin plugin;
     private final ManaManager mana;
-    private final ConfigManager configManager;
     private final Map<ElementType, ElementItem> items = new EnumMap<>(ElementType.class);
 
-    public ItemManager(ElementPlugin plugin, ManaManager mana, ConfigManager configManager) {
+    public ItemManager(ElementPlugin plugin, ManaManager mana) {
         this.plugin = plugin;
         this.mana = mana;
-        this.configManager = configManager;
     }
 
     public void register(ElementItem item) {
@@ -30,7 +28,7 @@ public class ItemManager {
 
     public void handleUse(PlayerInteractEvent e) {
         for (ElementItem item : items.values()) {
-            if (item.handleUse(e, plugin, mana, configManager)) {
+            if (item.handleUse(e, plugin, mana)) {
                 // If an item handled the event, stop processing
                 return;
             }
@@ -45,21 +43,19 @@ public class ItemManager {
 
     public void handleLaunch(ProjectileLaunchEvent e) {
         for (ElementItem item : items.values()) {
-            item.handleLaunch(e, plugin, mana, configManager);
+            item.handleLaunch(e, plugin, mana);
         }
     }
-    
+
     /**
      * Creates an Upgrader1 item
-     * @return The created ItemStack
      */
     public ItemStack createUpgrader1() {
         return hs.elementPlugin.items.Upgrader1Item.make(plugin);
     }
-    
+
     /**
      * Creates an Upgrader2 item
-     * @return The created ItemStack
      */
     public ItemStack createUpgrader2() {
         return hs.elementPlugin.items.Upgrader2Item.make(plugin);

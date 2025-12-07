@@ -17,9 +17,9 @@ public interface ElementItem {
 
     boolean isItem(ItemStack stack, ElementPlugin plugin);
 
-    boolean handleUse(PlayerInteractEvent e, ElementPlugin plugin, ManaManager mana, ConfigManager config);
+    boolean handleUse(PlayerInteractEvent e, ElementPlugin plugin, ManaManager mana);
 
     void handleDamage(EntityDamageByEntityEvent e, ElementPlugin plugin);
 
-    default void handleLaunch(ProjectileLaunchEvent e, ElementPlugin plugin, ManaManager mana, ConfigManager config) {}
+    default void handleLaunch(ProjectileLaunchEvent e, ElementPlugin plugin, ManaManager mana) {}
 }

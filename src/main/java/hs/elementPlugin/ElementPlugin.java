@@ -34,7 +34,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class ElementPlugin extends JavaPlugin {
 
     private DataStore dataStore;
-    private ConfigManager configManager;
     private ElementManager elementManager;
     private ManaManager manaManager;
     private TrustManager trustManager;
@@ -42,6 +41,12 @@ public final class ElementPlugin extends JavaPlugin {
     private AbilityManager abilityManager;
     private ElementRegistry elementRegistry;
 
+    // Constants
+    private static final int MAX_MANA = 100;
+    private static final int MANA_REGEN_PER_SECOND = 5;
+    private static final int ABILITY_1_COST = 50;
+    private static final int ABILITY_2_COST = 75;
+    private static final boolean UPGRADERS_DROP_ON_DEATH = true;
 
     @Override
     public void onEnable() {
@@ -61,14 +66,12 @@ public final class ElementPlugin extends JavaPlugin {
     }
 
     private void initializeManagers() {
-        this.configManager = new ConfigManager(this);
         this.dataStore = new DataStore(this);
         this.trustManager = new TrustManager(this);
-        this.manaManager = new ManaManager(this, dataStore, configManager);
+        this.manaManager = new ManaManager(this, dataStore);
         this.abilityManager = new AbilityManager(this);
-        this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager, configManager);
-        this.itemManager = new ItemManager(this, manaManager, configManager);
-
+        this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager);
+        this.itemManager = new ItemManager(this, manaManager);
     }
 
     private void registerAbilities() {
@@ -106,11 +109,9 @@ public final class ElementPlugin extends JavaPlugin {
 
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
         getCommand("element").setExecutor(new ElementCommand(this));
-        getCommand("mana").setExecutor(new ManaCommand(manaManager, configManager));
-        getCommand("config").setExecutor(new hs.elementPlugin.commands.ConfigCommand(this, configManager));
+        getCommand("mana").setExecutor(new ManaCommand(manaManager));
         getCommand("util").setExecutor(new UtilCommand(this));
         getCommand("damagetest").setExecutor(new hs.elementPlugin.util.DamageTester());
-
 
         getLogger().info("Commands registered successfully");
     }
@@ -153,9 +154,8 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathFriendlyMobListener(this, trustManager), this);
 
-        
         pm.registerEvents(new QuitListener(this, manaManager), this);
-        pm.registerEvents(new GameModeListener(manaManager, configManager), this);
+        pm.registerEvents(new GameModeListener(manaManager), this);
         pm.registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);
         pm.registerEvents(new PassiveEffectMonitor(this, elementManager), this);
         pm.registerEvents(new hs.elementPlugin.listeners.GUIListener(this), this);
@@ -177,18 +177,22 @@ public final class ElementPlugin extends JavaPlugin {
         Bukkit.getScheduler().runTaskLater(this, () -> {
             getLogger().info("Registering recipes...");
             hs.elementPlugin.recipes.util.UtilRecipes.registerRecipes(this);
-
             getLogger().info("Recipes registered successfully");
         }, 20L);
     }
 
+    // Getters
     public DataStore getDataStore() { return dataStore; }
-    public ConfigManager getConfigManager() { return configManager; }
     public ElementManager getElementManager() { return elementManager; }
     public ManaManager getManaManager() { return manaManager; }
     public TrustManager getTrustManager() { return trustManager; }
     public ItemManager getItemManager() { return itemManager; }
-    public AbilityManager getAbilityManager() {return abilityManager; }
+    public AbilityManager getAbilityManager() { return abilityManager; }
 
-
+    // Constants
+    public int getMaxMana() { return MAX_MANA; }
+    public int getManaRegenPerSecond() { return MANA_REGEN_PER_SECOND; }
+    public int getAbility1Cost() { return ABILITY_1_COST; }
+    public int getAbility2Cost() { return ABILITY_2_COST; }
+    public boolean isUpgradersDropOnDeath() { return UPGRADERS_DROP_ON_DEATH; }
 }

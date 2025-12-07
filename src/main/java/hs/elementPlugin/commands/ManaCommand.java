@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.Optional;
 
 public class ManaCommand implements CommandExecutor {
+    private static final int MAX_MANA = 100;
+
     private final ManaManager manaManager;
-    private final ConfigManager configManager;
     private final Map<String, ManaOperation> operations;
 
-    public ManaCommand(ManaManager manaManager, ConfigManager configManager) {
+    public ManaCommand(ManaManager manaManager) {
         this.manaManager = manaManager;
-        this.configManager = configManager;
         this.operations = initializeOperations();
     }
 
@@ -54,8 +54,6 @@ public class ManaCommand implements CommandExecutor {
     private class ResetOperation implements ManaOperation {
         @Override
         public void execute(CommandSender sender, String[] args) {
-            int maxMana = configManager.getMaxMana();
-
             Optional<Player> target = resolveTarget(sender, args, 1);
             if (target.isEmpty()) {
                 sender.sendMessage(ChatColor.RED + "Player not found");
@@ -63,9 +61,9 @@ public class ManaCommand implements CommandExecutor {
             }
 
             Player player = target.get();
-            manaManager.get(player.getUniqueId()).setMana(maxMana);
+            manaManager.get(player.getUniqueId()).setMana(MAX_MANA);
 
-            sendSuccessMessages(sender, player, "reset to " + maxMana);
+            sendSuccessMessages(sender, player, "reset to " + MAX_MANA);
         }
     }
 

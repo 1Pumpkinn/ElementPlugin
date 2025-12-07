@@ -15,22 +15,20 @@ import java.util.UUID;
 public class ManaManager {
     private final ElementPlugin plugin;
     private final DataStore store;
-    private final ConfigManager configManager;
     private BukkitTask task;
 
     private final Map<UUID, PlayerData> cache = new HashMap<>();
 
-    public ManaManager(ElementPlugin plugin, DataStore store, ConfigManager configManager) {
+    public ManaManager(ElementPlugin plugin, DataStore store) {
         this.plugin = plugin;
         this.store = store;
-        this.configManager = configManager;
     }
 
     public void start() {
         if (task != null) return;
         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            int maxMana = configManager.getMaxMana();
-            int regenRate = configManager.getManaRegenPerSecond();
+            int maxMana = plugin.getMaxMana();
+            int regenRate = plugin.getManaRegenPerSecond();
 
             for (Player p : Bukkit.getOnlinePlayers()) {
                 PlayerData pd = get(p.getUniqueId());
@@ -54,10 +52,10 @@ public class ManaManager {
                 // Action bar display with mana emoji
                 String manaDisplay = p.getGameMode() == GameMode.CREATIVE ? "∞" : String.valueOf(pd.getMana());
                 p.sendActionBar(
-                    net.kyori.adventure.text.Component.text("Ⓜ Mana: ")
-                        .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
-                        .append(net.kyori.adventure.text.Component.text(manaDisplay, net.kyori.adventure.text.format.NamedTextColor.WHITE))
-                        .append(net.kyori.adventure.text.Component.text("/" + maxMana, net.kyori.adventure.text.format.NamedTextColor.GRAY))
+                        net.kyori.adventure.text.Component.text("Ⓜ Mana: ")
+                                .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
+                                .append(net.kyori.adventure.text.Component.text(manaDisplay, net.kyori.adventure.text.format.NamedTextColor.WHITE))
+                                .append(net.kyori.adventure.text.Component.text("/" + maxMana, net.kyori.adventure.text.format.NamedTextColor.GRAY))
                 );
             }
         }, 20L, 20L);
@@ -92,9 +90,6 @@ public class ManaManager {
 
     /**
      * Check if player has enough mana without spending it
-     * @param player The player to check
-     * @param amount The amount of mana required
-     * @return true if player has enough mana, false otherwise
      */
     public boolean hasMana(Player player, int amount) {
         // Creative mode players always have mana

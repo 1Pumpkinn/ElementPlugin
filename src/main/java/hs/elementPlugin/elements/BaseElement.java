@@ -43,7 +43,7 @@ public abstract class BaseElement implements Element {
         }
 
         // Normal activation flow - check mana only (NO COOLDOWN)
-        int cost = context.getConfigManager().getAbility1Cost(getType());
+        int cost = context.getPlugin().getAbility1Cost();
         if (!hasMana(context.getPlayer(), context.getManaManager(), cost)) return false;
 
         // Execute ability first, only consume mana if successful
@@ -73,7 +73,7 @@ public abstract class BaseElement implements Element {
         }
 
         // Normal activation flow - check mana only (NO COOLDOWN)
-        int cost = context.getConfigManager().getAbility2Cost(getType());
+        int cost = context.getPlugin().getAbility2Cost();
         if (!hasMana(context.getPlayer(), context.getManaManager(), cost)) return false;
 
         // Execute ability first, only consume mana if successful
@@ -106,8 +106,6 @@ public abstract class BaseElement implements Element {
         }
         return true;
     }
-
-
 
     /**
      * Check if player has enough mana and spend it (deprecated - use hasMana instead)
@@ -184,7 +182,6 @@ public abstract class BaseElement implements Element {
         if (active) {
             activeAbility2.add(player.getUniqueId());
         } else {
-            activeAbility2.remove(player.getUniqueId());
             activeAbility2.remove(player.getUniqueId());
         }
     }

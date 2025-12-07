@@ -14,7 +14,7 @@ public record DeathListener(ElementPlugin plugin, ElementManager elements) imple
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDeath(PlayerDeathEvent e) {
-        if (!plugin.getConfigManager().isUpgradersDropOnDeath()) {
+        if (!plugin.isUpgradersDropOnDeath()) {
             return;
         }
 

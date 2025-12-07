@@ -8,12 +8,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 
 public class GameModeListener implements Listener {
-    private final ManaManager manaManager;
-    private final ConfigManager configManager;
+    private static final int MAX_MANA = 100;
 
-    public GameModeListener(ManaManager manaManager, ConfigManager configManager) {
+    private final ManaManager manaManager;
+
+    public GameModeListener(ManaManager manaManager) {
         this.manaManager = manaManager;
-        this.configManager = configManager;
     }
 
     @EventHandler
@@ -23,11 +23,8 @@ public class GameModeListener implements Listener {
 
         // When entering creative, fill mana
         if (newMode == GameMode.CREATIVE) {
-            int maxMana = configManager.getMaxMana();
             var pd = manaManager.get(p.getUniqueId());
-            pd.setMana(maxMana);
+            pd.setMana(MAX_MANA);
         }
-        // When leaving creative (to survival/adventure/spectator), mana stays at current level
-        // Normal regen will take over from ManaManager's tick
     }
 }
