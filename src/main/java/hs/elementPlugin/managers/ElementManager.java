@@ -155,9 +155,15 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
+        if (old != null && old != type) {
+            clearOldElementEffects(player, old);
+        }
         pd.setCurrentElement(type);
         store.save(pd);
 
+        if (configManager.isLogElementAssignment()) {
+            plugin.getLogger().info(player.getName() + "'s element set to " + type.name());
+        }
         player.sendMessage(ChatColor.GOLD + "Your element is now " + ChatColor.AQUA + type.name());
         applyUpsides(player);
     }
@@ -175,6 +181,7 @@ public class ElementManager {
             clearOldElementEffects(player, old);
         }
 
+
         if (resetLevel) {
             pd.setCurrentElement(type);
         } else {
@@ -182,12 +189,12 @@ public class ElementManager {
             pd.setCurrentElementWithoutReset(type);
             pd.setCurrentElementUpgradeLevel(currentUpgrade);
         }
-
         store.save(pd);
         showElementTitle(player, type, titleText);
         applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
+
 
     private void clearOldElementEffects(Player player, ElementType oldElement) {
         if (oldElement == null) return;
@@ -208,6 +215,7 @@ public class ElementManager {
         }
     }
 
+
     public void applyUpsides(Player player) {
         PlayerData pd = data(player.getUniqueId());
         ElementType type = pd.getCurrentElement();
@@ -219,6 +227,7 @@ public class ElementManager {
             element.applyUpsides(player, pd.getUpgradeLevel(type));
         }
     }
+
 
     public boolean useAbility1(Player player) {
         return useAbility(player, 1);

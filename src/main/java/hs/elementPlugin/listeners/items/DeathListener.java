@@ -14,6 +14,10 @@ public record DeathListener(ElementPlugin plugin, ElementManager elements) imple
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDeath(PlayerDeathEvent e) {
+        if (!plugin.getConfigManager().isUpgradersDropOnDeath()) {
+            return;
+        }
+
         PlayerData pd = elements.data(e.getEntity().getUniqueId());
         ElementType currentElement = pd.getCurrentElement();
 
@@ -21,23 +25,17 @@ public record DeathListener(ElementPlugin plugin, ElementManager elements) imple
             int currentLevel = pd.getUpgradeLevel(currentElement);
 
             if (currentLevel > 0) {
-                // Drop upgraders based on level
                 for (int i = 0; i < currentLevel; i++) {
                     if (i == 0) {
-                        // Drop Upgrader 1
                         e.getDrops().add(plugin.getItemManager().createUpgrader1());
                     } else {
-                        // Drop Upgrader 2
                         e.getDrops().add(plugin.getItemManager().createUpgrader2());
                     }
                 }
 
-                // Reset upgrade level to 0
                 pd.setUpgradeLevel(currentElement, 0);
                 plugin.getDataStore().save(pd);
 
-                // Reapply upsides to remove any upgrade benefits
-                // Schedule this for next tick to avoid issues during death event
                 new BukkitRunnable() {
                     @Override
                     public void run() {

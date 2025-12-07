@@ -27,8 +27,13 @@ commands:
     usage: /util
     permission: element.admin
 
-  damagetest:
-    description: Damage testing command
+  config:
+    description: Manage plugin configuration
+    usage: /config <reload|view|set> [section|path] [value]
+    permission: element.admin
+
+    damagetest:
+      description: Protection 4 Villager
 
 
   elements:

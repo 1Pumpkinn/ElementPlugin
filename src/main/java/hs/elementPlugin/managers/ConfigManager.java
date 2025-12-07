@@ -2,9 +2,8 @@ package hs.elementPlugin.managers;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementType;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
-
-import java.util.logging.Level;
 
 public class ConfigManager {
     private final ElementPlugin plugin;
@@ -12,81 +11,158 @@ public class ConfigManager {
 
     public ConfigManager(ElementPlugin plugin) {
         this.plugin = plugin;
-        try {
-            this.config = plugin.getConfig();
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load plugin configuration", e);
-            throw new RuntimeException("Could not load plugin configuration", e);
-        }
+        loadConfig();
+    }
+
+    private void loadConfig() {
+        plugin.saveDefaultConfig();
+        this.config = plugin.getConfig();
     }
 
     public void reload() {
-        try {
-            plugin.reloadConfig();
-            this.config = plugin.getConfig();
-            plugin.getLogger().info("Configuration reloaded successfully");
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to reload configuration", e);
-        }
+        plugin.reloadConfig();
+        this.config = plugin.getConfig();
+        plugin.getLogger().info("Configuration reloaded successfully");
     }
 
-    // Mana settings
     public int getMaxMana() {
-        try {
-            return config.getInt("mana.max", 100);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Error reading mana.max from config, using default value 100", e);
-            return 100;
-        }
+        return config.getInt("mana.max", 100);
     }
 
     public int getManaRegenPerSecond() {
-        try {
-            return config.getInt("mana.regen_per_second", 1);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Error reading mana.regen_per_second from config, using default value 1", e);
-            return 1;
-        }
+        return config.getInt("mana.regen_per_second", 1);
     }
 
-    // Ability costs
+    public boolean isCreativeInfiniteMana() {
+        return config.getBoolean("mana.creative_infinite", true);
+    }
+
     public int getAbility1Cost(ElementType type) {
-        try {
-            String path = "costs." + type.name().toLowerCase() + ".ability1";
-            return config.getInt(path, 50);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Error reading ability1 cost for " + type + " from config, using default value 50", e);
-            return 50;
-        }
+        return getAbilityValue(type, "ability1", "cost", 50);
     }
 
     public int getAbility2Cost(ElementType type) {
-        try {
-            String path = "costs." + type.name().toLowerCase() + ".ability2";
-            return config.getInt(path, 75);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Error reading ability2 cost for " + type + " from config, using default value 75", e);
-            return 75;
-        }
+        return getAbilityValue(type, "ability2", "cost", 75);
     }
 
-    public int getItemUseCost(ElementType type) {
-        try {
-            String path = "costs." + type.name().toLowerCase() + ".item_use";
-            return config.getInt(path, 75);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Error reading item_use cost for " + type + " from config, using default value 75", e);
-            return 75;
-        }
+    public int getAbility1Cooldown(ElementType type) {
+        return getAbilityValue(type, "ability1", "cooldown", 0);
     }
 
-    public int getItemThrowCost(ElementType type) {
-        try {
-            String path = "costs." + type.name().toLowerCase() + ".item_throw";
-            return config.getInt(path, 25);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Error reading item_throw cost for " + type + " from config, using default value 25", e);
-            return 25;
-        }
+    public int getAbility2Cooldown(ElementType type) {
+        return getAbilityValue(type, "ability2", "cooldown", 0);
+    }
+
+    private int getAbilityValue(ElementType type, String ability, String key, int defaultValue) {
+        String path = "abilities." + type.name().toLowerCase() + "." + ability + "." + key;
+        return config.getInt(path, defaultValue);
+    }
+
+    public int getLifeMaxHealth() {
+        return config.getInt("passives.life.max_health", 30);
+    }
+
+    public int getLifeCropGrowthRadius() {
+        return config.getInt("passives.life.crop_growth_radius", 5);
+    }
+
+    public int getLifeCropGrowthInterval() {
+        return config.getInt("passives.life.crop_growth_interval", 40);
+    }
+
+    public int getDeathHungerRadius() {
+        return config.getInt("passives.death.hunger_radius", 5);
+    }
+
+    public int getDeathHungerInterval() {
+        return config.getInt("passives.death.hunger_interval", 20);
+    }
+
+    public int getFrostSpeedOnLeatherBoots() {
+        return config.getInt("passives.frost.speed_on_leather_boots", 1);
+    }
+
+    public int getFrostSpeedOnIce() {
+        return config.getInt("passives.frost.speed_on_ice", 2);
+    }
+
+    public boolean isTrustPreventsDamage() {
+        return config.getBoolean("combat.trust_prevents_damage", true);
+    }
+
+    public double getAirSlowFallingChance() {
+        return config.getDouble("combat.air_slow_falling_chance", 0.05);
+    }
+
+    public int getAirSlowFallingDuration() {
+        return config.getInt("combat.air_slow_falling_duration", 100);
+    }
+
+    public int getFireAspectDuration() {
+        return config.getInt("combat.fire_aspect_duration", 80);
+    }
+
+    public int getHellishFlamesDuration() {
+        return config.getInt("combat.hellish_flames_duration", 200);
+    }
+
+    public int getDeathClockDuration() {
+        return config.getInt("combat.death_clock_duration", 200);
+    }
+
+    public int getDeathSlashBleedDuration() {
+        return config.getInt("combat.death_slash_bleed_duration", 100);
+    }
+
+    public int getDeathSlashDamageInterval() {
+        return config.getInt("combat.death_slash_damage_interval", 20);
+    }
+
+    public int getMetalChainStunDuration() {
+        return config.getInt("combat.metal_chain_stun_duration", 60);
+    }
+
+    public int getMetalDashStunDuration() {
+        return config.getInt("combat.metal_dash_stun_duration", 100);
+    }
+
+    public int getFrostNovaFreezeDuration() {
+        return config.getInt("combat.frost_nova_freeze_duration", 100);
+    }
+
+    public int getWaterPrisonDuration() {
+        return config.getInt("combat.water_prison_duration", 200);
+    }
+
+    public boolean isUpgradersDropOnDeath() {
+        return config.getBoolean("items.upgraders_drop_on_death", true);
+    }
+
+    public boolean isElementItemsOnePerPlayer() {
+        return config.getBoolean("items.element_items_one_per_player", true);
+    }
+
+    public boolean isForceElementSelection() {
+        return config.getBoolean("gui.force_element_selection", true);
+    }
+
+    public boolean isReopenOnCloseWithoutSelection() {
+        return config.getBoolean("gui.reopen_on_close_without_selection", true);
+    }
+
+    public boolean isLogAbilityUsage() {
+        return config.getBoolean("debug.log_ability_usage", false);
+    }
+
+    public boolean isLogElementAssignment() {
+        return config.getBoolean("debug.log_element_assignment", true);
+    }
+
+    public boolean isLogManaChanges() {
+        return config.getBoolean("debug.log_mana_changes", false);
+    }
+
+    public FileConfiguration getRawConfig() {
+        return config;
     }
 }

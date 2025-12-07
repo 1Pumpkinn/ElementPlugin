@@ -107,6 +107,8 @@ public abstract class BaseElement implements Element {
         return true;
     }
 
+
+
     /**
      * Check if player has enough mana and spend it (deprecated - use hasMana instead)
      */
@@ -123,7 +125,6 @@ public abstract class BaseElement implements Element {
      * Template methods to be implemented by concrete elements
      */
     protected abstract boolean executeAbility1(ElementContext context);
-
     protected abstract boolean executeAbility2(ElementContext context);
 
     /**
@@ -183,6 +184,7 @@ public abstract class BaseElement implements Element {
         if (active) {
             activeAbility2.add(player.getUniqueId());
         } else {
+            activeAbility2.remove(player.getUniqueId());
             activeAbility2.remove(player.getUniqueId());
         }
     }

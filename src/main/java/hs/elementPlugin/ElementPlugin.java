@@ -107,6 +107,7 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
         getCommand("element").setExecutor(new ElementCommand(this));
         getCommand("mana").setExecutor(new ManaCommand(manaManager, configManager));
+        getCommand("config").setExecutor(new hs.elementPlugin.commands.ConfigCommand(this, configManager));
         getCommand("util").setExecutor(new UtilCommand(this));
         getCommand("damagetest").setExecutor(new hs.elementPlugin.util.DamageTester());
 
@@ -121,7 +122,6 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new CombatListener(trustManager, elementManager), this);
         pm.registerEvents(new DeathListener(this, elementManager), this);
         pm.registerEvents(new hs.elementPlugin.listeners.AbilityListener(this, elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.listeners.items.ElementItemCraftListener(this, elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager), this);
 
         pm.registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);
