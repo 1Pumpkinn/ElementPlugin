@@ -60,9 +60,7 @@ public class DeathSlashAbility extends BaseAbility {
 
         // Initial blood burst
         ability.bloodBurst(target.getLocation().add(0, 1, 0));
-
         attacker.removeMetadata(META_SLASH_ACTIVE, plugin);
-        attacker.sendMessage(ChatColor.RED + "Slash applied! Target is bleeding.");
 
         new BukkitRunnable() {
             int ticks = 0;

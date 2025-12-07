@@ -67,12 +67,8 @@ public class DeathClockAbility extends BaseAbility {
                 target.getLocation().add(0, 1, 0),
                 30, 0.3, 0.5, 0.3, 0.05
         );
-
         // Remove the active marker
         attacker.removeMetadata(META_DEATH_CLOCK_ACTIVE, plugin);
-
-        // Feedback to attacker
-        attacker.sendMessage(ChatColor.DARK_PURPLE + "Death Clock curse applied!");
     }
 
     @Override
