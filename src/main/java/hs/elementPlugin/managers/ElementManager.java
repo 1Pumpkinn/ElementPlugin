@@ -35,18 +35,16 @@ public class ElementManager {
     private final DataStore store;
     private final ManaManager manaManager;
     private final TrustManager trustManager;
-    private final ConfigManager configManager;
     private final Map<ElementType, Element> registry = new EnumMap<>(ElementType.class);
     private final Set<UUID> currentlyRolling = new HashSet<>();
     private final Random random = new Random();
 
     public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager,
-                          TrustManager trustManager, ConfigManager configManager) {
+                          TrustManager trustManager) {
         this.plugin = plugin;
         this.store = store;
         this.manaManager = manaManager;
         this.trustManager = trustManager;
-        this.configManager = configManager;
         registerAllElements();
     }
 
@@ -161,9 +159,7 @@ public class ElementManager {
         pd.setCurrentElement(type);
         store.save(pd);
 
-        if (configManager.isLogElementAssignment()) {
-            plugin.getLogger().info(player.getName() + "'s element set to " + type.name());
-        }
+
         player.sendMessage(ChatColor.GOLD + "Your element is now " + ChatColor.AQUA + type.name());
         applyUpsides(player);
     }
@@ -250,7 +246,6 @@ public class ElementManager {
                 .elementType(type)
                 .manaManager(manaManager)
                 .trustManager(trustManager)
-                .configManager(configManager)
                 .plugin(plugin)
                 .build();
 

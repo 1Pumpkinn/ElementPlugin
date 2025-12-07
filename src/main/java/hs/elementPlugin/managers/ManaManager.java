@@ -17,6 +17,7 @@ public class ManaManager {
     private final DataStore store;
     private final ConfigManager configManager;
     private BukkitTask task;
+
     private final Map<UUID, PlayerData> cache = new HashMap<>();
 
     public ManaManager(ElementPlugin plugin, DataStore store, ConfigManager configManager) {
@@ -27,7 +28,6 @@ public class ManaManager {
 
     public void start() {
         if (task != null) return;
-
         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             int maxMana = configManager.getMaxMana();
             int regenRate = configManager.getManaRegenPerSecond();
@@ -35,47 +35,37 @@ public class ManaManager {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 PlayerData pd = get(p.getUniqueId());
 
-                if (configManager.isCreativeInfiniteMana() && p.getGameMode() == GameMode.CREATIVE) {
+                // Creative mode players have infinite mana
+                if (p.getGameMode() == GameMode.CREATIVE) {
                     pd.setMana(maxMana);
                 } else {
-                    int currentMana = pd.getMana();
-                    if (currentMana < maxMana) {
+                    // Normal mana regen for survival/adventure/spectator
+                    int before = pd.getMana();
+                    if (before < maxMana) {
                         pd.addMana(regenRate);
+                        // Ensure we don't exceed max mana
                         if (pd.getMana() > maxMana) {
                             pd.setMana(maxMana);
                         }
-
-                        if (configManager.isLogManaChanges()) {
-                            plugin.getLogger().fine(p.getName() + " mana: " + currentMana + " -> " + pd.getMana());
-                        }
-
                         store.save(pd);
                     }
                 }
 
-                displayManaActionBar(p, pd.getMana(), maxMana);
+                // Action bar display with mana emoji
+                String manaDisplay = p.getGameMode() == GameMode.CREATIVE ? "∞" : String.valueOf(pd.getMana());
+                p.sendActionBar(
+                    net.kyori.adventure.text.Component.text("Ⓜ Mana: ")
+                        .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
+                        .append(net.kyori.adventure.text.Component.text(manaDisplay, net.kyori.adventure.text.format.NamedTextColor.WHITE))
+                        .append(net.kyori.adventure.text.Component.text("/" + maxMana, net.kyori.adventure.text.format.NamedTextColor.GRAY))
+                );
             }
         }, 20L, 20L);
     }
 
-    private void displayManaActionBar(Player player, int currentMana, int maxMana) {
-        String manaDisplay = (configManager.isCreativeInfiniteMana() && player.getGameMode() == GameMode.CREATIVE)
-                ? "∞"
-                : String.valueOf(currentMana);
-
-        player.sendActionBar(
-                net.kyori.adventure.text.Component.text("Ⓜ Mana: ")
-                        .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
-                        .append(net.kyori.adventure.text.Component.text(manaDisplay, net.kyori.adventure.text.format.NamedTextColor.WHITE))
-                        .append(net.kyori.adventure.text.Component.text("/" + maxMana, net.kyori.adventure.text.format.NamedTextColor.GRAY))
-        );
-    }
-
     public void stop() {
-        if (task != null) {
-            task.cancel();
-            task = null;
-        }
+        if (task != null) task.cancel();
+        task = null;
     }
 
     public PlayerData get(UUID uuid) {
@@ -88,25 +78,27 @@ public class ManaManager {
     }
 
     public boolean spend(Player player, int amount) {
-        if (configManager.isCreativeInfiniteMana() && player.getGameMode() == GameMode.CREATIVE) {
+        // Creative mode players don't spend mana
+        if (player.getGameMode() == GameMode.CREATIVE) {
             return true;
         }
 
         PlayerData pd = get(player.getUniqueId());
         if (pd.getMana() < amount) return false;
-
-        if (configManager.isLogManaChanges()) {
-            plugin.getLogger().fine(player.getName() + " spent " + amount + " mana (" +
-                    pd.getMana() + " -> " + (pd.getMana() - amount) + ")");
-        }
-
         pd.addMana(-amount);
         store.save(pd);
         return true;
     }
 
+    /**
+     * Check if player has enough mana without spending it
+     * @param player The player to check
+     * @param amount The amount of mana required
+     * @return true if player has enough mana, false otherwise
+     */
     public boolean hasMana(Player player, int amount) {
-        if (configManager.isCreativeInfiniteMana() && player.getGameMode() == GameMode.CREATIVE) {
+        // Creative mode players always have mana
+        if (player.getGameMode() == GameMode.CREATIVE) {
             return true;
         }
 

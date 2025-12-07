@@ -1,7 +1,6 @@
 package hs.elementPlugin.elements;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.ManaManager;
 import hs.elementPlugin.managers.TrustManager;
 import org.bukkit.entity.Player;
@@ -15,7 +14,6 @@ public class ElementContext {
     private final int upgradeLevel;
     private final ManaManager manaManager;
     private final TrustManager trustManager;
-    private final ConfigManager configManager;
     private final ElementType elementType;
     private final ElementPlugin plugin;
 
@@ -25,7 +23,6 @@ public class ElementContext {
         this.elementType = builder.elementType;
         this.manaManager = builder.manaManager;
         this.trustManager = builder.trustManager;
-        this.configManager = builder.configManager;
         this.plugin = builder.plugin;
     }
 
@@ -35,7 +32,6 @@ public class ElementContext {
     public ElementType getElementType() { return elementType; }
     public ManaManager getManaManager() { return manaManager; }
     public TrustManager getTrustManager() { return trustManager; }
-    public ConfigManager getConfigManager() { return configManager; }
     public ElementPlugin getPlugin() { return plugin; }
 
     // Builder
@@ -49,7 +45,6 @@ public class ElementContext {
         private ElementType elementType;
         private ManaManager manaManager;
         private TrustManager trustManager;
-        private ConfigManager configManager;
         private ElementPlugin plugin;
 
         public Builder player(Player player) {
@@ -74,11 +69,6 @@ public class ElementContext {
 
         public Builder trustManager(TrustManager manager) {
             this.trustManager = manager;
-            return this;
-        }
-
-        public Builder configManager(ConfigManager manager) {
-            this.configManager = manager;
             return this;
         }
 

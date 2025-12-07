@@ -2,7 +2,6 @@ package hs.elementPlugin.items.api;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.elements.ElementType;
-import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.ManaManager;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;

@@ -1,6 +1,5 @@
 package hs.elementPlugin.listeners.player;
 
-import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.ManaManager;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;

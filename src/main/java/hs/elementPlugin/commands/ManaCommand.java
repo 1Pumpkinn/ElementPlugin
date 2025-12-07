@@ -1,6 +1,5 @@
 package hs.elementPlugin.commands;
 
-import hs.elementPlugin.managers.ConfigManager;
 import hs.elementPlugin.managers.ManaManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;

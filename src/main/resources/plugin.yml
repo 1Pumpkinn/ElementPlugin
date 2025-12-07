@@ -27,21 +27,14 @@ commands:
     usage: /util
     permission: element.admin
 
-  config:
-    description: Manage plugin configuration
-    usage: /config <reload|view|set> [section|path] [value]
+  damagetest:
+    description: Protection 4 Villager
     permission: element.admin
-
-    damagetest:
-      description: Protection 4 Villager
-
 
   elements:
     description: View information about all elements
     usage: /elements [element_name]
     aliases: [ elementinfo, elinfo ]
-
-
 
 permissions:
   element.admin:
