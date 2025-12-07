@@ -9,7 +9,7 @@ import hs.elementPlugin.elements.abilities.impl.air.AirBlastAbility;
 import hs.elementPlugin.elements.abilities.impl.air.AirDashAbility;
 import hs.elementPlugin.elements.abilities.impl.death.DeathClockAbility;
 import hs.elementPlugin.elements.abilities.impl.death.DeathSlashAbility;
-import hs.elementPlugin.elements.abilities.impl.earth.EarthCharmAbility;
+import hs.elementPlugin.elements.abilities.impl.earth.EarthquakeAbility;
 import hs.elementPlugin.elements.abilities.impl.earth.EarthTunnelAbility;
 import hs.elementPlugin.elements.abilities.impl.fire.HellishFlamesAbility;
 import hs.elementPlugin.elements.abilities.impl.fire.PhoenixFormAbility;
@@ -84,7 +84,7 @@ public final class ElementPlugin extends JavaPlugin {
         abilityManager.registerAbility(ElementType.FIRE, 2, new PhoenixFormAbility(this));
 
         abilityManager.registerAbility(ElementType.EARTH, 1, new EarthTunnelAbility(this));
-        abilityManager.registerAbility(ElementType.EARTH, 2, new EarthCharmAbility(this));
+        abilityManager.registerAbility(ElementType.EARTH, 2, new EarthquakeAbility(this));
 
         abilityManager.registerAbility(ElementType.LIFE, 1, new LifeRegenAbility(this));
         abilityManager.registerAbility(ElementType.LIFE, 2, new LifeHealingBeamAbility(this));
@@ -142,8 +142,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireCombatListener(elementManager, trustManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireballProtectionListener(), this);
 
-        pm.registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthCharmListener(elementManager, this), this);
-        pm.registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthFriendlyMobListener(this, trustManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthquakeMovementListener(this), this);
         pm.registerEvents(new EarthOreDropListener(elementManager), this);
 
         pm.registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeRegenListener(elementManager), this);

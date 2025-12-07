@@ -154,7 +154,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
                 "Masters of stone and terrain",
                 Arrays.asList("Hero of The Village", "Double ore drops (Upgrade II)"),
                 "Earth Tunnel", "Dig tunnels through stone and dirt", 50,
-                "Mob Charm", "Charm mobs to follow you", 75
+                "Earthquake", "Create a powerful earthquake that stuns all enemies within 10 blocks for 3 seconds", 75
         ));
 
         map.put(ElementType.LIFE, new ElementInfo(
