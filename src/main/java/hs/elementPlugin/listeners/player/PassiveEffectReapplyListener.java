@@ -82,7 +82,6 @@ public class PassiveEffectReapplyListener implements Listener {
                 if (player.isOnline()) {
                     // Reapply element effects
                     elementManager.applyUpsides(player);
-                    plugin.getLogger().fine("Reapplied element passive effects for " + player.getName() + " after " + reason);
                 }
             }
         }.runTaskLater(plugin, delayTicks);

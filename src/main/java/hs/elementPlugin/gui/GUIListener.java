@@ -1,7 +1,6 @@
-package hs.elementPlugin.listeners;
+package hs.elementPlugin.gui;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.gui.ElementSelectionGUI;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

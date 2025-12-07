@@ -43,14 +43,13 @@ public final class ElementPlugin extends JavaPlugin {
 
     // Constants
     private static final int MAX_MANA = 100;
-    private static final int MANA_REGEN_PER_SECOND = 5;
-    private static final int ABILITY_1_COST = 50;
-    private static final int ABILITY_2_COST = 75;
+    private static final int MANA_REGEN_PER_SECOND = 1;
+    private static final int ABILITY_1_COST = 50; // 50
+    private static final int ABILITY_2_COST = 75;  // 75
     private static final boolean UPGRADERS_DROP_ON_DEATH = true;
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
         initializeManagers();
         registerAbilities();
         registerCommands();
@@ -158,7 +157,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new GameModeListener(manaManager), this);
         pm.registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);
         pm.registerEvents(new PassiveEffectMonitor(this, elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.listeners.GUIListener(this), this);
+        pm.registerEvents(new hs.elementPlugin.gui.GUIListener(this), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.AdvancedRerollerListener(this), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
@@ -175,7 +174,6 @@ public final class ElementPlugin extends JavaPlugin {
 
     private void registerRecipes() {
         Bukkit.getScheduler().runTaskLater(this, () -> {
-            getLogger().info("Registering recipes...");
             hs.elementPlugin.recipes.util.UtilRecipes.registerRecipes(this);
             getLogger().info("Recipes registered successfully");
         }, 20L);

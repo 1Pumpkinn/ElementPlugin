@@ -37,7 +37,6 @@ public class DataStore {
         try {
             playerCfg = YamlConfiguration.loadConfiguration(playerFile);
         } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to reload player configuration", e);
             return new PlayerData(uuid);
         }
 
@@ -53,7 +52,6 @@ public class DataStore {
 
             // If found at root level, log a warning
             if (section != null) {
-                plugin.getLogger().warning("Found player data for " + uuidString + " at root level. Consider migrating to 'players.' format.");
             }
         }
 
@@ -183,42 +181,6 @@ public class DataStore {
         save(pd);
     }
 
-    // Server-wide restrictions
-    public synchronized boolean isLifeElementCrafted() {
-        try {
-            return serverCfg.getBoolean("life_crafted", false);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to check life element crafted status", e);
-            return false;
-        }
-    }
-
-    public synchronized void setLifeElementCrafted(boolean crafted) {
-        try {
-            serverCfg.set("life_crafted", crafted);
-            flushServerData();
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to set life element crafted status", e);
-        }
-    }
-
-    public synchronized boolean isDeathElementCrafted() {
-        try {
-            return serverCfg.getBoolean("death_crafted", false);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to check death element crafted status", e);
-            return false;
-        }
-    }
-
-    public synchronized void setDeathElementCrafted(boolean crafted) {
-        try {
-            serverCfg.set("death_crafted", crafted);
-            flushServerData();
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to set death element crafted status", e);
-        }
-    }
 
     private void flushServerData() {
         try {

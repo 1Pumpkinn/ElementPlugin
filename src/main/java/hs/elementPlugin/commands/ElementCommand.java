@@ -128,9 +128,6 @@ public class ElementCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            plugin.getLogger().info(String.format("[ElementCommand] Setting element for %s (%s) to %s",
-                    target.getName(), target.getUniqueId(), elementType.get().name()));
-
             elementManager.setElement(target, elementType.get());
 
             sender.sendMessage(ChatColor.GREEN + "Set " + target.getName() + "'s element to " +
