@@ -29,39 +29,56 @@ public class MetalChainAbility extends BaseAbility {
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
 
-        // --- Target detection (cone-based with line-of-sight check) ---
-        LivingEntity target = null;
-        double range = 20;
-        double coneAngle = Math.toRadians(25);
-        Location eyeLoc = player.getEyeLocation();
-        Vector lookDir = eyeLoc.getDirection();
+        // --- Target detection (ray trace for precise targeting) ---
+        double range = 12.0;
 
-        for (LivingEntity entity : player.getWorld().getLivingEntities()) {
-            if (entity.equals(player)) continue;
+        // First, check if there's a block in the way
+        org.bukkit.util.RayTraceResult blockRayTrace = player.getWorld().rayTraceBlocks(
+                player.getEyeLocation(),
+                player.getEyeLocation().getDirection(),
+                range,
+                org.bukkit.FluidCollisionMode.NEVER,
+                true
+        );
 
-            // Skip armor stands
-            if (entity instanceof org.bukkit.entity.ArmorStand) continue;
-
-            if (eyeLoc.distanceSquared(entity.getLocation()) > range * range) continue;
-
-            Vector toEntity = entity.getLocation().toVector().subtract(eyeLoc.toVector());
-            double angle = lookDir.angle(toEntity);
-
-            if (angle < coneAngle) {
-                // Check line of sight - make sure there are no solid blocks between player and target
-                if (player.hasLineOfSight(entity)) {
-                    target = entity;
-                    break;
-                }
-            }
+        // If a block is hit, limit the range to that distance
+        double effectiveRange = range;
+        if (blockRayTrace != null && blockRayTrace.getHitBlock() != null) {
+            effectiveRange = player.getEyeLocation().distance(blockRayTrace.getHitPosition().toLocation(player.getWorld()));
         }
 
-        if (target == null) {
-            player.sendMessage(ChatColor.RED + "No target found!");
+        // Now ray trace for entities, but only up to the block distance
+        org.bukkit.util.RayTraceResult rayTrace = player.getWorld().rayTraceEntities(
+                player.getEyeLocation(),
+                player.getEyeLocation().getDirection(),
+                effectiveRange,
+                0.5, // Hit box expansion
+                entity -> {
+                    // Filter out invalid targets
+                    if (entity.equals(player)) return false;
+                    if (entity instanceof org.bukkit.entity.ArmorStand) return false;
+                    if (!(entity instanceof LivingEntity)) return false;
+
+                    // Check trust for players
+                    if (entity instanceof Player targetPlayer) {
+                        return !context.getTrustManager().isTrusted(
+                                player.getUniqueId(),
+                                targetPlayer.getUniqueId()
+                        );
+                    }
+
+                    return true;
+                }
+        );
+
+        if (rayTrace == null || rayTrace.getHitEntity() == null) {
+            player.sendMessage(ChatColor.RED + "No target found! Aim at an enemy.");
             return false;
         }
 
-        // Don't target trusted players
+        LivingEntity target = (LivingEntity) rayTrace.getHitEntity();
+
+        // Don't target trusted players (redundant check but kept for safety)
         if (target instanceof Player targetPlayer) {
             if (context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {
                 player.sendMessage(ChatColor.RED + "You cannot chain trusted players!");
@@ -79,7 +96,6 @@ public class MetalChainAbility extends BaseAbility {
         new BukkitRunnable() {
             int ticks = 0;
             final int maxTicks = 40; // 2 seconds of reeling
-            final Location playerStartLoc = player.getEyeLocation().subtract(0, 0.3, 0);
 
             @Override
             public void run() {
