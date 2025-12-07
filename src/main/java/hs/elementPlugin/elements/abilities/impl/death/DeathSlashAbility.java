@@ -89,17 +89,15 @@ public class DeathSlashAbility extends BaseAbility {
                 }
 
                 if (ticks % 20 == 0) {
-                    // TRUE DAMAGE with knockback (1.0 damage = 0.5 hearts)
-                    // Store absorption hearts to restore them (true damage ignores absorption)
-                    double absorption = target.getAbsorptionAmount();
+                    // TRUE DAMAGE - directly modify health to bypass armor completely
+                    double currentHealth = target.getHealth();
+                    double newHealth = Math.max(0.0, currentHealth - 1.0); // 1.0 damage = 0.5 hearts
 
-                    // Deal damage (bypasses armor but triggers knockback)
-                    target.damage(1.0, attacker);
+                    target.setHealth(newHealth);
 
-                    // Restore absorption hearts (optional - remove if you want true damage to also bypass absorption)
-                    if (absorption > 0.0) {
-                        target.setAbsorptionAmount(absorption);
-                    }
+                    // Play hurt sound and animation
+                    target.getWorld().playSound(target.getLocation(), Sound.ENTITY_GENERIC_HURT, 0.5f, 1.0f);
+                    target.damage(0.0); // Trigger hurt animation without actual damage
 
                     // BLEED TICK BLOOD
                     ability.bloodBurst(target.getLocation().add(0, 1, 0));

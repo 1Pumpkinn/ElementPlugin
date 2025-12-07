@@ -7,7 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Villager;
+import org.bukkit.entity.Zombie;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 
@@ -32,7 +32,7 @@ public class DamageTester implements CommandExecutor {
         }
 
         if (args[0].equalsIgnoreCase("spawn")) {
-            spawnTestVillager(player);
+            spawnTestZombie(player);
             return true;
         }
 
@@ -40,16 +40,16 @@ public class DamageTester implements CommandExecutor {
         return true;
     }
 
-    private void spawnTestVillager(Player player) {
-        Villager villager = (Villager) player.getWorld().spawnEntity(
+    private void spawnTestZombie(Player player) {
+        Zombie zombie = (Zombie) player.getWorld().spawnEntity(
                 player.getLocation(),
-                EntityType.VILLAGER
+                EntityType.ZOMBIE
         );
 
-        villager.setAI(false);
-        villager.setGravity(true);
-        villager.setSilent(true);
-        villager.setInvulnerable(false);
+        zombie.setAI(true);
+        zombie.setGravity(true);
+        zombie.setSilent(true);
+        zombie.setInvulnerable(false);
 
         // Armor
         ItemStack helmet = new ItemStack(Material.DIAMOND_HELMET);
@@ -64,7 +64,7 @@ public class DamageTester implements CommandExecutor {
         ItemStack boots = new ItemStack(Material.DIAMOND_BOOTS);
         boots.addEnchantment(Enchantment.PROTECTION, 4);
 
-        EntityEquipment equipment = villager.getEquipment();
+        EntityEquipment equipment = zombie.getEquipment();
         if (equipment != null) {
             equipment.setHelmet(helmet);
             equipment.setChestplate(chestplate);
@@ -77,9 +77,9 @@ public class DamageTester implements CommandExecutor {
             equipment.setBootsDropChance(0f);
         }
 
-        villager.setCustomName("§6Test Dummy");
-        villager.setCustomNameVisible(true);
+        zombie.setCustomName("§6Test Dummy");
+        zombie.setCustomNameVisible(true);
 
-        player.sendMessage("§aSpawned test villager with PROTECTION IV armor!");
+        player.sendMessage("§aSpawned test zombie with PROTECTION IV armor!");
     }
 }
