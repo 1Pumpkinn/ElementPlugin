@@ -5,8 +5,8 @@ import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.earth.EarthCharmAbility;
 import hs.elementPlugin.elements.abilities.impl.earth.EarthTunnelAbility;
+import hs.elementPlugin.elements.abilities.impl.earth.EarthquakeAbility;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -25,7 +25,7 @@ public class EarthElement extends BaseElement {
         super(plugin);
         this.plugin = plugin;
         this.ability1 = new EarthTunnelAbility(plugin);
-        this.ability2 = new EarthCharmAbility(plugin);
+        this.ability2 = new EarthquakeAbility(plugin);
     }
 
     @Override
