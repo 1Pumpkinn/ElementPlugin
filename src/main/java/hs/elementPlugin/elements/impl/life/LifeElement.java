@@ -5,7 +5,7 @@ import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.life.LifeHealingBeamAbility;
+import hs.elementPlugin.elements.abilities.impl.life.TransfusionAbility;
 import hs.elementPlugin.elements.abilities.impl.life.LifeRegenAbility;
 import org.bukkit.ChatColor;
 import org.bukkit.attribute.Attribute;
@@ -32,7 +32,7 @@ public class LifeElement extends BaseElement {
         super(plugin);
         this.plugin = plugin;
         this.ability1 = new LifeRegenAbility(plugin);
-        this.ability2 = new LifeHealingBeamAbility(plugin);
+        this.ability2 = new TransfusionAbility(plugin);
     }
 
     @Override

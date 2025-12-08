@@ -15,7 +15,7 @@ import hs.elementPlugin.elements.abilities.impl.fire.HellishFlamesAbility;
 import hs.elementPlugin.elements.abilities.impl.fire.PhoenixFormAbility;
 import hs.elementPlugin.elements.abilities.impl.frost.FrostNovaAbility;
 import hs.elementPlugin.elements.abilities.impl.frost.IceShardVolleyAbility;
-import hs.elementPlugin.elements.abilities.impl.life.LifeHealingBeamAbility;
+import hs.elementPlugin.elements.abilities.impl.life.TransfusionAbility;
 import hs.elementPlugin.elements.abilities.impl.life.LifeRegenAbility;
 import hs.elementPlugin.elements.abilities.impl.water.WaterPrisonAbility;
 import hs.elementPlugin.elements.abilities.impl.water.WaterWhirlpoolAbility;
@@ -87,7 +87,7 @@ public final class ElementPlugin extends JavaPlugin {
         abilityManager.registerAbility(ElementType.EARTH, 2, new EarthquakeAbility(this));
 
         abilityManager.registerAbility(ElementType.LIFE, 1, new LifeRegenAbility(this));
-        abilityManager.registerAbility(ElementType.LIFE, 2, new LifeHealingBeamAbility(this));
+        abilityManager.registerAbility(ElementType.LIFE, 2, new TransfusionAbility(this));
 
         abilityManager.registerAbility(ElementType.DEATH, 1, new DeathClockAbility(this));
         abilityManager.registerAbility(ElementType.DEATH, 2, new DeathSlashAbility(this));
