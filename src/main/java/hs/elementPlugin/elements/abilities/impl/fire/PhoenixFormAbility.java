@@ -56,9 +56,8 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
             player.sendMessage(ChatColor.RED + "Phoenix Form is on cooldown for " +
                     remainingMinutes + "m " + remainingSeconds + "s");
         } else {
-            player.sendMessage(ChatColor.GOLD + "Phoenix Form is ready! It will automatically trigger when you take fatal damage.");
-        }
 
+        }
         return false; // Don't consume the ability since it's passive
     }
 
@@ -74,7 +73,7 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
 
         // Check if ability is on cooldown
         if (isOnCooldown(player)) {
-            // Phoenix Form is on cooldown - let death happen
+            // Phoenix Form is on cooldown - let death/totem happen
             return;
         }
 
@@ -123,14 +122,12 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
         // Apply invincibility and invisibility
         applyPhoenixResurrection(player);
 
-        // Notify player
+        // Notify player - SINGLE MESSAGE
         player.sendTitle(
                 ChatColor.GOLD + "PHOENIX FORM",
-                ChatColor.YELLOW + "You have been revived!",
+                ChatColor.YELLOW + "Invincible for 3s | 5min cooldown",
                 10, 40, 10
         );
-        player.sendMessage(ChatColor.GOLD + "Phoenix Form activated! You are invincible and invisible for 3 seconds.");
-        player.sendMessage(ChatColor.RED + "Cooldown: 5 minutes");
     }
 
     /**
@@ -221,6 +218,21 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
             if (System.currentTimeMillis() < invulnerableUntil) {
                 event.setCancelled(true);
             }
+        }
+    }
+
+    /**
+     * Prevent totem consumption when Phoenix Form triggers
+     * This prevents the totem from being consumed when Phoenix Form activates
+     */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onTotemUse(org.bukkit.event.entity.EntityResurrectEvent event) {
+        if (!(event.getEntity() instanceof Player player)) return;
+
+        // Check if Phoenix Form just triggered (player has invulnerable metadata)
+        if (player.hasMetadata(META_PHOENIX_INVULNERABLE)) {
+            // Phoenix Form just activated - cancel totem usage
+            event.setCancelled(true);
         }
     }
 
