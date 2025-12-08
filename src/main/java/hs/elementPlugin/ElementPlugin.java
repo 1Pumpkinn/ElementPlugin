@@ -140,7 +140,6 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireImmunityListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireJoinListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireCombatListener(elementManager, trustManager), this);
-        pm.registerEvents(new hs.elementPlugin.elements.impl.fire.listeners.FireballProtectionListener(), this);
 
         pm.registerEvents(new hs.elementPlugin.elements.impl.earth.listeners.EarthquakeMovementListener(this), this);
         pm.registerEvents(new EarthOreDropListener(elementManager), this);

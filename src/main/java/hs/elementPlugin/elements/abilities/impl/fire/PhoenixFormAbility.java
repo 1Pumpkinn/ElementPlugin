@@ -23,22 +23,20 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Fire element's Phoenix Form ability - revive with 1 HP and become invincible/invisible
+ * Fire element's Phoenix Form ability - PASSIVE revive with 1 HP and become invincible/invisible
  */
 public class PhoenixFormAbility extends BaseAbility implements Listener {
     private final ElementPlugin plugin;
 
     // Metadata keys
-    public static final String META_PHOENIX_ACTIVE = "fire_phoenix_active";
-    public static final String META_PHOENIX_COOLDOWN = "fire_phoenix_cooldown";
     public static final String META_PHOENIX_INVULNERABLE = "fire_phoenix_invulnerable";
 
-    // Cooldown tracking (5 minutes = 300 seconds = 6000 ticks)
+    // Cooldown tracking (5 minutes = 300 seconds)
     private static final long COOLDOWN_DURATION_MS = 5 * 60 * 1000L; // 5 minutes in milliseconds
     private final Map<UUID, Long> cooldowns = new HashMap<>();
 
     public PhoenixFormAbility(ElementPlugin plugin) {
-        super("fire_phoenix_form", 75, 0, 2); // No cooldown in BaseAbility (we handle it manually)
+        super("fire_phoenix_form", 75, 0, 2);
         this.plugin = plugin;
 
         // Register this as a listener to handle death prevention
@@ -49,7 +47,7 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
 
-        // Check if ability is on cooldown
+        // Show cooldown status when player tries to use it
         if (isOnCooldown(player)) {
             long remainingMs = getRemainingCooldown(player);
             int remainingMinutes = (int) (remainingMs / 60000);
@@ -57,43 +55,19 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
 
             player.sendMessage(ChatColor.RED + "Phoenix Form is on cooldown for " +
                     remainingMinutes + "m " + remainingSeconds + "s");
-            return false;
-        }
-
-        // Toggle the ability on/off
-        if (player.hasMetadata(META_PHOENIX_ACTIVE)) {
-            // Deactivate
-            player.removeMetadata(META_PHOENIX_ACTIVE, plugin);
-            player.sendMessage(ChatColor.YELLOW + "Phoenix Form deactivated");
-            setActive(player, false);
         } else {
-            // Activate
-            player.setMetadata(META_PHOENIX_ACTIVE, new FixedMetadataValue(plugin, true));
-            player.sendMessage(ChatColor.GOLD + "Phoenix Form activated! You will revive if you take fatal damage.");
-
-            // Visual/audio feedback
-            player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 1.5f);
-            player.getWorld().spawnParticle(
-                    Particle.SOUL_FIRE_FLAME,
-                    player.getLocation().add(0, 1, 0),
-                    50, 0.5, 1.0, 0.5, 0.1, null, true
-            );
-
-            setActive(player, true);
+            player.sendMessage(ChatColor.GOLD + "Phoenix Form is ready! It will automatically trigger when you take fatal damage.");
         }
 
-        return true;
+        return false; // Don't consume the ability since it's passive
     }
 
     /**
-     * Handle death prevention and phoenix resurrection
+     * Handle death prevention and phoenix resurrection - ALWAYS ACTIVE
      */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onPlayerDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-
-        // Check if player has Phoenix Form active
-        if (!player.hasMetadata(META_PHOENIX_ACTIVE)) return;
 
         // Check if this damage would be fatal
         if (player.getHealth() - event.getFinalDamage() > 0) return;
@@ -101,18 +75,14 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
         // Check if ability is on cooldown
         if (isOnCooldown(player)) {
             // Phoenix Form is on cooldown - let death happen
-            player.removeMetadata(META_PHOENIX_ACTIVE, plugin);
             return;
         }
 
-        // TRIGGER PHOENIX FORM
+        // TRIGGER PHOENIX FORM AUTOMATICALLY
         event.setCancelled(true); // Prevent death
 
         // Set health to 1
         player.setHealth(1.0);
-
-        // Remove Phoenix Form active status
-        player.removeMetadata(META_PHOENIX_ACTIVE, plugin);
 
         // Start cooldown
         startCooldown(player);
@@ -285,6 +255,6 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
 
     @Override
     public String getDescription() {
-        return "When you would die, survive with 1 HP and explode in flames, becoming invisible and invincible for 3 seconds. 5 minute cooldown.";
+        return "PASSIVE: When you would die, automatically survive with 1 HP and explode in flames, becoming invisible and invincible for 3 seconds. 5 minute cooldown.";
     }
 }

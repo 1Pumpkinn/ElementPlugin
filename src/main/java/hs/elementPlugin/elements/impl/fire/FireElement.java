@@ -51,7 +51,6 @@ public class FireElement extends BaseElement {
         player.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
 
         // Clear Phoenix Form metadata
-        player.removeMetadata(PhoenixFormAbility.META_PHOENIX_ACTIVE, plugin);
         player.removeMetadata(PhoenixFormAbility.META_PHOENIX_INVULNERABLE, plugin);
 
         // Clear Hellish Flames metadata
