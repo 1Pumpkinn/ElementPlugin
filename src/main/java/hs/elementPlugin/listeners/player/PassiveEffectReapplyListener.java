@@ -67,7 +67,6 @@ public class PassiveEffectReapplyListener implements Listener {
         scheduleReapplyWithValidation(player, 20L, "join");
     }
 
-
     /**
      * Schedule a task to reapply element passive effects
      *

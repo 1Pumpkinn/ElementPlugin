@@ -63,8 +63,9 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
 
     /**
      * Handle death prevention and phoenix resurrection - ALWAYS ACTIVE
+     * PRIORITY.LOWEST means this runs FIRST, before totem
      */
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     public void onPlayerDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
 
@@ -223,15 +224,22 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
 
     /**
      * Prevent totem consumption when Phoenix Form triggers
-     * This prevents the totem from being consumed when Phoenix Form activates
+     * This MUST run at LOWEST priority to prevent totem from triggering first
      */
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     public void onTotemUse(org.bukkit.event.entity.EntityResurrectEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
 
-        // Check if Phoenix Form just triggered (player has invulnerable metadata)
+        // Check if Phoenix Form just triggered
         if (player.hasMetadata(META_PHOENIX_INVULNERABLE)) {
             // Phoenix Form just activated - cancel totem usage
+            event.setCancelled(true);
+            return;
+        }
+
+        // Also prevent totem if Phoenix Form is off cooldown
+        // (meaning it WILL trigger in the damage handler)
+        if (!isOnCooldown(player)) {
             event.setCancelled(true);
         }
     }
