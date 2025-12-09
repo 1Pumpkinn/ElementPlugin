@@ -29,11 +29,11 @@ public class FireElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: Infinite Fire Resistance
+        // Upside 1: Fire Resistance (always active)
         player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0, true, false));
 
-        // Upside 2: Fire Aspect on hits (handled in listener)
-        // No passive effect needed here
+        // Upside 2: Fire Aspect on hits (requires Upgrade 2, handled in FireCombatListener)
+        // No potion effect needed here
     }
 
     @Override
