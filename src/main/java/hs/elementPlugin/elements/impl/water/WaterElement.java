@@ -29,12 +29,17 @@ public class WaterElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: Infinite conduit power
+        // Upside 1: Conduit power (permanent water breathing)
         player.addPotionEffect(new PotionEffect(PotionEffectType.CONDUIT_POWER, Integer.MAX_VALUE, 0, true, false));
-        
+
+        // Upside 2: Mine faster in water - requires upgrade level 2
         if (upgradeLevel >= 2) {
-            // Upside 2: Dolphins grace 5 (level 4 = dolphins grace 5)
-            player.addPotionEffect(new PotionEffect(PotionEffectType.DOLPHINS_GRACE, Integer.MAX_VALUE, 4, true, false));
+            var attr = player.getAttribute(org.bukkit.attribute.Attribute.SUBMERGED_MINING_SPEED);
+            if (attr != null) {
+                // Default is 0.2 (5x slower underwater)
+                // Set to 1.2 (slightly faster than on land)
+                attr.setBaseValue(1.2);
+            }
         }
     }
 
@@ -47,38 +52,46 @@ public class WaterElement extends BaseElement {
     protected boolean executeAbility2(ElementContext context) {
         return ability2.execute(context);
     }
-    
+
     @Override
     public void clearEffects(Player player) {
+        player.removePotionEffect(PotionEffectType.CONDUIT_POWER);
+
+        // Reset underwater mining speed to default
+        var attr = player.getAttribute(org.bukkit.attribute.Attribute.SUBMERGED_MINING_SPEED);
+        if (attr != null) {
+            attr.setBaseValue(0.2); // Default underwater speed
+        }
+
         ability1.setActive(player, false);
         ability2.setActive(player, false);
     }
-    
+
     @Override
     public String getDisplayName() {
         return ChatColor.AQUA + "Water";
     }
-    
+
     @Override
     public String getDescription() {
         return "Harness the flowing power of water to control the battlefield.";
     }
-    
+
     @Override
     public String getAbility1Name() {
         return ability1.getName();
     }
-    
+
     @Override
     public String getAbility1Description() {
         return ability1.getDescription();
     }
-    
+
     @Override
     public String getAbility2Name() {
         return ability2.getName();
     }
-    
+
     @Override
     public String getAbility2Description() {
         return ability2.getDescription();

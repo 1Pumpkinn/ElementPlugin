@@ -145,7 +145,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
 
         map.put(ElementType.WATER, new ElementInfo(
                 "Controllers of water and ocean currents",
-                Arrays.asList("Infinite Water Breathing", "Conduit Power permanently"),
+                Arrays.asList("Conduit Power", "Mine faster in water (Upgrade II)"),
                 "Water Prison", "Trap an enemy in a sphere of water", 75,
                 "Water Whirlpool", "Create a spinning vortex", 50
         ));
