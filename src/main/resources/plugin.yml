@@ -22,6 +22,11 @@ commands:
     usage: /mana <reset|set> [player] [amount]
     permission: element.mana
 
+  data:
+    description: Manage plugin data storage
+    usage: /data <save|backup|stats>
+    permission: element.admin
+
   util:
     description: Get utility items (upgraders and reroller)
     usage: /util

@@ -111,6 +111,7 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("mana").setExecutor(new ManaCommand(manaManager));
         getCommand("util").setExecutor(new UtilCommand(this));
         getCommand("damagetest").setExecutor(new hs.elementPlugin.util.DamageTester());
+        getCommand("data").setExecutor(new DataCommand(this));
 
         getLogger().info("Commands registered successfully");
     }
