@@ -72,6 +72,11 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
         // Check if this damage would be fatal
         if (player.getHealth() - event.getFinalDamage() > 0) return;
 
+        // CRITICAL FIX: Check if player currently has Fire element
+        if (!hasFireElement(player)) {
+            return; // Player doesn't have Fire element - don't trigger
+        }
+
         // Check if ability is on cooldown
         if (isOnCooldown(player)) {
             // Phoenix Form is on cooldown - let death/totem happen
@@ -129,6 +134,14 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
                 ChatColor.YELLOW + "Invincible for 3s | 5min cooldown",
                 10, 40, 10
         );
+    }
+
+    /**
+     * CRITICAL FIX: Check if player currently has Fire element
+     */
+    private boolean hasFireElement(Player player) {
+        var pd = plugin.getElementManager().data(player.getUniqueId());
+        return pd.getCurrentElement() == hs.elementPlugin.elements.ElementType.FIRE;
     }
 
     /**
@@ -230,6 +243,11 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
     public void onTotemUse(org.bukkit.event.entity.EntityResurrectEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
 
+        // CRITICAL FIX: Check if player currently has Fire element
+        if (!hasFireElement(player)) {
+            return; // Player doesn't have Fire element - allow totem
+        }
+
         // Check if Phoenix Form just triggered
         if (player.hasMetadata(META_PHOENIX_INVULNERABLE)) {
             // Phoenix Form just activated - cancel totem usage
@@ -266,6 +284,14 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
         if (cooldownEnd == null) return 0;
 
         return Math.max(0, cooldownEnd - System.currentTimeMillis());
+    }
+
+    /**
+     * CRITICAL FIX: Clear cooldown when player changes elements
+     * This should be called from FireElement.clearEffects()
+     */
+    public void clearCooldown(Player player) {
+        cooldowns.remove(player.getUniqueId());
     }
 
     @Override

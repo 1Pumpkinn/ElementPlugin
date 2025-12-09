@@ -14,7 +14,7 @@ import org.bukkit.potion.PotionEffectType;
 
 public class FireElement extends BaseElement {
     private final Ability ability1;
-    private final Ability ability2;
+    private final PhoenixFormAbility ability2; // Changed type to access clearCooldown()
 
     public FireElement(ElementPlugin plugin) {
         super(plugin);
@@ -52,6 +52,9 @@ public class FireElement extends BaseElement {
 
         // Clear Phoenix Form metadata
         player.removeMetadata(PhoenixFormAbility.META_PHOENIX_INVULNERABLE, plugin);
+
+        // CRITICAL FIX: Clear Phoenix Form cooldown
+        ability2.clearCooldown(player);
 
         // Clear Hellish Flames metadata
         player.removeMetadata(HellishFlamesAbility.META_HELLISH_FLAMES, plugin);
