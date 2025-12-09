@@ -102,7 +102,10 @@ public class ElementManager {
                 .withSteps(ROLL_STEPS)
                 .withDelay(ROLL_DELAY_TICKS)
                 .onComplete(() -> {
-                    assignRandomWithTitle(player);
+                    // CRITICAL: Check if player is still online before assignment
+                    if (player.isOnline()) {
+                        assignRandomWithTitle(player);
+                    }
                     endRoll(player);
                 })
                 .start();
@@ -117,8 +120,9 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType oldElement = pd.getCurrentElement();
 
+        // CRITICAL: Clear ALL element effects before assigning new one
         if (oldElement != null && oldElement != targetElement) {
-            clearOldElementEffects(player, oldElement);
+            clearAllElementEffects(player);
         }
 
         int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
@@ -153,12 +157,13 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
+        // CRITICAL: Clear ALL element effects before changing
         if (old != null && old != type) {
-            clearOldElementEffects(player, old);
+            clearAllElementEffects(player);
         }
+
         pd.setCurrentElement(type);
         store.save(pd);
-
 
         player.sendMessage(ChatColor.GOLD + "Your element is now " + ChatColor.AQUA + type.name());
         applyUpsides(player);
@@ -172,11 +177,10 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
-
+        // CRITICAL: Clear ALL element effects before assigning
         if (old != null && old != type) {
-            clearOldElementEffects(player, old);
+            clearAllElementEffects(player);
         }
-
 
         if (resetLevel) {
             pd.setCurrentElement(type);
@@ -191,26 +195,36 @@ public class ElementManager {
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
 
-
-    private void clearOldElementEffects(Player player, ElementType oldElement) {
-        if (oldElement == null) return;
-
-        Element element = registry.get(oldElement);
-        if (element != null) {
-            element.clearEffects(player);
+    /**
+     * CRITICAL: Clear ALL element effects, not just the old one
+     * This prevents effect stacking from logout bugs
+     */
+    private void clearAllElementEffects(Player player) {
+        // Clear effects from EVERY element type
+        for (ElementType type : ElementType.values()) {
+            Element element = registry.get(type);
+            if (element != null) {
+                element.clearEffects(player);
+            }
         }
 
-        if (oldElement == ElementType.LIFE) {
-            Optional.ofNullable(player.getAttribute(Attribute.MAX_HEALTH))
-                    .ifPresent(attr -> {
+        // Reset max health to default (20 HP) while preserving current health
+        Optional.ofNullable(player.getAttribute(Attribute.MAX_HEALTH))
+                .ifPresent(attr -> {
+                    if (attr.getBaseValue() != 20.0) {
+                        // Store current health before changing max health
+                        double currentHealth = player.getHealth();
                         attr.setBaseValue(20.0);
-                        if (!player.isDead() && player.getHealth() > attr.getBaseValue()) {
-                            player.setHealth(attr.getBaseValue());
-                        }
-                    });
-        }
-    }
 
+                        // Restore current health (capped at new max if necessary)
+                        if (!player.isDead() && currentHealth > 0) {
+                            player.setHealth(Math.min(currentHealth, 20.0));
+                        }
+                    }
+                });
+
+        plugin.getLogger().fine("Cleared all element effects for " + player.getName());
+    }
 
     public void applyUpsides(Player player) {
         PlayerData pd = data(player.getUniqueId());
@@ -223,7 +237,6 @@ public class ElementManager {
             element.applyUpsides(player, pd.getUpgradeLevel(type));
         }
     }
-
 
     public boolean useAbility1(Player player) {
         return useAbility(player, 1);
@@ -252,7 +265,6 @@ public class ElementManager {
         return number == 1 ? element.ability1(ctx) : element.ability2(ctx);
     }
 
-
     private void showElementTitle(Player player, ElementType type, String title) {
         var titleObj = net.kyori.adventure.title.Title.title(
                 net.kyori.adventure.text.Component.text(title)
@@ -266,7 +278,6 @@ public class ElementManager {
                 ));
         player.showTitle(titleObj);
     }
-
 
     private boolean beginRoll(Player player) {
         if (isCurrentlyRolling(player)) {
@@ -314,6 +325,7 @@ public class ElementManager {
 
                 @Override
                 public void run() {
+                    // CRITICAL: Check if player disconnected during animation
                     if (!player.isOnline() || !isCurrentlyRolling(player)) {
                         endRoll(player);
                         cancel();

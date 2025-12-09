@@ -2,6 +2,7 @@ package hs.elementPlugin.listeners.items;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.PlayerData;
+import hs.elementPlugin.elements.Element;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.items.ItemKeys;
 import org.bukkit.ChatColor;
@@ -24,7 +25,6 @@ public class AdvancedRerollerListener implements Listener {
     private final ElementPlugin plugin;
     private final Random random = new Random();
 
-    // Advanced elements include METAL, FROST, LIFE, and DEATH
     private static final ElementType[] ADVANCED_ELEMENTS = {
             ElementType.METAL,
             ElementType.FROST,
@@ -41,7 +41,6 @@ public class AdvancedRerollerListener implements Listener {
         Player player = event.getPlayer();
         ItemStack item = event.getItem();
 
-        // Validate item
         if (item == null || !item.hasItemMeta()) return;
         var meta = item.getItemMeta();
         var container = meta.getPersistentDataContainer();
@@ -51,7 +50,6 @@ public class AdvancedRerollerListener implements Listener {
         Action action = event.getAction();
         if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) return;
 
-
         event.setCancelled(true);
 
         var elementManager = plugin.getElementManager();
@@ -59,6 +57,9 @@ public class AdvancedRerollerListener implements Listener {
             player.sendMessage(ChatColor.RED + "You are already rerolling your element!");
             return;
         }
+
+        // CRITICAL FIX: Clear ALL element effects BEFORE starting roll
+        clearAllElementEffects(player);
 
         PlayerData pd = elementManager.data(player.getUniqueId());
         ElementType current = pd.getCurrentElement();
@@ -72,7 +73,6 @@ public class AdvancedRerollerListener implements Listener {
     }
 
     private ElementType determineNewElement(ElementType current) {
-        // Filter out current element from choices
         List<ElementType> availableElements = new ArrayList<>();
 
         for (ElementType element : ADVANCED_ELEMENTS) {
@@ -81,17 +81,14 @@ public class AdvancedRerollerListener implements Listener {
             }
         }
 
-        // If no elements available (shouldn't happen), return random
         if (availableElements.isEmpty()) {
             return ADVANCED_ELEMENTS[random.nextInt(ADVANCED_ELEMENTS.length)];
         }
 
-        // Pick from available elements (excluding current)
         return availableElements.get(random.nextInt(availableElements.size()));
     }
 
     private void performAdvancedRoll(Player player, ElementType targetElement) {
-        plugin.getElementManager().data(player.getUniqueId());
         player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
 
         String[] names = {"METAL", "FROST", "LIFE", "DEATH"};
@@ -103,6 +100,13 @@ public class AdvancedRerollerListener implements Listener {
 
             @Override
             public void run() {
+                // CRITICAL: Check if player is still online during animation
+                if (!player.isOnline()) {
+                    plugin.getElementManager().cancelRolling(player);
+                    cancel();
+                    return;
+                }
+
                 if (tick >= steps) {
                     assignAdvancedElement(player, targetElement);
                     cancel();
@@ -121,11 +125,15 @@ public class AdvancedRerollerListener implements Listener {
     }
 
     private void assignAdvancedElement(Player player, ElementType element) {
+        // Double-check player is still online
+        if (!player.isOnline()) {
+            plugin.getElementManager().cancelRolling(player);
+            return;
+        }
+
         PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
 
-        // Clear old element effects
-        clearOldElementEffects(player, pd);
-
+        // Preserve upgrade level
         int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
         pd.setCurrentElementWithoutReset(element);
         pd.setCurrentElementUpgradeLevel(currentUpgradeLevel);
@@ -144,33 +152,43 @@ public class AdvancedRerollerListener implements Listener {
         );
 
         player.showTitle(title);
+
+        // Apply new element effects
         plugin.getElementManager().applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
 
         player.sendMessage(ChatColor.GREEN + "Your element has been rerolled to " +
                 ChatColor.AQUA + element.name() + ChatColor.GREEN + "!");
+
+        // Mark rolling as complete
+        plugin.getElementManager().cancelRolling(player);
     }
 
-    private void clearOldElementEffects(Player player, PlayerData pd) {
-        ElementType oldElement = pd.getCurrentElement();
-
-        if (oldElement == null) return;
-
-        // Use the Element's clearEffects method
-        var element = plugin.getElementManager().get(oldElement);
-        if (element != null) {
-            element.clearEffects(player);
-        }
-
-        // Special handling for Life element - reset max health
-        if (oldElement == ElementType.LIFE) {
-            var attr = player.getAttribute(Attribute.MAX_HEALTH);
-            if (attr != null) {
-                attr.setBaseValue(20.0);
-                if (!player.isDead() && player.getHealth() > 0 && player.getHealth() > 20.0) {
-                    player.setHealth(20.0);
-                }
+    /**
+     * CRITICAL: Clear ALL element effects to prevent stacking
+     */
+    private void clearAllElementEffects(Player player) {
+        // Clear effects from EVERY element type
+        for (ElementType type : ElementType.values()) {
+            Element element = plugin.getElementManager().get(type);
+            if (element != null) {
+                element.clearEffects(player);
             }
         }
+
+        // Reset max health to default (20 HP) while preserving current health
+        var attr = player.getAttribute(Attribute.MAX_HEALTH);
+        if (attr != null && attr.getBaseValue() != 20.0) {
+            // Store current health before changing max health
+            double currentHealth = player.getHealth();
+            attr.setBaseValue(20.0);
+
+            // Restore current health (capped at new max if necessary)
+            if (!player.isDead() && currentHealth > 0) {
+                player.setHealth(Math.min(currentHealth, 20.0));
+            }
+        }
+
+        plugin.getLogger().fine("Cleared all element effects for " + player.getName() + " before advanced reroll");
     }
 }
