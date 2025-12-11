@@ -1,4 +1,4 @@
-package hs.elementPlugin.listeners.player;
+package hs.elementPlugin.listeners.core;
 
 import hs.elementPlugin.managers.ElementManager;
 import hs.elementPlugin.managers.TrustManager;

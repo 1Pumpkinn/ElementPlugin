@@ -1,4 +1,4 @@
-package hs.elementPlugin.listeners.items.listeners;
+package hs.elementPlugin.listeners.items.handlers;
 
 import hs.elementPlugin.managers.ItemManager;
 import org.bukkit.event.EventHandler;

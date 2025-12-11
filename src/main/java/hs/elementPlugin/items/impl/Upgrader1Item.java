@@ -1,4 +1,4 @@
-package hs.elementPlugin.items;
+package hs.elementPlugin.items.impl;
 
 import hs.elementPlugin.ElementPlugin;
 import org.bukkit.Material;

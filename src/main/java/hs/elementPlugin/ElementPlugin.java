@@ -22,10 +22,10 @@ import hs.elementPlugin.elements.abilities.impl.water.WaterWhirlpoolAbility;
 import hs.elementPlugin.elements.impl.earth.listeners.EarthOreDropListener;
 import hs.elementPlugin.elements.impl.metal.listeners.MetalChainStunListener;
 import hs.elementPlugin.listeners.items.DeathListener;
-import hs.elementPlugin.listeners.items.listeners.ElementCombatProjectileListener;
-import hs.elementPlugin.listeners.items.listeners.ElementItemDropListener;
-import hs.elementPlugin.listeners.items.listeners.ElementItemPickupListener;
-import hs.elementPlugin.listeners.items.listeners.ElementItemUseListener;
+import hs.elementPlugin.listeners.items.handlers.ElementCombatProjectileListener;
+import hs.elementPlugin.listeners.items.handlers.ElementItemDropListener;
+import hs.elementPlugin.listeners.items.handlers.ElementItemPickupListener;
+import hs.elementPlugin.listeners.items.handlers.ElementItemUseListener;
 import hs.elementPlugin.listeners.player.*;
 import hs.elementPlugin.managers.*;
 import org.bukkit.Bukkit;
@@ -132,7 +132,6 @@ public final class ElementPlugin extends JavaPlugin {
 
         pm.registerEvents(new hs.elementPlugin.elements.impl.air.listeners.FallDamageListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.air.listeners.AirJoinListener(elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.elements.impl.air.listeners.AirCombatListener(elementManager), this);
 
         pm.registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterDrowningImmunityListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.water.listeners.WaterJoinListener(elementManager), this);
