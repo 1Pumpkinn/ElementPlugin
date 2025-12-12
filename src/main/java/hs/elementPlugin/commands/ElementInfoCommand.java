@@ -146,8 +146,8 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         map.put(ElementType.WATER, new ElementInfo(
                 "Controllers of water and ocean currents",
                 Arrays.asList("Conduit Power", "Mine faster in water (Upgrade II)"),
-                "Water Prison", "Trap an enemy in a sphere of water", 75,
-                "Water Whirlpool", "Create a spinning vortex", 50
+                "Water Whirlpool", "Create a spinning vortex", 50,
+                "Water Prison", "Trap an enemy in a sphere of water", 75
         ));
 
         map.put(ElementType.EARTH, new ElementInfo(
@@ -159,7 +159,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
 
         map.put(ElementType.LIFE, new ElementInfo(
                 "Healers with power over vitality (Advanced Reroller)",
-                Arrays.asList("15 hearts total", "Regeneration I", "Crops grow faster (Upgrade II)"),
+                Arrays.asList("Regeneration I", "15 hearts total"),
                 "Regeneration Aura", "Heals you and allies around you", 50,
                 "Healing Beam", "Heal an ally directly", 75
         ));
@@ -173,7 +173,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
 
         map.put(ElementType.METAL, new ElementInfo(
                 "Warriors of steel and chains (Advanced Reroller)",
-                Arrays.asList("Haste I", "Arrow immunity (Upgrade II)"),
+                Arrays.asList("Resistance I", "Armor breaks slower (Upgrade II)"),
                 "Chain Reel", "Pull an enemy toward you", 50,
                 "Metal Dash", "Dash forward, damaging enemies", 75
         ));

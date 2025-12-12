@@ -56,9 +56,8 @@ public class PassiveEffectMonitor implements Listener {
             case LIFE -> checkLifeEffects(player);
             case DEATH -> checkDeathEffects(player);
             case METAL -> checkMetalEffects(player);
-        }}
-
-    // Replace the checkWaterEffects method with:
+        }
+    }
 
     private void checkWaterEffects(Player player, int upgradeLevel) {
         // Upside 1: Conduit Power (always active)
@@ -69,47 +68,56 @@ public class PassiveEffectMonitor implements Listener {
         var attr = player.getAttribute(org.bukkit.attribute.Attribute.SUBMERGED_MINING_SPEED);
         if (attr != null) {
             if (upgradeLevel >= 2) {
-                // Set to 1.2 (slightly faster than on land)
                 if (attr.getBaseValue() != 1.2) {
                     attr.setBaseValue(1.2);
                 }
             } else {
-                // Reset to default underwater speed
                 if (attr.getBaseValue() != 0.2) {
                     attr.setBaseValue(0.2);
-                }}}}
+                }
+            }
+        }
+    }
 
     private void checkFireEffects(Player player) {
         if (!hasEffect(player, PotionEffectType.FIRE_RESISTANCE)) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0, true, false));
-        }}
+        }
+    }
 
     private void checkEarthEffects(Player player) {
         if (!hasEffect(player, PotionEffectType.HERO_OF_THE_VILLAGE)) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, Integer.MAX_VALUE, 0, true, false));
-        }}
+        }
+    }
 
     private void checkLifeEffects(Player player) {
+        // Upside 1: Regeneration I
         if (!hasEffect(player, PotionEffectType.REGENERATION)) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, Integer.MAX_VALUE, 0, true, false));
         }
 
+        // Upside 2: 15 Hearts (30 HP)
         var attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null && attr.getBaseValue() != 30.0) {
             attr.setBaseValue(30.0);
             if (!player.isDead() && player.getHealth() > 30.0) {
                 player.setHealth(30.0);
-            }}}
+            }
+        }
+    }
 
     private void checkDeathEffects(Player player) {
         if (!hasEffect(player, PotionEffectType.NIGHT_VISION)) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0, true, false));
-        }}
+        }
+    }
 
     private void checkMetalEffects(Player player) {
-        if (!hasEffect(player, PotionEffectType.HASTE)) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, Integer.MAX_VALUE, 0, true, false));
-        }}
+        if (!hasEffect(player, PotionEffectType.RESISTANCE)) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, Integer.MAX_VALUE, 0, true, false));
+        }
+    }
 
     private boolean hasEffect(Player player, PotionEffectType type) {
         PotionEffect effect = player.getPotionEffect(type);

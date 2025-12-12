@@ -160,7 +160,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
 
         pm.registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalJoinListener(elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalArrowImmunityListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalArmorDurabilityListener(elementManager), this);
         pm.registerEvents(new MetalChainStunListener(), this);
 
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
