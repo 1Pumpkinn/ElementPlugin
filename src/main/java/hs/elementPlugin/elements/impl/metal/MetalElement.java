@@ -5,8 +5,8 @@ import hs.elementPlugin.elements.BaseElement;
 import hs.elementPlugin.elements.ElementContext;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.abilities.Ability;
-import hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility;
 import hs.elementPlugin.elements.abilities.impl.metal.MetalDashAbility;
+import hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -14,14 +14,14 @@ import org.bukkit.potion.PotionEffectType;
 
 public class MetalElement extends BaseElement {
     private final ElementPlugin plugin;
-    private final Ability ability1;
-    private final Ability ability2;
+    private final Ability ability1; // Now Metal Dash
+    private final Ability ability2; // Now Metal Chain
 
     public MetalElement(ElementPlugin plugin) {
         super(plugin);
         this.plugin = plugin;
-        this.ability1 = new MetalChainAbility(plugin);
-        this.ability2 = new MetalDashAbility(plugin);
+        this.ability1 = new MetalDashAbility(plugin); // Swapped: Dash is now ability 1
+        this.ability2 = new MetalChainAbility(plugin); // Swapped: Chain is now ability 2
     }
 
     @Override

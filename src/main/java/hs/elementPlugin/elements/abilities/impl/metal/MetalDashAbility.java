@@ -24,7 +24,7 @@ public class MetalDashAbility extends BaseAbility implements Listener {
     private final Map<UUID, Boolean> pendingStuns = new HashMap<>();
 
     public MetalDashAbility(ElementPlugin plugin) {
-        super("metal_dash", 75, 15, 2);
+        super("metal_dash", 50, 15, 1); // Now ability 1: 50 mana, level 1 required
         this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
@@ -104,7 +104,6 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                         double newHealth = Math.max(0, currentHealth - 4.0);
                         entity.setHealth(newHealth);
 
-
                         // Mark as damaged
                         damagedEntities.add(entity.getUniqueId());
                         hitEntity = true;
@@ -135,7 +134,6 @@ public class MetalDashAbility extends BaseAbility implements Listener {
         player.getWorld().spawnParticle(Particle.SMOKE, player.getLocation().add(0, 1, 0), 30, 0.3, 0.5, 0.3, 0.05, null, true);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_DAMAGE, 1.0f, 0.8f);
 
-
         // Remove from stunned set after 5 seconds
         new BukkitRunnable() {
             @Override
@@ -164,10 +162,6 @@ public class MetalDashAbility extends BaseAbility implements Listener {
             if (to != null && (from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ())) {
                 // Cancel the movement by teleporting back
                 event.setTo(from);
-
-                // Optional: Small visual feedback
-                if (player.getTicksLived() % 10 == 0) { // Only every 10 ticks to avoid spam
-                }
             }
         }
     }
@@ -179,6 +173,6 @@ public class MetalDashAbility extends BaseAbility implements Listener {
 
     @Override
     public String getDescription() {
-        return "Dash forward 20 blocks, damaging enemies you pass through. Missing all enemies stuns you for 5 seconds. (75 mana)";
+        return "Dash forward 20 blocks, damaging enemies you pass through. Missing all enemies stuns you for 5 seconds. (50 mana)";
     }
 }

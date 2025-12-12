@@ -21,7 +21,7 @@ public class MetalChainAbility extends BaseAbility {
     public static final String META_CHAINED_STUN = "metal_chain_stunned";
 
     public MetalChainAbility(ElementPlugin plugin) {
-        super("metal_chain", 50, 10, 1);
+        super("metal_chain", 75, 10, 2); // Now ability 2: 75 mana, level 2 required
         this.plugin = plugin;
     }
 
@@ -207,6 +207,6 @@ public class MetalChainAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return "Pull a targeted enemy towards you with a chain. (50 mana)";
+        return "Pull a targeted enemy towards you with a chain. (75 mana)";
     }
 }

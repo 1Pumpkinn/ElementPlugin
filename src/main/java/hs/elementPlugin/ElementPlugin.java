@@ -17,6 +17,8 @@ import hs.elementPlugin.elements.abilities.impl.frost.FrostNovaAbility;
 import hs.elementPlugin.elements.abilities.impl.frost.IceShardVolleyAbility;
 import hs.elementPlugin.elements.abilities.impl.life.TransfusionAbility;
 import hs.elementPlugin.elements.abilities.impl.life.LifeRegenAbility;
+import hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility;
+import hs.elementPlugin.elements.abilities.impl.metal.MetalDashAbility;
 import hs.elementPlugin.elements.abilities.impl.water.WaterPrisonAbility;
 import hs.elementPlugin.elements.abilities.impl.water.WaterWhirlpoolAbility;
 import hs.elementPlugin.elements.impl.earth.listeners.EarthOreDropListener;
@@ -92,8 +94,8 @@ public final class ElementPlugin extends JavaPlugin {
         abilityManager.registerAbility(ElementType.DEATH, 1, new DeathClockAbility(this));
         abilityManager.registerAbility(ElementType.DEATH, 2, new DeathSlashAbility(this));
 
-        abilityManager.registerAbility(ElementType.METAL, 1, new hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility(this));
-        abilityManager.registerAbility(ElementType.METAL, 2, new hs.elementPlugin.elements.abilities.impl.metal.MetalDashAbility(this));
+        abilityManager.registerAbility(ElementType.METAL, 1, new MetalDashAbility(this));
+        abilityManager.registerAbility(ElementType.METAL, 2, new MetalChainAbility(this));
 
         abilityManager.registerAbility(ElementType.FROST, 1, new IceShardVolleyAbility(this));
         abilityManager.registerAbility(ElementType.FROST, 2, new FrostNovaAbility(this));
