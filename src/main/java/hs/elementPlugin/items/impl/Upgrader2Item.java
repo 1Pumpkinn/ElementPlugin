@@ -1,6 +1,7 @@
 package hs.elementPlugin.items.impl;
 
 import hs.elementPlugin.ElementPlugin;
+import hs.elementPlugin.items.ItemKeys;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -36,15 +37,13 @@ public final class Upgrader2Item {
             plugin.getServer().removeRecipe(key);
             
             ShapedRecipe recipe = new ShapedRecipe(key, result);
-            recipe.shape("DFD", "WNB", "DAD");
+            recipe.shape("DGD", "NWN", "DGD");
             recipe.setIngredient('D', Material.DIAMOND_BLOCK);
+            recipe.setIngredient('G', Material.GOLD_BLOCK);
+            recipe.setIngredient('W', Material.WITHER_SKELETON_SKULL);
             recipe.setIngredient('N', Material.NETHERITE_INGOT);
 
-            recipe.setIngredient('F', Material.FIRE_CHARGE);
-            recipe.setIngredient('W', Material.WATER_BUCKET);
-            recipe.setIngredient('B', Material.GRASS_BLOCK);
-            recipe.setIngredient('A', Material.FEATHER);
-            
+
             boolean success = plugin.getServer().addRecipe(recipe);
             if (!success) {
                 plugin.getLogger().warning("Failed to register Upgrader II recipe");

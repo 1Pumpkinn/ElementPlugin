@@ -1,6 +1,7 @@
 package hs.elementPlugin.items.impl;
 
 import hs.elementPlugin.ElementPlugin;
+import hs.elementPlugin.items.ItemKeys;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;

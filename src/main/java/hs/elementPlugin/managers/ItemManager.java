@@ -51,13 +51,13 @@ public class ItemManager {
      * Creates an Upgrader1 item
      */
     public ItemStack createUpgrader1() {
-        return hs.elementPlugin.items.Upgrader1Item.make(plugin);
+        return hs.elementPlugin.items.impl.Upgrader1Item.make(plugin);
     }
 
     /**
      * Creates an Upgrader2 item
      */
     public ItemStack createUpgrader2() {
-        return hs.elementPlugin.items.Upgrader2Item.make(plugin);
+        return hs.elementPlugin.items.impl.Upgrader2Item.make(plugin);
     }
 }
