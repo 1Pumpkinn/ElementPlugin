@@ -20,8 +20,7 @@ public class DeathJoinListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (elementManager.getPlayerElement(player) == ElementType.DEATH) {
-            // Apply night vision effect for Death element users
-            player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0, true, false));
+            // nothing here because death passives are not a effect
         }
     }
 }

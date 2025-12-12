@@ -166,7 +166,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
 
         map.put(ElementType.DEATH, new ElementInfo(
                 "Masters of decay and darkness (Advanced Reroller)",
-                Arrays.asList("Permanent Night Vision + 25% more XP", "Wither on hit (35% chance, Upgrade II)"), // UPDATED
+                Arrays.asList("25% more XP", "Wither on hit (35% chance, Upgrade II)"), // UPDATED
                 "Wither Skull", "Fire an explosive wither skull", 75,
                 "Summon Undead", "Summon undead ally for 30s", 50
         ));

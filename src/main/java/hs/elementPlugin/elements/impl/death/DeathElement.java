@@ -36,40 +36,8 @@ public class DeathElement extends BaseElement {
         // Cancel any existing passive task for this player
         cancelPassiveTask(player);
 
-        // Upside 1: Permanent Night Vision
-        player.addPotionEffect(new PotionEffect(
-                PotionEffectType.NIGHT_VISION,
-                Integer.MAX_VALUE,
-                0,
-                true,
-                false,
-                false
-        ));
-
-        // Upside 2: Nearby enemies get hunger 1 in a 5x5 radius (if upgradeLevel >= 2)
         if (upgradeLevel >= 2) {
-            // Start a repeating task to continuously apply hunger to nearby enemies
-            org.bukkit.scheduler.BukkitTask task = new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (!player.isOnline()) {
-                        cancel();
-                        passiveTasks.remove(player.getUniqueId());
-                        return;
-                    }
 
-                    // Apply hunger to nearby players and mobs in 5x5 radius
-                    int radius = 5;
-                    for (Player other : player.getWorld().getNearbyPlayers(player.getLocation(), radius)) {
-                        if (!other.equals(player)) {
-                            other.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 40, 0, true, true, true)); // 2 seconds
-                        }
-                    }
-                }
-            }.runTaskTimer(plugin, 0L, 20L); // Every second
-
-            // Store the task reference
-            passiveTasks.put(player.getUniqueId(), task);
         }
     }
 
@@ -87,9 +55,6 @@ public class DeathElement extends BaseElement {
     public void clearEffects(Player player) {
         // Cancel passive task
         cancelPassiveTask(player);
-
-        // Remove Night Vision
-        player.removePotionEffect(PotionEffectType.NIGHT_VISION);
 
         // Clear ability metadata
         player.removeMetadata(DeathClockAbility.META_DEATH_CLOCK_ACTIVE, plugin);
