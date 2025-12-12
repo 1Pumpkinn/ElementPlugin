@@ -185,6 +185,11 @@ public class AdvancedRerollerListener implements Listener {
             }
         }
 
+        // Clear ALL active potion effects
+        for (org.bukkit.potion.PotionEffect effect : player.getActivePotionEffects()) {
+            player.removePotionEffect(effect.getType());
+        }
+
         // Reset max health to default (20 HP) while preserving current health
         var attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null && attr.getBaseValue() != 20.0) {
@@ -198,6 +203,18 @@ public class AdvancedRerollerListener implements Listener {
             }
         }
 
-        plugin.getLogger().fine("Cleared all element effects for " + player.getName() + " before advanced reroll");
+        // Reset underwater mining speed to default
+        var miningAttr = player.getAttribute(Attribute.SUBMERGED_MINING_SPEED);
+        if (miningAttr != null && miningAttr.getBaseValue() != 0.2) {
+            miningAttr.setBaseValue(0.2);
+        }
+
+        // Clear fire ticks
+        player.setFireTicks(0);
+
+        // Clear freeze ticks
+        player.setFreezeTicks(0);
+
+        plugin.getLogger().fine("Cleared all element effects and potion effects for " + player.getName() + " before advanced reroll");
     }
 }

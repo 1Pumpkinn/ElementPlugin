@@ -100,6 +100,7 @@ public class ElementManager {
     public void cancelRolling(Player player) {
         currentlyRolling.remove(player.getUniqueId());
     }
+
     public void rollAndAssign(Player player) {
         if (!beginRoll(player)) return;
 
