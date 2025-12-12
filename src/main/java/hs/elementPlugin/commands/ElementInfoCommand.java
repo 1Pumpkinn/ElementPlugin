@@ -152,7 +152,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
 
         map.put(ElementType.EARTH, new ElementInfo(
                 "Masters of stone and terrain",
-                Arrays.asList("Hero of The Village", "Double ore drops (Upgrade II)"),
+                Arrays.asList("Hero of The Village", "1.5x ore drops (Upgrade II)"), // UPDATED
                 "Earth Tunnel", "Dig tunnels through stone and dirt", 50,
                 "Earthquake", "Create a powerful earthquake that stuns all enemies within 10 blocks for 3 seconds", 75
         ));
@@ -166,7 +166,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
 
         map.put(ElementType.DEATH, new ElementInfo(
                 "Masters of decay and darkness (Advanced Reroller)",
-                Arrays.asList("Permanent Night Vision", "Raw/undead foods heal you"),
+                Arrays.asList("Permanent Night Vision + 25% more XP", "Wither on hit (35% chance, Upgrade II)"), // UPDATED
                 "Wither Skull", "Fire an explosive wither skull", 75,
                 "Summon Undead", "Summon undead ally for 30s", 50
         ));
@@ -180,7 +180,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
 
         map.put(ElementType.FROST, new ElementInfo(
                 "Controllers of ice and cold (Advanced Reroller)",
-                Arrays.asList("Speed II on snow", "Speed III on ice (Upgrade II)"),
+                Arrays.asList("Speed II on snow", "Speed III on ice + Freeze on hit (35% chance, Upgrade II)"), // UPDATED
                 "Frost Nova", "Create an explosion of ice around you", 50,
                 "Ice Shard Volley", "Fire 5 ice shards in a cone", 75
         ));

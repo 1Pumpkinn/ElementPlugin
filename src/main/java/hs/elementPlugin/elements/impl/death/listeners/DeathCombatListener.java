@@ -5,6 +5,7 @@ import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.elements.abilities.impl.death.DeathClockAbility;
 import hs.elementPlugin.elements.abilities.impl.death.DeathSlashAbility;
 import hs.elementPlugin.managers.ElementManager;
+import hs.elementPlugin.managers.TrustManager;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,10 +19,12 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 public class DeathCombatListener implements Listener {
     private final ElementPlugin plugin;
     private final ElementManager elementManager;
+    private final TrustManager trustManager;
 
-    public DeathCombatListener(ElementPlugin plugin, ElementManager elementManager) {
+    public DeathCombatListener(ElementPlugin plugin, ElementManager elementManager, TrustManager trustManager) {
         this.plugin = plugin;
         this.elementManager = elementManager;
+        this.trustManager = trustManager;
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -39,8 +42,10 @@ public class DeathCombatListener implements Listener {
             return;
         }
 
-        if (target instanceof Player targetPlayer) {
-            if (plugin.getTrustManager().isTrusted(attacker.getUniqueId(), targetPlayer.getUniqueId())) {
+        // Don't apply to trusted players (check both directions)
+        if (target instanceof Player victim) {
+            if (trustManager.isTrusted(attacker.getUniqueId(), victim.getUniqueId()) ||
+                    trustManager.isTrusted(victim.getUniqueId(), attacker.getUniqueId())) {
                 return;
             }
         }

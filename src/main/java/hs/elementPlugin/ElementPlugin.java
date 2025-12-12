@@ -125,7 +125,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new CombatListener(trustManager, elementManager), this);
         pm.registerEvents(new DeathListener(this, elementManager), this);
         pm.registerEvents(new hs.elementPlugin.listeners.AbilityListener(this, elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager, trustManager), this);
 
         pm.registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);
         pm.registerEvents(new ElementItemDropListener(this), this);
@@ -149,10 +149,8 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeRegenListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
 
-        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathRawFoodListener(elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathFriendlyMobListener(this, trustManager), this);
-
+        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager,trustManager ), this);        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathXPDropListener(elementManager), this);
         pm.registerEvents(new QuitListener(this, manaManager), this);
         pm.registerEvents(new GameModeListener(manaManager), this);
         pm.registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);

@@ -48,13 +48,22 @@ public class EarthOreDropListener implements Listener {
             return;
         }
 
-        // Don't double drops if using Silk Touch
+        // Don't multiply drops if using Silk Touch
         ItemStack tool = p.getInventory().getItemInMainHand();
         if (tool.containsEnchantment(Enchantment.SILK_TOUCH)) {
             return;
         }
 
-        // Double all dropped items (Fortune is already calculated at this point)
-        e.getItems().forEach(item -> item.getItemStack().setAmount(item.getItemStack().getAmount() * 2));
+        // Apply 1.5x multiplier (50% increase)
+        e.getItems().forEach(item -> {
+            int originalAmount = item.getItemStack().getAmount();
+            // 1.5x = amount + (amount / 2)
+            int newAmount = originalAmount + (originalAmount / 2);
+            // Ensure at least 1 extra item for odd amounts
+            if (originalAmount % 2 != 0) {
+                newAmount = originalAmount + (originalAmount / 2) + 1;
+            }
+            item.getItemStack().setAmount(newAmount);
+        });
     }
 }
