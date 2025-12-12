@@ -2,6 +2,7 @@ package hs.elementPlugin.elements.impl.metal.listeners;
 
 import hs.elementPlugin.elements.abilities.impl.metal.MetalChainAbility;
 import io.papermc.paper.event.entity.EntityMoveEvent;
+import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -26,14 +27,26 @@ public class MetalChainStunListener implements Listener {
 
             // Check if stun is still active
             if (System.currentTimeMillis() < stunUntil) {
-                // Cancel ALL movement (horizontal and vertical)
-                if (event.getFrom().getX() != event.getTo().getX() ||
-                        event.getFrom().getY() != event.getTo().getY() ||
-                        event.getFrom().getZ() != event.getTo().getZ()) {
-                    event.setCancelled(true);
+                // CRITICAL FIX: Allow falling but prevent horizontal movement
+                Location from = event.getFrom();
+                Location to = event.getTo();
 
-                    // Set velocity to zero to prevent all movement including jumping
-                    player.setVelocity(new Vector(0, 0, 0));
+                if (to != null) {
+                    // Only cancel horizontal movement (X and Z), allow vertical (Y) for falling
+                    if (from.getX() != to.getX() || from.getZ() != to.getZ()) {
+                        // Player tried to move horizontally - cancel it
+                        Location newTo = to.clone();
+                        newTo.setX(from.getX());
+                        newTo.setZ(from.getZ());
+                        event.setTo(newTo);
+                    }
+
+                    // Cancel upward movement (jumping), but allow falling
+                    if (to.getY() > from.getY()) {
+                        Location newTo = to.clone();
+                        newTo.setY(from.getY());
+                        event.setTo(newTo);
+                    }
                 }
             } else {
                 // Stun expired, remove metadata
@@ -59,11 +72,20 @@ public class MetalChainStunListener implements Listener {
 
             // Check if stun is still active
             if (System.currentTimeMillis() < stunUntil) {
-                // Cancel the movement
-                event.setCancelled(true);
+                // CRITICAL FIX: Allow falling but prevent horizontal movement
+                Location from = event.getFrom();
+                Location to = event.getTo();
 
-                // Set velocity to zero
-                entity.setVelocity(new Vector(0, 0, 0));
+                // Only cancel horizontal movement (X and Z), allow vertical (Y) for falling
+                if (from.getX() != to.getX() || from.getZ() != to.getZ()) {
+                    // Entity tried to move horizontally - cancel it
+                    event.setCancelled(true);
+                }
+
+                // Allow falling but prevent jumping (only if moving upward)
+                if (to.getY() > from.getY()) {
+                    event.setCancelled(true);
+                }
             } else {
                 // Stun expired, remove metadata
                 entity.removeMetadata(MetalChainAbility.META_CHAINED_STUN,
@@ -85,8 +107,10 @@ public class MetalChainStunListener implements Listener {
 
             // Check if stun is still active
             if (System.currentTimeMillis() < stunUntil) {
-                // Cancel velocity changes from damage
-                entity.setVelocity(new Vector(0, 0, 0));
+                // Cancel horizontal velocity changes from damage, but allow falling
+                Vector currentVelocity = entity.getVelocity();
+                // Only preserve downward Y velocity (falling), zero out X and Z
+                entity.setVelocity(new Vector(0, Math.min(currentVelocity.getY(), 0), 0));
             } else {
                 // Stun expired, remove metadata
                 entity.removeMetadata(MetalChainAbility.META_CHAINED_STUN,

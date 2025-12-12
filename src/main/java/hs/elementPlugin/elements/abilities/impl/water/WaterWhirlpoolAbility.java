@@ -83,7 +83,20 @@ public class WaterWhirlpoolAbility extends BaseAbility {
                     Location entityLoc = entity.getLocation();
                     double distance = entityLoc.distance(currentCenter);
 
-                    // If entity is within range, make them orbit
+                    // Apply pull force when within particle range (orbitRadius + 2)
+                    if (distance <= orbitRadius + 2) {
+                        // Stronger pull when farther away, weaker when closer
+                        double pullStrength = Math.min(distance / orbitRadius, 1.0) * 0.3;
+
+                        Vector pullDirection = currentCenter.toVector().subtract(entityLoc.toVector()).normalize();
+                        Vector pullForce = pullDirection.multiply(pullStrength);
+
+                        // Combine with current velocity for smooth pulling
+                        Vector currentVelocity = entity.getVelocity();
+                        entity.setVelocity(currentVelocity.add(pullForce));
+                    }
+
+                    // If entity is within orbit range, make them orbit
                     if (distance <= orbitRadius + 1) {
                         Vector orbitalVelocity = calculateOrbitalVelocity(
                                 currentCenter,
@@ -173,10 +186,27 @@ public class WaterWhirlpoolAbility extends BaseAbility {
         Vector tangent = new Vector(-toEntity.getZ(), 0, toEntity.getX()).normalize();
         velocity.add(tangent.multiply(orbitSpeed * targetRadius * 10));
 
-        // Keep entities grounded
-        if (entity.isOnGround()) {
+        // AGGRESSIVE GRAVITY: Check for holes every tick and apply strong fall
+        Location checkLoc = entity.getLocation().subtract(0, 0.1, 0);
+        boolean holeDetected = false;
+
+        // Check multiple blocks below to detect holes faster
+        for (int i = 0; i < 3; i++) {
+            Location belowLoc = entity.getLocation().subtract(0, i + 0.5, 0);
+            if (belowLoc.getBlock().getType().isAir() || !belowLoc.getBlock().getType().isSolid()) {
+                holeDetected = true;
+                break;
+            }
+        }
+
+        if (holeDetected) {
+            // There's a hole - apply strong downward velocity immediately
+            velocity.setY(-1.0);
+        } else if (entity.isOnGround()) {
+            // Entity is on ground - keep them there
             velocity.setY(-0.1);
         } else {
+            // No hole but not on ground - slight downward
             velocity.setY(Math.min(velocity.getY(), 0.1));
         }
 

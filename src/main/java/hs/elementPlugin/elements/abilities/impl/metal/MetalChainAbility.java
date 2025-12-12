@@ -120,23 +120,8 @@ public class MetalChainAbility extends BaseAbility {
                         mob.setAware(true);
                     }
 
-                    // Set metadata for stun duration (3 seconds = 3000ms)
-                    long stunDuration = 3000; // 3 seconds in milliseconds
-                    long stunUntil = System.currentTimeMillis() + stunDuration;
-                    finalTarget.setMetadata(META_CHAINED_STUN, new FixedMetadataValue(plugin, stunUntil));
-
-                    // Schedule metadata removal and re-enable AI after stun expires
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            if (finalTarget.isValid()) {
-                                finalTarget.removeMetadata(META_CHAINED_STUN, plugin);
-                                if (finalTarget instanceof Mob mob) {
-                                    mob.setAware(true);
-                                }
-                            }
-                        }
-                    }.runTaskLater(plugin, 60L); // 3 seconds = 60 ticks
+                    // Stun the target for 3 seconds
+                    stunEntity(finalTarget, 3);
 
                     // Visual/audio feedback for stun
                     player.getWorld().playSound(targetLoc, Sound.BLOCK_ANVIL_LAND, 1.0f, 2.0f);
@@ -198,6 +183,82 @@ public class MetalChainAbility extends BaseAbility {
         }.runTaskTimer(plugin, 0L, 1L);
 
         return true;
+    }
+
+    /**
+     * Stun an entity for a duration
+     */
+    private void stunEntity(LivingEntity entity, int durationSeconds) {
+        long stunUntil = System.currentTimeMillis() + (durationSeconds * 1000L);
+        entity.setMetadata(META_CHAINED_STUN, new FixedMetadataValue(plugin, stunUntil));
+
+        // Disable mob AI if it's a mob
+        if (entity instanceof Mob mob) {
+            mob.setAware(false);
+
+            // Re-enable AI after stun expires
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (mob.isValid()) {
+                        mob.setAware(true);
+                    }
+                }
+            }.runTaskLater(plugin, durationSeconds * 20L);
+        }
+
+        // Visual stun effect - periodic particles + gravity handling
+        new BukkitRunnable() {
+            int ticks = 0;
+            final int maxTicks = durationSeconds * 20;
+
+            @Override
+            public void run() {
+                if (!entity.isValid() || entity.isDead() || ticks >= maxTicks) {
+                    entity.removeMetadata(META_CHAINED_STUN, plugin);
+                    cancel();
+                    return;
+                }
+
+                if (!entity.hasMetadata(META_CHAINED_STUN)) {
+                    cancel();
+                    return;
+                }
+
+                long end = entity.getMetadata(META_CHAINED_STUN).get(0).asLong();
+                if (System.currentTimeMillis() >= end) {
+                    entity.removeMetadata(META_CHAINED_STUN, plugin);
+                    cancel();
+                    return;
+                }
+
+                // CRITICAL FIX: Apply gravity if there's a hole beneath entity
+                if (!entity.isOnGround()) {
+                    // Check if there's air/void beneath (entity should fall)
+                    Location checkLoc = entity.getLocation().subtract(0, 1, 0);
+                    if (checkLoc.getBlock().getType().isAir() || !checkLoc.getBlock().getType().isSolid()) {
+                        // Apply downward velocity to make them fall
+                        Vector gravity = new Vector(0, -0.5, 0);
+                        entity.setVelocity(gravity);
+                    }
+                } else {
+                    // Entity is on ground - keep them in place
+                    entity.setVelocity(new Vector(0, 0, 0));
+                }
+
+                // Show stun particles around head
+                if (ticks % 5 == 0) {
+                    entity.getWorld().spawnParticle(
+                            Particle.CRIT,
+                            entity.getEyeLocation(),
+                            5, 0.3, 0.3, 0.3, 0,
+                            null, true
+                    );
+                }
+
+                ticks++;
+            }
+        }.runTaskTimer(plugin, 0L, 1L);
     }
 
     @Override
