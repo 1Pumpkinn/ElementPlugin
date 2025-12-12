@@ -37,8 +37,8 @@ public class WaterElement extends BaseElement {
             var attr = player.getAttribute(org.bukkit.attribute.Attribute.SUBMERGED_MINING_SPEED);
             if (attr != null) {
                 // Default is 0.2 (5x slower underwater)
-                // Set to 1.2 (slightly faster than on land)
-                attr.setBaseValue(1.2);
+                // Set to 1.1 (slightly faster than on land)
+                attr.setBaseValue(1.1);
             }
         }
     }
