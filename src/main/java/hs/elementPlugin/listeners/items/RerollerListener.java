@@ -36,6 +36,13 @@ public class RerollerListener implements Listener {
                 return;
             }
 
+            // CRITICAL FIX: Prevent offhand usage
+            if (event.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) {
+                return;
+            }
+
+            event.setCancelled(true);
+
             // Check if player is already rolling
             if (plugin.getElementManager().isCurrentlyRolling(player)) {
                 player.sendMessage(net.kyori.adventure.text.Component.text("You are already rerolling your element!").color(net.kyori.adventure.text.format.NamedTextColor.RED));

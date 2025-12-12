@@ -50,6 +50,11 @@ public class AdvancedRerollerListener implements Listener {
         Action action = event.getAction();
         if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) return;
 
+        // CRITICAL FIX: Prevent offhand usage
+        if (event.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) {
+            return;
+        }
+
         event.setCancelled(true);
 
         var elementManager = plugin.getElementManager();
