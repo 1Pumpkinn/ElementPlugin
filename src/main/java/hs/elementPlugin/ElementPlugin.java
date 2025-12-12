@@ -46,8 +46,8 @@ public final class ElementPlugin extends JavaPlugin {
     // Constants
     private static final int MAX_MANA = 100;
     private static final int MANA_REGEN_PER_SECOND = 1;
-    private static final int ABILITY_1_COST = 50; // 50
-    private static final int ABILITY_2_COST = 75;  // 75
+    private static final int ABILITY_1_COST = 50;
+    private static final int ABILITY_2_COST = 75;
     private static final boolean UPGRADERS_DROP_ON_DEATH = true;
 
     @Override
@@ -149,7 +149,8 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeRegenListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
 
-        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager,trustManager ), this);        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager,trustManager ), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.death.listeners.DeathXPDropListener(elementManager), this);
         pm.registerEvents(new QuitListener(this, manaManager), this);
         pm.registerEvents(new GameModeListener(manaManager), this);
@@ -166,6 +167,10 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostNovaMovementListener(this), this);
+
+        // CRITICAL FIX: Register FrostCombatListener for freeze-on-hit effect
+        pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostCombatListener(elementManager, trustManager), this);
+
         getLogger().info("Listeners registered successfully");
     }
 

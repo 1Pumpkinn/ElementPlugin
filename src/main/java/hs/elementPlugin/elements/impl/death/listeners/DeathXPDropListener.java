@@ -2,6 +2,7 @@ package hs.elementPlugin.elements.impl.death.listeners;
 
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -10,7 +11,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 
 /**
  * Handles Death element XP boost
- * Death Upside 1: 25% more XP from mob kills
+ * Death Upside 1: 25% more XP from ALL entity kills (not just mobs)
  */
 public class DeathXPDropListener implements Listener {
     private final ElementManager elementManager;
@@ -21,8 +22,26 @@ public class DeathXPDropListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityDeath(EntityDeathEvent event) {
-        // Check if killer is a player
-        if (!(event.getEntity().getKiller() instanceof Player killer)) {
+        LivingEntity entity = event.getEntity();
+
+        // FIXED: Check if ANY player killed this entity (not just Player killer)
+        Player killer = entity.getKiller();
+
+        // If no direct killer, check for last damager
+        if (killer == null && entity.getLastDamageCause() != null) {
+            if (entity.getLastDamageCause() instanceof org.bukkit.event.entity.EntityDamageByEntityEvent damageEvent) {
+                if (damageEvent.getDamager() instanceof Player) {
+                    killer = (Player) damageEvent.getDamager();
+                } else if (damageEvent.getDamager() instanceof org.bukkit.entity.Projectile projectile) {
+                    if (projectile.getShooter() instanceof Player) {
+                        killer = (Player) projectile.getShooter();
+                    }
+                }
+            }
+        }
+
+        // If still no killer, return
+        if (killer == null) {
             return;
         }
 
@@ -40,5 +59,5 @@ public class DeathXPDropListener implements Listener {
             int bonusXP = (int) Math.ceil(originalXP * 0.25);
             event.setDroppedExp(originalXP + bonusXP);
         }
-        }
     }
+}

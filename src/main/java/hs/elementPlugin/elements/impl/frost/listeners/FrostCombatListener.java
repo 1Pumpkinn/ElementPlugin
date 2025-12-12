@@ -14,7 +14,7 @@ import org.bukkit.potion.PotionEffectType;
 
 /**
  * Handles Frost element combat interactions
- * Frost Upside 2: 35% chance to apply freeze effect when hitting enemies
+ * Frost Upside 2: 35% chance to apply freeze effect when hitting enemies (Upgrade II)
  */
 public class FrostCombatListener implements Listener {
     private final ElementManager elementManager;
@@ -42,7 +42,7 @@ public class FrostCombatListener implements Listener {
             return;
         }
 
-        // Check if they have Upgrade 2
+        // FIXED: Check if they have Upgrade 2
         if (playerData.getUpgradeLevel(ElementType.FROST) < 2) {
             return;
         }
@@ -54,7 +54,7 @@ public class FrostCombatListener implements Listener {
             }
         }
 
-        // 35% chance to apply freeze effect
+        // FIXED: 35% chance to apply freeze effect
         if (Math.random() < 0.35) {
             // Apply Slowness 4 for 3 seconds (freeze effect)
             target.addPotionEffect(new PotionEffect(
@@ -68,6 +68,13 @@ public class FrostCombatListener implements Listener {
 
             // Apply visual freeze ticks (makes entity look frozen)
             target.setFreezeTicks(target.getMaxFreezeTicks());
+
+            // Visual particles
+            target.getWorld().spawnParticle(
+                    org.bukkit.Particle.SNOWFLAKE,
+                    target.getLocation().add(0, 1, 0),
+                    20, 0.3, 0.5, 0.3, 0.05
+            );
         }
     }
 }

@@ -14,6 +14,10 @@ import org.bukkit.inventory.ItemStack;
 import java.util.EnumSet;
 import java.util.Set;
 
+/**
+ * Earth Upside 2: 1.5x ore drops (requires Upgrade II)
+ * This applies to ALL ore types when broken
+ */
 public class EarthOreDropListener implements Listener {
     private final ElementManager elements;
 
@@ -26,7 +30,8 @@ public class EarthOreDropListener implements Listener {
             Material.LAPIS_ORE, Material.DEEPSLATE_LAPIS_ORE,
             Material.DIAMOND_ORE, Material.DEEPSLATE_DIAMOND_ORE,
             Material.EMERALD_ORE, Material.DEEPSLATE_EMERALD_ORE,
-            Material.NETHER_GOLD_ORE, Material.NETHER_QUARTZ_ORE
+            Material.NETHER_GOLD_ORE, Material.NETHER_QUARTZ_ORE,
+            Material.ANCIENT_DEBRIS
     );
 
     public EarthOreDropListener(ElementManager elements) {
@@ -54,15 +59,15 @@ public class EarthOreDropListener implements Listener {
             return;
         }
 
-        // Apply 1.5x multiplier (50% increase)
+        // FIXED: Apply 1.5x multiplier (50% increase) to ALL drops
         e.getItems().forEach(item -> {
             int originalAmount = item.getItemStack().getAmount();
-            // 1.5x = amount + (amount / 2)
-            int newAmount = originalAmount + (originalAmount / 2);
-            // Ensure at least 1 extra item for odd amounts
-            if (originalAmount % 2 != 0) {
-                newAmount = originalAmount + (originalAmount / 2) + 1;
-            }
+
+            // Calculate 1.5x: amount + (amount / 2)
+            // For odd numbers, round up to ensure at least 1 extra item
+            int bonus = (originalAmount + 1) / 2; // This rounds up for odd numbers
+            int newAmount = originalAmount + bonus;
+
             item.getItemStack().setAmount(newAmount);
         });
     }
