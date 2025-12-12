@@ -129,60 +129,84 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
     private Map<ElementType, ElementInfo> initializeElementInfo() {
         Map<ElementType, ElementInfo> map = new EnumMap<>(ElementType.class);
 
-        map.put(ElementType.AIR, new ElementInfo(
-                "Masters of the sky and wind",
-                Arrays.asList("No fall damage", "5% chance to apply Slow Falling to enemies (Upgrade II)"),
-                "Air Blast", "Push enemies away with a gust of wind", 50,
-                "Air Dash", "Dash forward swiftly, pushing enemies aside", 75
-        ));
-
-        map.put(ElementType.FIRE, new ElementInfo(
-                "Wielders of flame and destruction",
-                Arrays.asList("Immune to fire/lava damage", "Apply Fire Aspect to all attacks (Upgrade II)"),
-                "Hellish Flames", "Set enemies ablaze with inextinguishable flames for 10s", 50,
-                "Phoenix Form", "Revive from death with 1 HP, explode and become invincible for 3s (5min cooldown)", 75
-        ));
-
         map.put(ElementType.WATER, new ElementInfo(
                 "Controllers of water and ocean currents",
-                Arrays.asList("Conduit Power", "Mine faster in water (Upgrade II)"),
+                Arrays.asList(
+                        "Conduit Power (underwater breathing + night vision)",
+                        "Mine faster underwater (Upgrade II)"
+                ),
                 "Water Whirlpool", "Create a spinning vortex", 50,
                 "Water Prison", "Trap an enemy in a sphere of water", 75
         ));
 
+        map.put(ElementType.FIRE, new ElementInfo(
+                "Wielders of flame and destruction",
+                Arrays.asList(
+                        "Fire Resistance (immune to fire/lava)",
+                        "Fire Aspect on all attacks (Upgrade II)"
+                ),
+                "Hellish Flames", "Set enemies ablaze with inextinguishable flames for 10s", 50,
+                "Phoenix Form", "Revive from death with 1 HP, explode and become invincible for 3s (5min cooldown)", 75
+        ));
+
         map.put(ElementType.EARTH, new ElementInfo(
                 "Masters of stone and terrain",
-                Arrays.asList("Hero of The Village", "1.5x ore drops (Upgrade II)"), // UPDATED
+                Arrays.asList(
+                        "Hero of The Village",
+                        "1.5x ore drops (Upgrade II)"
+                ),
                 "Earth Tunnel", "Dig tunnels through stone and dirt", 50,
                 "Earthquake", "Create a powerful earthquake that stuns all enemies within 10 blocks for 3 seconds", 75
         ));
 
+        map.put(ElementType.AIR, new ElementInfo(
+                "Masters of the sky and wind",
+                Arrays.asList(
+                        "No fall damage",
+                        "Immunity to powdered snow, soul sand, and slow blocks"
+                ),
+                "Air Blast", "Push enemies away with a gust of wind", 50,
+                "Air Dash", "Dash forward swiftly, pushing enemies aside", 75
+        ));
+
+        map.put(ElementType.FROST, new ElementInfo(
+                "Controllers of ice and cold (Advanced Reroller)",
+                Arrays.asList(
+                        "Speed III on ice",
+                        "Freeze on hit (35% chance, slows but no freeze damage, Upgrade II)"
+                ),
+                "Ice Shard Volley", "Fire 5 ice shards in a cone", 75,
+                "Frost Nova", "Create an explosion of ice around you", 50
+        ));
+
+        map.put(ElementType.METAL, new ElementInfo(
+                "Warriors of steel and chains (Advanced Reroller)",
+                Arrays.asList(
+                        "Resistance I",
+                        "Armor breaks slower (Upgrade II)"
+                ),
+                "Metal Dash", "Dash forward, damaging enemies", 50,
+                "Chain Reel", "Pull an enemy toward you", 75
+        ));
+
         map.put(ElementType.LIFE, new ElementInfo(
                 "Healers with power over vitality (Advanced Reroller)",
-                Arrays.asList("Regeneration I", "15 hearts total"),
+                Arrays.asList(
+                        "Regeneration I",
+                        "15 hearts total"
+                ),
                 "Regeneration Aura", "Heals you and allies around you", 50,
                 "Healing Beam", "Heal an ally directly", 75
         ));
 
         map.put(ElementType.DEATH, new ElementInfo(
                 "Masters of decay and darkness (Advanced Reroller)",
-                Arrays.asList("25% more XP", "Wither on hit (35% chance, Upgrade II)"), // UPDATED
-                "Wither Skull", "Fire an explosive wither skull", 75,
-                "Summon Undead", "Summon undead ally for 30s", 50
-        ));
-
-        map.put(ElementType.METAL, new ElementInfo(
-                "Warriors of steel and chains (Advanced Reroller)",
-                Arrays.asList("Resistance I", "Armor breaks slower (Upgrade II)"),
-                "Chain Reel", "Pull an enemy toward you", 50,
-                "Metal Dash", "Dash forward, damaging enemies", 75
-        ));
-
-        map.put(ElementType.FROST, new ElementInfo(
-                "Controllers of ice and cold (Advanced Reroller)",
-                Arrays.asList("Speed II on snow", "Speed III on ice + Freeze on hit (35% chance, Upgrade II)"), // UPDATED
-                "Frost Nova", "Create an explosion of ice around you", 50,
-                "Ice Shard Volley", "Fire 5 ice shards in a cone", 75
+                Arrays.asList(
+                        "25% more XP from kills",
+                        "Wither on hit (35% chance, Upgrade II)"
+                ),
+                "Death Clock", "Your next hit curses with blindness, weakness, and wither", 50,
+                "Death Slash", "Your next hit causes bleeding for 5 seconds", 75
         ));
 
         return map;

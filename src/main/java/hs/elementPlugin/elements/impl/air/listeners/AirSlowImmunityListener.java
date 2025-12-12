@@ -13,13 +13,13 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Air Upside 1: Immunity to slow-inducing blocks (except cobwebs)
+ * Air Upside 2: Immunity to slow-inducing blocks
  * Prevents slowdown from powdered snow, soul sand, honey blocks, etc.
  */
 public class AirSlowImmunityListener implements Listener {
     private final ElementManager elementManager;
 
-    // Blocks that normally slow players (except cobweb)
+    // Blocks that normally slow players
     private static final Set<Material> SLOW_BLOCKS = EnumSet.of(
             Material.POWDER_SNOW,
             Material.SOUL_SAND,
