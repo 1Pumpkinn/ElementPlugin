@@ -41,11 +41,12 @@ public class RerollerListener implements Listener {
                 return;
             }
 
+            // CRITICAL FIX: Always cancel the event to prevent spam
             event.setCancelled(true);
 
             // Check if player is already rolling
             if (plugin.getElementManager().isCurrentlyRolling(player)) {
-                player.sendMessage(net.kyori.adventure.text.Component.text("You are already rerolling your element!").color(net.kyori.adventure.text.format.NamedTextColor.RED));
+                // Don't send message on every spam click - just silently ignore
                 return;
             }
 

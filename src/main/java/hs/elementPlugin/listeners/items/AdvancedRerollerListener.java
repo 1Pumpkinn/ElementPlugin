@@ -55,13 +55,17 @@ public class AdvancedRerollerListener implements Listener {
             return;
         }
 
+        // CRITICAL FIX: Always cancel the event to prevent spam
         event.setCancelled(true);
 
         var elementManager = plugin.getElementManager();
         if (elementManager.isCurrentlyRolling(player)) {
-            player.sendMessage(ChatColor.RED + "You are already rerolling your element!");
+            // Don't send message on every spam click - just silently ignore
             return;
         }
+
+        // CRITICAL FIX: Mark player as rolling BEFORE consuming item
+        elementManager.setCurrentlyRolling(player, true);
 
         // CRITICAL FIX: Clear ALL element effects BEFORE starting roll
         clearAllElementEffects(player);
@@ -70,7 +74,7 @@ public class AdvancedRerollerListener implements Listener {
         ElementType current = pd.getCurrentElement();
         ElementType newElement = determineNewElement(current);
 
-        // Consume one reroller
+        // Consume one reroller AFTER marking as rolling
         item.setAmount(item.getAmount() - 1);
         if (item.getAmount() <= 0) player.getInventory().removeItem(item);
 

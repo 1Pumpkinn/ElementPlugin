@@ -108,10 +108,9 @@ public class PassiveEffectMonitor implements Listener {
     }
 
     private void checkDeathEffects(Player player) {
-        if (!hasEffect(player, PotionEffectType.NIGHT_VISION)) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0, true, false));
-        }
+
     }
+
 
     private void checkMetalEffects(Player player) {
         if (!hasEffect(player, PotionEffectType.RESISTANCE)) {

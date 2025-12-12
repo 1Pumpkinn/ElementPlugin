@@ -89,10 +89,17 @@ public class ElementManager {
         return currentlyRolling.contains(player.getUniqueId());
     }
 
+    public void setCurrentlyRolling(Player player, boolean rolling) {
+        if (rolling) {
+            currentlyRolling.add(player.getUniqueId());
+        } else {
+            currentlyRolling.remove(player.getUniqueId());
+        }
+    }
+
     public void cancelRolling(Player player) {
         currentlyRolling.remove(player.getUniqueId());
     }
-
     public void rollAndAssign(Player player) {
         if (!beginRoll(player)) return;
 
