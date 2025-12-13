@@ -64,8 +64,8 @@ public class RerollerListener implements Listener {
                 player.getInventory().removeItem(item);
             }
 
-            // Automatically reroll the element
-            plugin.getElementManager().rollAndAssign(player);
+            // GUARANTEED DIFFERENT: Automatically reroll to a DIFFERENT element
+            plugin.getElementManager().rollAndAssignDifferent(player);
             player.sendMessage(net.kyori.adventure.text.Component.text("Your element has been rerolled!").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
         }
     }

@@ -72,6 +72,8 @@ public class AdvancedRerollerListener implements Listener {
 
         PlayerData pd = elementManager.data(player.getUniqueId());
         ElementType current = pd.getCurrentElement();
+
+        // GUARANTEED DIFFERENT: Get a new element that's different from current
         ElementType newElement = determineNewElement(current);
 
         // Consume one reroller AFTER marking as rolling
@@ -81,7 +83,13 @@ public class AdvancedRerollerListener implements Listener {
         performAdvancedRoll(player, newElement);
     }
 
+    /**
+     * Determine a new element that is GUARANTEED to be different from current
+     * @param current The player's current element
+     * @return A random advanced element different from current
+     */
     private ElementType determineNewElement(ElementType current) {
+        // Always exclude the current element from options
         List<ElementType> availableElements = new ArrayList<>();
 
         for (ElementType element : ADVANCED_ELEMENTS) {
@@ -90,10 +98,13 @@ public class AdvancedRerollerListener implements Listener {
             }
         }
 
+        // If somehow we have no options (shouldn't happen with 4 advanced elements),
+        // return random from all (safety fallback)
         if (availableElements.isEmpty()) {
             return ADVANCED_ELEMENTS[random.nextInt(ADVANCED_ELEMENTS.length)];
         }
 
+        // Return random from available elements (guaranteed different from current)
         return availableElements.get(random.nextInt(availableElements.size()));
     }
 

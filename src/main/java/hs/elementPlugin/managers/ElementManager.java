@@ -101,6 +101,10 @@ public class ElementManager {
         currentlyRolling.remove(player.getUniqueId());
     }
 
+    /**
+     * Roll and assign a random element (can be any element)
+     * Used for first-time player assignment
+     */
     public void rollAndAssign(Player player) {
         if (!beginRoll(player)) return;
 
@@ -117,6 +121,61 @@ public class ElementManager {
                     endRoll(player);
                 })
                 .start();
+    }
+
+    /**
+     * Roll and assign a DIFFERENT element (never the same as current)
+     * Used by rerollers to ensure players get a new element
+     */
+    public void rollAndAssignDifferent(Player player) {
+        if (!beginRoll(player)) return;
+
+        PlayerData pd = data(player.getUniqueId());
+        ElementType currentElement = pd.getCurrentElement();
+
+        // Get a different element
+        ElementType targetElement = getRandomDifferentElement(currentElement, BASIC_ELEMENTS);
+
+        player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
+
+        new RollingAnimation(player, BASIC_ELEMENTS)
+                .withSteps(ROLL_STEPS)
+                .withDelay(ROLL_DELAY_TICKS)
+                .onComplete(() -> {
+                    // CRITICAL: Check if player is still online before assignment
+                    if (player.isOnline()) {
+                        assignRandomWithTitle(player, targetElement);
+                    }
+                    endRoll(player);
+                })
+                .start();
+    }
+
+    /**
+     * Get a random element that is different from the current one
+     * @param current The current element (can be null)
+     * @param availableElements The pool of elements to choose from
+     * @return A random element different from current, or random if current is null
+     */
+    private ElementType getRandomDifferentElement(ElementType current, ElementType[] availableElements) {
+        if (current == null || availableElements.length <= 1) {
+            return availableElements[random.nextInt(availableElements.length)];
+        }
+
+        // Build list of elements excluding the current one
+        List<ElementType> options = new ArrayList<>();
+        for (ElementType type : availableElements) {
+            if (type != current) {
+                options.add(type);
+            }
+        }
+
+        // If somehow we have no options (shouldn't happen), return random from all
+        if (options.isEmpty()) {
+            return availableElements[random.nextInt(availableElements.length)];
+        }
+
+        return options.get(random.nextInt(options.size()));
     }
 
     private void assignRandomWithTitle(Player player) {
