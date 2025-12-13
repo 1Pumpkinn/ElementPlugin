@@ -187,9 +187,11 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType oldElement = pd.getCurrentElement();
 
-        // FIXED: Only clear if actually changing elements
+        // CRITICAL FIX: Clear effects AGAIN right before assignment
+        // This catches any effects that may have been applied during rolling animation
         if (oldElement != null && oldElement != targetElement) {
             SmartEffectCleaner.clearForElementChange(plugin, player);
+            plugin.getLogger().info("Cleared effects before assigning " + targetElement + " (was: " + oldElement + ")");
         }
 
         int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
@@ -198,8 +200,13 @@ public class ElementManager {
         store.save(pd);
 
         showElementTitle(player, targetElement, "Element Assigned!");
+
+        // Apply new element effects AFTER data is saved
         applyUpsides(player);
+
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+
+        plugin.getLogger().info("Assigned " + targetElement + " to " + player.getName() + " (Upgrade: " + currentUpgradeLevel + ")");
     }
 
     public void assignRandomDifferentElement(Player player) {

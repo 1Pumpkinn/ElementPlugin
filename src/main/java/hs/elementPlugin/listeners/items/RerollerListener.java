@@ -10,6 +10,11 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
+/**
+ * Handles basic reroller usage
+ * Rerolls to basic elements: AIR, WATER, FIRE, EARTH
+ * Clears ALL infinite element effects (including advanced element effects)
+ */
 public class RerollerListener implements Listener {
     private final ElementPlugin plugin;
 
@@ -47,8 +52,11 @@ public class RerollerListener implements Listener {
                 return;
             }
 
-            // FIXED: Use SmartEffectCleaner to clear only old element effects
+            // CRITICAL: Clear ALL infinite element effects (including advanced element effects)
+            // This ensures switching from METAL/FROST/LIFE/DEATH to basic elements works correctly
             SmartEffectCleaner.clearForElementChange(plugin, player);
+
+            plugin.getLogger().info("Reroller used by " + player.getName() + " - cleared all infinite element effects");
 
             // Remove one reroller item
             if (item.getAmount() > 1) {
@@ -57,7 +65,7 @@ public class RerollerListener implements Listener {
                 player.getInventory().removeItem(item);
             }
 
-            // GUARANTEED DIFFERENT: Automatically reroll to a DIFFERENT element
+            // GUARANTEED DIFFERENT: Automatically reroll to a DIFFERENT basic element
             plugin.getElementManager().rollAndAssignDifferent(player);
             player.sendMessage(net.kyori.adventure.text.Component.text("Your element has been rerolled!").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
         }

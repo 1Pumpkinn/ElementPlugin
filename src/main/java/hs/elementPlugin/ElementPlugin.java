@@ -156,6 +156,8 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new GameModeListener(manaManager), this);
         pm.registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);
         pm.registerEvents(new PassiveEffectMonitor(this, elementManager), this);
+
+        // CRITICAL: Reroller listeners - properly registered
         pm.registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.AdvancedRerollerListener(this), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
@@ -171,7 +173,7 @@ public final class ElementPlugin extends JavaPlugin {
         // CRITICAL FIX: Register FrostCombatListener for freeze-on-hit effect
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostCombatListener(elementManager, trustManager), this);
 
-        getLogger().info("Listeners registered successfully");
+        getLogger().info("Listeners registered successfully (including Reroller and AdvancedReroller)");
     }
 
     private void registerRecipes() {

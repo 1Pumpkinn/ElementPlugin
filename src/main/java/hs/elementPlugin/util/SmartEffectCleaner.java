@@ -14,13 +14,20 @@ import java.util.*;
 /**
  * Smart utility class for cleaning up element effects
  * Only removes infinite effects that DON'T belong to the current element
+ * Properly handles both basic and advanced element effects
+ * FIXED: Now includes extensive logging to catch effect glitches
  */
 public class SmartEffectCleaner {
 
     // Map of which infinite effects belong to which elements
     private static final Map<ElementType, Set<PotionEffectType>> ELEMENT_EFFECTS = new EnumMap<>(ElementType.class);
 
+    // Threshold for considering an effect "infinite" (effects longer than this are element passives)
+    private static final int INFINITE_EFFECT_THRESHOLD = 1_000_000;
+
     static {
+        // BASIC ELEMENTS (Reroller)
+
         // Water: Conduit Power
         ELEMENT_EFFECTS.put(ElementType.WATER, Set.of(PotionEffectType.CONDUIT_POWER));
 
@@ -30,21 +37,28 @@ public class SmartEffectCleaner {
         // Earth: Hero of the Village
         ELEMENT_EFFECTS.put(ElementType.EARTH, Set.of(PotionEffectType.HERO_OF_THE_VILLAGE));
 
-        // Life: Regeneration
+        // Air: No infinite potion effects
+        ELEMENT_EFFECTS.put(ElementType.AIR, Set.of());
+
+        // ADVANCED ELEMENTS (Advanced Reroller)
+
+        // Life: Regeneration (infinite)
         ELEMENT_EFFECTS.put(ElementType.LIFE, Set.of(PotionEffectType.REGENERATION));
 
-        // Metal: Resistance
+        // Metal: Resistance (infinite)
         ELEMENT_EFFECTS.put(ElementType.METAL, Set.of(PotionEffectType.RESISTANCE));
 
-        // Air, Death, Frost have no infinite potion effects
-        ELEMENT_EFFECTS.put(ElementType.AIR, Set.of());
+        // Death: No infinite potion effects
         ELEMENT_EFFECTS.put(ElementType.DEATH, Set.of());
+
+        // Frost: No infinite potion effects (Speed is applied dynamically by FrostPassiveListener)
         ELEMENT_EFFECTS.put(ElementType.FROST, Set.of());
     }
 
     /**
      * Clean ONLY the infinite effects that don't belong to the current element
      * This preserves correct element effects while removing old ones
+     * ONLY removes effects with duration > INFINITE_EFFECT_THRESHOLD (1 million ticks)
      */
     public static void cleanInvalidInfiniteEffects(ElementPlugin plugin, Player player) {
         PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
@@ -62,8 +76,8 @@ public class SmartEffectCleaner {
         Collection<PotionEffect> activeEffects = player.getActivePotionEffects();
 
         for (PotionEffect effect : activeEffects) {
-            // Only check infinite effects (duration > 1 million ticks)
-            if (effect.getDuration() > 1_000_000) {
+            // CRITICAL: Only check INFINITE effects (duration > threshold)
+            if (effect.getDuration() > INFINITE_EFFECT_THRESHOLD) {
                 PotionEffectType type = effect.getType();
 
                 // If this infinite effect is NOT in the valid set for current element, remove it
@@ -82,14 +96,39 @@ public class SmartEffectCleaner {
     }
 
     /**
-     * Clear ALL element effects for element change (advanced reroller)
-     * This is used when switching elements - clears old, applies new
+     * Clear ALL element effects for element change (reroller/advanced reroller)
+     * This is used when switching elements - clears old infinite effects, applies new
+     * ONLY removes INFINITE effects (duration > threshold), preserves timed effects
+     * FIXED: Added comprehensive logging
      */
     public static void clearForElementChange(ElementPlugin plugin, Player player) {
-        // Clear ALL element-specific infinite effects
-        for (Set<PotionEffectType> effectSet : ELEMENT_EFFECTS.values()) {
-            for (PotionEffectType type : effectSet) {
-                player.removePotionEffect(type);
+        int clearedCount = 0;
+
+        plugin.getLogger().info("=== Starting clearForElementChange for " + player.getName() + " ===");
+
+        // Get all active effects BEFORE clearing
+        Collection<PotionEffect> activeEffects = new ArrayList<>(player.getActivePotionEffects());
+
+        plugin.getLogger().info("Active effects BEFORE clearing:");
+        for (PotionEffect effect : activeEffects) {
+            plugin.getLogger().info("  - " + effect.getType() + " (duration: " + effect.getDuration() + ", amplifier: " + effect.getAmplifier() + ")");
+        }
+
+        // Clear ONLY element-specific INFINITE effects
+        for (PotionEffect effect : activeEffects) {
+            // CRITICAL: Only remove INFINITE effects
+            if (effect.getDuration() > INFINITE_EFFECT_THRESHOLD) {
+                PotionEffectType type = effect.getType();
+
+                // Check if this is an element effect
+                boolean isElementEffect = ELEMENT_EFFECTS.values().stream()
+                        .anyMatch(set -> set.contains(type));
+
+                if (isElementEffect) {
+                    player.removePotionEffect(type);
+                    plugin.getLogger().info("  ✓ Cleared infinite element effect: " + type + " (duration: " + effect.getDuration() + ")");
+                    clearedCount++;
+                }
             }
         }
 
@@ -97,25 +136,20 @@ public class SmartEffectCleaner {
         clearElementMetadata(plugin, player);
 
         // Reset ALL attributes to default (will be set correctly after)
-        var healthAttr = player.getAttribute(Attribute.MAX_HEALTH);
-        if (healthAttr != null && healthAttr.getBaseValue() != 20.0) {
-            double currentHealth = player.getHealth();
-            healthAttr.setBaseValue(20.0);
-            if (!player.isDead() && currentHealth > 0) {
-                player.setHealth(Math.min(currentHealth, 20.0));
-            }
-        }
+        resetAttributesToDefault(player);
 
-        var miningAttr = player.getAttribute(Attribute.SUBMERGED_MINING_SPEED);
-        if (miningAttr != null) {
-            miningAttr.setBaseValue(0.2);
-        }
-
-        // Clear temporary effects
+        // Clear temporary effects (these are always safe to clear)
         player.setFireTicks(0);
         player.setFreezeTicks(0);
 
-        plugin.getLogger().fine("Cleared all element effects for " + player.getName() + " (element change)");
+        plugin.getLogger().info("=== Cleared " + clearedCount + " infinite element effects from " + player.getName() + " ===");
+
+        // Log remaining effects AFTER clearing
+        Collection<PotionEffect> remainingEffects = player.getActivePotionEffects();
+        plugin.getLogger().info("Remaining effects AFTER clearing:");
+        for (PotionEffect effect : remainingEffects) {
+            plugin.getLogger().info("  - " + effect.getType() + " (duration: " + effect.getDuration() + ")");
+        }
     }
 
     /**
@@ -136,32 +170,23 @@ public class SmartEffectCleaner {
     }
 
     /**
-     * Reset player attributes based on element
+     * Reset all element-related attributes to default values
      */
-    private static void resetAttributes(Player player, ElementType currentElement) {
-        // Max Health (only Life should have 30)
+    private static void resetAttributesToDefault(Player player) {
+        // Max Health (reset to 20 - Life will set to 30 if needed)
         var healthAttr = player.getAttribute(Attribute.MAX_HEALTH);
-        if (healthAttr != null) {
-            double targetHealth = (currentElement == ElementType.LIFE) ? 30.0 : 20.0;
-
-            if (healthAttr.getBaseValue() != targetHealth) {
-                double currentHealth = player.getHealth();
-                healthAttr.setBaseValue(targetHealth);
-
-                // Cap health if needed
-                if (!player.isDead() && currentHealth > 0) {
-                    player.setHealth(Math.min(currentHealth, targetHealth));
-                }
+        if (healthAttr != null && healthAttr.getBaseValue() != 20.0) {
+            double currentHealth = player.getHealth();
+            healthAttr.setBaseValue(20.0);
+            if (!player.isDead() && currentHealth > 0) {
+                player.setHealth(Math.min(currentHealth, 20.0));
             }
         }
 
-        // Underwater Mining Speed (only Water with Upgrade 2 should have 1.2)
+        // Underwater Mining Speed (reset to 0.2 - Water will set to 1.2 if needed)
         var miningAttr = player.getAttribute(Attribute.SUBMERGED_MINING_SPEED);
-        if (miningAttr != null) {
-            // Will be set correctly by applyUpsides if needed
-            if (currentElement != ElementType.WATER) {
-                miningAttr.setBaseValue(0.2);
-            }
+        if (miningAttr != null && miningAttr.getBaseValue() != 0.2) {
+            miningAttr.setBaseValue(0.2);
         }
     }
 
@@ -178,5 +203,12 @@ public class SmartEffectCleaner {
      */
     public static Set<PotionEffectType> getElementEffects(ElementType element) {
         return new HashSet<>(ELEMENT_EFFECTS.getOrDefault(element, Set.of()));
+    }
+
+    /**
+     * Check if an effect is considered "infinite" (element passive)
+     */
+    public static boolean isInfiniteEffect(PotionEffect effect) {
+        return effect.getDuration() > INFINITE_EFFECT_THRESHOLD;
     }
 }

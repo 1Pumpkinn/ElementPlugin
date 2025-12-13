@@ -20,6 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Handles advanced reroller usage
+ * Rerolls to advanced elements: METAL, FROST, LIFE, DEATH
+ * Clears ALL infinite element effects (including basic element effects)
+ */
 public class AdvancedRerollerListener implements Listener {
     private final ElementPlugin plugin;
     private final Random random = new Random();
@@ -66,8 +71,11 @@ public class AdvancedRerollerListener implements Listener {
         // CRITICAL FIX: Mark player as rolling BEFORE consuming item
         elementManager.setCurrentlyRolling(player, true);
 
-        // FIXED: Use SmartEffectCleaner to clear only old element effects
+        // CRITICAL: Clear ALL infinite element effects (including basic element effects)
+        // This ensures switching from AIR/WATER/FIRE/EARTH to advanced elements works correctly
         SmartEffectCleaner.clearForElementChange(plugin, player);
+
+        plugin.getLogger().info("Advanced Reroller used by " + player.getName() + " - cleared all infinite element effects");
 
         PlayerData pd = elementManager.data(player.getUniqueId());
         ElementType current = pd.getCurrentElement();
@@ -154,10 +162,11 @@ public class AdvancedRerollerListener implements Listener {
         PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
         ElementType oldElement = pd.getCurrentElement();
 
-        // CRITICAL FIX: Clear old element's infinite effects BEFORE assigning new element
-        if (oldElement != null && oldElement != element) {
-            SmartEffectCleaner.clearForElementChange(plugin, player);
-        }
+        // CRITICAL FIX: Clear effects AGAIN right before assignment to catch any glitched effects
+        // This ensures no effects from the rolling animation persist
+        SmartEffectCleaner.clearForElementChange(plugin, player);
+
+        plugin.getLogger().info("Assigning " + element + " to " + player.getName() + " (previous: " + oldElement + ")");
 
         // Preserve upgrade level
         int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
