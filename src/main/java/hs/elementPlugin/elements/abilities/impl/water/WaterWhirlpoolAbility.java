@@ -7,6 +7,7 @@ import org.bukkit.*;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 /**
  * Whirlpool - Creates a spinning vortex that makes enemies orbit around the player, dealing damage
+ * Only affects entities with line of sight (won't pull through walls/underground)
  */
 public class WaterWhirlpoolAbility extends BaseAbility {
     private final ElementPlugin plugin;
@@ -23,6 +25,34 @@ public class WaterWhirlpoolAbility extends BaseAbility {
     public WaterWhirlpoolAbility(ElementPlugin plugin) {
         super("water_whirlpool", 50, 20, 2);
         this.plugin = plugin;
+    }
+
+    /**
+     * Check if there's a clear line of sight from player to entity
+     * Returns false if there are solid blocks between them
+     */
+    private boolean hasLineOfSight(Player player, LivingEntity target) {
+        Location from = player.getEyeLocation();
+        Location to = target.getEyeLocation();
+
+        if (from.getWorld() != to.getWorld()) {
+            return false;
+        }
+
+        Vector direction = to.toVector().subtract(from.toVector());
+        double distance = direction.length();
+
+        // Ray trace for blocks between player and target
+        RayTraceResult result = from.getWorld().rayTraceBlocks(
+                from,
+                direction.normalize(),
+                distance,
+                FluidCollisionMode.NEVER,
+                true // Ignore passable blocks
+        );
+
+        // If we hit a block before reaching the target, line of sight is blocked
+        return result == null || result.getHitBlock() == null;
     }
 
     @Override
@@ -78,6 +108,13 @@ public class WaterWhirlpoolAbility extends BaseAbility {
                         )) {
                             continue;
                         }
+                    }
+
+                    // ⭐ LINE OF SIGHT CHECK - Don't pull entities through blocks/underground
+                    if (!hasLineOfSight(player, entity)) {
+                        // Entity is behind blocks or underground - remove from tracking
+                        entityAngles.remove(entity.getUniqueId());
+                        continue;
                     }
 
                     Location entityLoc = entity.getLocation();
@@ -169,22 +206,51 @@ public class WaterWhirlpoolAbility extends BaseAbility {
         double newAngle = currentAngle + orbitSpeed;
         entityAngles.put(entityId, newAngle);
 
-        // Calculate target position on orbit
-        double targetX = Math.cos(newAngle) * targetRadius;
-        double targetZ = Math.sin(newAngle) * targetRadius;
+        // Calculate target position on orbit with adjusted radius
+        double adjustedRadius = targetRadius;
+
+        // Check if orbit path would go into a block - if so, make orbit smaller
+        double checkAngle = newAngle;
+        for (int i = 0; i < 8; i++) { // Check 8 points around the orbit
+            double testAngle = checkAngle + (i * Math.PI / 4); // 45 degree intervals
+            double testX = Math.cos(testAngle) * targetRadius;
+            double testZ = Math.sin(testAngle) * targetRadius;
+
+            Location testLoc = center.clone().add(testX, 0, testZ);
+
+            // If this orbit position is inside a solid block, reduce the radius
+            if (testLoc.getBlock().getType().isSolid()) {
+                // Find safe radius by checking inward
+                for (double r = targetRadius * 0.9; r > 1.0; r -= 0.5) {
+                    Location innerLoc = center.clone().add(
+                            Math.cos(testAngle) * r,
+                            0,
+                            Math.sin(testAngle) * r
+                    );
+                    if (!innerLoc.getBlock().getType().isSolid()) {
+                        adjustedRadius = Math.min(adjustedRadius, r);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Use the adjusted (smaller) radius if orbit would hit blocks
+        double targetX = Math.cos(newAngle) * adjustedRadius;
+        double targetZ = Math.sin(newAngle) * adjustedRadius;
         Vector targetPos = new Vector(targetX, 0, targetZ);
 
         // Calculate velocity to move toward target position
         Vector velocity = targetPos.subtract(toEntity);
 
         // Add radial force to maintain orbit radius
-        double radiusError = targetRadius - currentDistance;
+        double radiusError = adjustedRadius - currentDistance;
         Vector radialForce = toEntity.clone().normalize().multiply(radiusError * 0.15);
         velocity.add(radialForce);
 
         // Add tangential velocity for circular motion
         Vector tangent = new Vector(-toEntity.getZ(), 0, toEntity.getX()).normalize();
-        velocity.add(tangent.multiply(orbitSpeed * targetRadius * 10));
+        velocity.add(tangent.multiply(orbitSpeed * adjustedRadius * 10));
 
         // AGGRESSIVE GRAVITY: Check for holes every tick and apply strong fall
         Location checkLoc = entity.getLocation().subtract(0, 0.1, 0);
