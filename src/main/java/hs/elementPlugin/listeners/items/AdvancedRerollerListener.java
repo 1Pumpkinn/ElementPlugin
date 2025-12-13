@@ -84,6 +84,7 @@ public class AdvancedRerollerListener implements Listener {
 
     /**
      * Determine a new element that is GUARANTEED to be different from current
+     *
      * @param current The player's current element
      * @return A random advanced element different from current
      */
@@ -151,6 +152,12 @@ public class AdvancedRerollerListener implements Listener {
         }
 
         PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
+        ElementType oldElement = pd.getCurrentElement();
+
+        // CRITICAL FIX: Clear old element's infinite effects BEFORE assigning new element
+        if (oldElement != null && oldElement != element) {
+            SmartEffectCleaner.clearForElementChange(plugin, player);
+        }
 
         // Preserve upgrade level
         int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
