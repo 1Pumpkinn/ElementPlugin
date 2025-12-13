@@ -1,11 +1,8 @@
 package hs.elementPlugin.listeners.core;
 
 import hs.elementPlugin.ElementPlugin;
-import hs.elementPlugin.data.PlayerData;
-import hs.elementPlugin.elements.Element;
-import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
-import org.bukkit.attribute.Attribute;
+import hs.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -17,10 +14,12 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 /**
  * Listener that ensures element passive effects are reapplied in situations where they might be removed.
+ * FIXED: Now uses SmartEffectCleaner for intelligent effect management
+ *
  * This handles:
  * - Player respawn (after death)
  * - Totem of Undying usage (clears potion effects)
- * - Player join (ensures effects are present on login AND clears stacked effects)
+ * - Player join (ensures effects are present on login)
  */
 public class PassiveEffectReapplyListener implements Listener {
     private final ElementPlugin plugin;
@@ -57,7 +56,7 @@ public class PassiveEffectReapplyListener implements Listener {
 
     /**
      * Reapply effects when player joins the server
-     * CRITICAL: Clear ALL old effects first to prevent stacking
+     * FIXED: Now uses SmartEffectCleaner to validate effects
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -68,28 +67,8 @@ public class PassiveEffectReapplyListener implements Listener {
     }
 
     /**
-     * Schedule a task to reapply element passive effects
-     *
-     * @param player The player to reapply effects for
-     * @param delayTicks Delay in ticks before reapplying
-     * @param reason Reason for reapplying (for logging)
-     */
-    private void scheduleReapply(Player player, long delayTicks, String reason) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (player.isOnline()) {
-                    // Reapply element effects
-                    elementManager.applyUpsides(player);
-                }
-            }
-        }.runTaskLater(plugin, delayTicks);
-    }
-
-    /**
      * Schedule a task to reapply element passive effects with validation
-     * This clears ALL element effects first, then applies only the current element's effects
-     * CRITICAL FIX: This prevents the reroller bug where old effects stack with new ones
+     * FIXED: Uses SmartEffectCleaner to clean invalid effects
      *
      * @param player The player to reapply effects for
      * @param delayTicks Delay in ticks before reapplying
@@ -100,62 +79,15 @@ public class PassiveEffectReapplyListener implements Listener {
             @Override
             public void run() {
                 if (player.isOnline()) {
-                    // CRITICAL: Clear ALL element effects first
-                    clearAllElementEffects(player);
+                    // FIXED: Use SmartEffectCleaner to remove invalid infinite effects
+                    SmartEffectCleaner.cleanInvalidInfiniteEffects(plugin, player);
 
-                    // Then apply only the current element's effects
+                    // Then reapply correct element effects
                     elementManager.applyUpsides(player);
+
                     plugin.getLogger().fine("Validated and reapplied element effects for " + player.getName() + " after " + reason);
                 }
             }
         }.runTaskLater(plugin, delayTicks);
-    }
-
-    /**
-     * Clear ALL possible element effects from a player
-     * This prevents effect stacking when switching elements
-     * CRITICAL FIX: This is the key to fixing the reroller disconnect bug
-     */
-    private void clearAllElementEffects(Player player) {
-        // Get current element
-        PlayerData pd = elementManager.data(player.getUniqueId());
-        ElementType currentElement = pd.getCurrentElement();
-
-        if (currentElement == null) {
-            plugin.getLogger().warning("Attempted to clear effects for player " + player.getName() + " with no element");
-            return;
-        }
-
-        // Clear effects from ALL elements (to prevent stacking)
-        for (ElementType type : ElementType.values()) {
-            // Skip the current element - we'll apply those effects next
-            if (type == currentElement) continue;
-
-            Element element = elementManager.get(type);
-            if (element != null) {
-                element.clearEffects(player);
-            }
-        }
-
-        // Reset Life max health if player is NOT Life element
-        if (currentElement != ElementType.LIFE) {
-            var attr = player.getAttribute(Attribute.MAX_HEALTH);
-            if (attr != null && attr.getBaseValue() > 20.0) {
-                attr.setBaseValue(20.0);
-                if (!player.isDead() && player.getHealth() > 20.0) {
-                    player.setHealth(20.0);
-                }
-            }
-        } else {
-            // Ensure Life element has 30 HP
-            var attr = player.getAttribute(Attribute.MAX_HEALTH);
-            if (attr != null && attr.getBaseValue() != 30.0) {
-                attr.setBaseValue(30.0);
-                // Don't modify current health, just cap it if needed
-                if (!player.isDead() && player.getHealth() > 30.0) {
-                    player.setHealth(30.0);
-                }
-            }
-        }
     }
 }

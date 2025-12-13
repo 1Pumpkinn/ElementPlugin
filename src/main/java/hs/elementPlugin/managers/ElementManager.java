@@ -12,9 +12,9 @@ import hs.elementPlugin.elements.impl.earth.EarthElement;
 import hs.elementPlugin.elements.impl.fire.FireElement;
 import hs.elementPlugin.elements.impl.life.LifeElement;
 import hs.elementPlugin.elements.impl.water.WaterElement;
+import hs.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -187,9 +187,9 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType oldElement = pd.getCurrentElement();
 
-        // CRITICAL: Clear ALL element effects before assigning new one
+        // FIXED: Only clear if actually changing elements
         if (oldElement != null && oldElement != targetElement) {
-            clearAllElementEffects(player);
+            SmartEffectCleaner.clearForElementChange(plugin, player);
         }
 
         int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
@@ -220,13 +220,16 @@ public class ElementManager {
         assignElementInternal(player, type, "Element Chosen!", true);
     }
 
+    /**
+     * FIXED: Set element using SmartEffectCleaner
+     */
     public void setElement(Player player, ElementType type) {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
-        // CRITICAL: Clear ALL element effects before changing
+        // FIXED: Use SmartEffectCleaner if changing elements
         if (old != null && old != type) {
-            clearAllElementEffects(player);
+            SmartEffectCleaner.clearForElementChange(plugin, player);
         }
 
         pd.setCurrentElement(type);
@@ -244,9 +247,9 @@ public class ElementManager {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
-        // CRITICAL: Clear ALL element effects before assigning
+        // FIXED: Use SmartEffectCleaner if changing elements
         if (old != null && old != type) {
-            clearAllElementEffects(player);
+            SmartEffectCleaner.clearForElementChange(plugin, player);
         }
 
         if (resetLevel) {
@@ -260,37 +263,6 @@ public class ElementManager {
         showElementTitle(player, type, titleText);
         applyUpsides(player);
         player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-    }
-
-    /**
-     * CRITICAL: Clear ALL element effects, not just the old one
-     * This prevents effect stacking from logout bugs
-     */
-    private void clearAllElementEffects(Player player) {
-        // Clear effects from EVERY element type
-        for (ElementType type : ElementType.values()) {
-            Element element = registry.get(type);
-            if (element != null) {
-                element.clearEffects(player);
-            }
-        }
-
-        // Reset max health to default (20 HP) while preserving current health
-        Optional.ofNullable(player.getAttribute(Attribute.MAX_HEALTH))
-                .ifPresent(attr -> {
-                    if (attr.getBaseValue() != 20.0) {
-                        // Store current health before changing max health
-                        double currentHealth = player.getHealth();
-                        attr.setBaseValue(20.0);
-
-                        // Restore current health (capped at new max if necessary)
-                        if (!player.isDead() && currentHealth > 0) {
-                            player.setHealth(Math.min(currentHealth, 20.0));
-                        }
-                    }
-                });
-
-        plugin.getLogger().fine("Cleared all element effects for " + player.getName());
     }
 
     public void applyUpsides(Player player) {

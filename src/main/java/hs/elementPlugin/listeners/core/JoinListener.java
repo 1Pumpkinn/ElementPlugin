@@ -2,11 +2,10 @@ package hs.elementPlugin.listeners.core;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.PlayerData;
-import hs.elementPlugin.elements.Element;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.managers.ElementManager;
 import hs.elementPlugin.managers.ManaManager;
-import org.bukkit.attribute.Attribute;
+import hs.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -49,7 +48,7 @@ public class JoinListener implements Listener {
                 }
             }.runTaskLater(plugin, 20L); // 1 second delay
         } else {
-            // CRITICAL FIX: Validate and clean up element effects on join
+            // FIXED: Use SmartEffectCleaner to validate effects on join
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -65,8 +64,8 @@ public class JoinListener implements Listener {
     }
 
     /**
-     * CRITICAL: Validate that player only has their current element's effects
-     * This fixes the bug where rerolling while logging out causes stacked effects
+     * FIXED: Validate that player only has their current element's effects
+     * Uses SmartEffectCleaner to remove invalid infinite effects
      */
     private void validateAndCleanupEffects(Player player) {
         PlayerData pd = elements.data(player.getUniqueId());
@@ -77,43 +76,12 @@ public class JoinListener implements Listener {
             return;
         }
 
-        // Step 1: Clear ALL element effects first (in case of stacking)
-        for (ElementType type : ElementType.values()) {
-            // Skip the current element - we'll apply those effects in step 2
-            if (type == currentElement) continue;
+        // Use SmartEffectCleaner to remove invalid infinite effects
+        SmartEffectCleaner.cleanInvalidInfiniteEffects(plugin, player);
 
-            Element element = elements.get(type);
-            if (element != null) {
-                element.clearEffects(player);
-            }
-        }
-
-        // Step 2: Ensure max health is correct
-        if (currentElement != ElementType.LIFE) {
-            // Reset to normal 20 HP if not Life element
-            var attr = player.getAttribute(Attribute.MAX_HEALTH);
-            if (attr != null && attr.getBaseValue() != 20.0) {
-                attr.setBaseValue(20.0);
-                // Cap health if it exceeds max
-                if (!player.isDead() && player.getHealth() > 20.0) {
-                    player.setHealth(20.0);
-                }
-            }
-        } else {
-            // Life element should have 30 HP
-            var attr = player.getAttribute(Attribute.MAX_HEALTH);
-            if (attr != null && attr.getBaseValue() != 30.0) {
-                attr.setBaseValue(30.0);
-                // Don't modify current health, just cap it if needed
-                if (!player.isDead() && player.getHealth() > 30.0) {
-                    player.setHealth(30.0);
-                }
-            }
-        }
-
-        // Step 3: Apply ONLY the current element's effects
+        // Apply current element effects to ensure everything is correct
         elements.applyUpsides(player);
 
-        plugin.getLogger().info("Validated and cleaned up element effects for " + player.getName() + " (Element: " + currentElement + ")");
+        plugin.getLogger().info("Validated element effects for " + player.getName() + " (Element: " + currentElement + ")");
     }
 }

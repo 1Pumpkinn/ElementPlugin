@@ -2,12 +2,11 @@ package hs.elementPlugin.listeners.items;
 
 import hs.elementPlugin.ElementPlugin;
 import hs.elementPlugin.data.PlayerData;
-import hs.elementPlugin.elements.Element;
 import hs.elementPlugin.elements.ElementType;
 import hs.elementPlugin.items.ItemKeys;
+import hs.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -67,8 +66,8 @@ public class AdvancedRerollerListener implements Listener {
         // CRITICAL FIX: Mark player as rolling BEFORE consuming item
         elementManager.setCurrentlyRolling(player, true);
 
-        // CRITICAL FIX: Clear ALL element effects BEFORE starting roll
-        clearAllElementEffects(player);
+        // FIXED: Use SmartEffectCleaner to clear only old element effects
+        SmartEffectCleaner.clearForElementChange(plugin, player);
 
         PlayerData pd = elementManager.data(player.getUniqueId());
         ElementType current = pd.getCurrentElement();
@@ -182,50 +181,5 @@ public class AdvancedRerollerListener implements Listener {
 
         // Mark rolling as complete
         plugin.getElementManager().cancelRolling(player);
-    }
-
-    /**
-     * CRITICAL: Clear ALL element effects to prevent stacking
-     */
-    private void clearAllElementEffects(Player player) {
-        // Clear effects from EVERY element type
-        for (ElementType type : ElementType.values()) {
-            Element element = plugin.getElementManager().get(type);
-            if (element != null) {
-                element.clearEffects(player);
-            }
-        }
-
-        // Clear ALL active potion effects
-        for (org.bukkit.potion.PotionEffect effect : player.getActivePotionEffects()) {
-            player.removePotionEffect(effect.getType());
-        }
-
-        // Reset max health to default (20 HP) while preserving current health
-        var attr = player.getAttribute(Attribute.MAX_HEALTH);
-        if (attr != null && attr.getBaseValue() != 20.0) {
-            // Store current health before changing max health
-            double currentHealth = player.getHealth();
-            attr.setBaseValue(20.0);
-
-            // Restore current health (capped at new max if necessary)
-            if (!player.isDead() && currentHealth > 0) {
-                player.setHealth(Math.min(currentHealth, 20.0));
-            }
-        }
-
-        // Reset underwater mining speed to default
-        var miningAttr = player.getAttribute(Attribute.SUBMERGED_MINING_SPEED);
-        if (miningAttr != null && miningAttr.getBaseValue() != 0.2) {
-            miningAttr.setBaseValue(0.2);
-        }
-
-        // Clear fire ticks
-        player.setFireTicks(0);
-
-        // Clear freeze ticks
-        player.setFreezeTicks(0);
-
-        plugin.getLogger().fine("Cleared all element effects and potion effects for " + player.getName() + " before advanced reroll");
     }
 }
