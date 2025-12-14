@@ -203,10 +203,6 @@ public class ElementManager {
 
         // Apply new element effects AFTER data is saved
         applyUpsides(player);
-
-        player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-
-        plugin.getLogger().info("Assigned " + targetElement + " to " + player.getName() + " (Upgrade: " + currentUpgradeLevel + ")");
     }
 
     public void assignRandomDifferentElement(Player player) {
@@ -269,7 +265,6 @@ public class ElementManager {
         store.save(pd);
         showElementTitle(player, type, titleText);
         applyUpsides(player);
-        player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
     }
 
     public void applyUpsides(Player player) {

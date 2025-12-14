@@ -190,8 +190,8 @@ public class AdvancedRerollerListener implements Listener {
 
         // Apply new element effects
         plugin.getElementManager().applyUpsides(player);
-        player.getWorld().playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-
+        player.playSound(player.getLocation(),
+                Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
         player.sendMessage(ChatColor.GREEN + "Your element has been rerolled to " +
                 ChatColor.AQUA + element.name() + ChatColor.GREEN + "!");
 
