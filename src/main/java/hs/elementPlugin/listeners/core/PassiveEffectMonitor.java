@@ -18,6 +18,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 /**
  * Monitors and maintains element passive effects continuously
+ * UPDATED: Added Haste for Metal, removed Resistance
  */
 public class PassiveEffectMonitor implements Listener {
 
@@ -108,13 +109,13 @@ public class PassiveEffectMonitor implements Listener {
     }
 
     private void checkDeathEffects(Player player) {
-
+        // Death has no passive potion effects
     }
 
-
     private void checkMetalEffects(Player player) {
-        if (!hasEffect(player, PotionEffectType.RESISTANCE)) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, Integer.MAX_VALUE, 0, true, false));
+        // UPDATED: Check for Haste instead of Resistance
+        if (!hasEffect(player, PotionEffectType.HASTE)) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, Integer.MAX_VALUE, 0, true, false));
         }
     }
 
@@ -147,4 +148,5 @@ public class PassiveEffectMonitor implements Listener {
                 checkAndRestoreEffects(player);
             }
         }, 2L);
-    }}
+    }
+}

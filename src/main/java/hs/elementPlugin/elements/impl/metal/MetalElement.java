@@ -14,14 +14,14 @@ import org.bukkit.potion.PotionEffectType;
 
 public class MetalElement extends BaseElement {
     private final ElementPlugin plugin;
-    private final Ability ability1; // Now Metal Dash
-    private final Ability ability2; // Now Metal Chain
+    private final Ability ability1;
+    private final Ability ability2;
 
     public MetalElement(ElementPlugin plugin) {
         super(plugin);
         this.plugin = plugin;
-        this.ability1 = new MetalDashAbility(plugin); // Swapped: Dash is now ability 1
-        this.ability2 = new MetalChainAbility(plugin); // Swapped: Chain is now ability 2
+        this.ability1 = new MetalDashAbility(plugin);
+        this.ability2 = new MetalChainAbility(plugin);
     }
 
     @Override
@@ -31,14 +31,11 @@ public class MetalElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: Resistance 1 permanently
-        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, Integer.MAX_VALUE, 0, true, false));
+        // Upside 1: Haste 1 permanently
+        player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, Integer.MAX_VALUE, 0, true, false));
 
-        // Upside 2: Armor breaks slower (Unbreaking effect on worn armor) - requires upgrade level 2
-        if (upgradeLevel >= 2) {
-            // This is handled passively - armor takes less durability damage
-            // Implemented in MetalArmorDurabilityListener
-        }
+        // Upside 2: Reduced knockback (handled in MetalKnockbackListener) - requires upgrade level 2
+        // No potion effect needed here
     }
 
     @Override
@@ -53,7 +50,7 @@ public class MetalElement extends BaseElement {
 
     @Override
     public void clearEffects(Player player) {
-        player.removePotionEffect(PotionEffectType.RESISTANCE);
+        player.removePotionEffect(PotionEffectType.HASTE);
         ability1.setActive(player, false);
         ability2.setActive(player, false);
     }
@@ -65,7 +62,7 @@ public class MetalElement extends BaseElement {
 
     @Override
     public String getDescription() {
-        return "Masters of chains and iron. Metal users are resilient and can dash through enemies.";
+        return "Masters of chains and iron. Metal users mine faster and resist knockback.";
     }
 
     @Override

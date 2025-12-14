@@ -125,6 +125,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
 
     /**
      * Initialize all element information
+     * UPDATED: Metal upsides changed to Haste 1 and reduced knockback
      */
     private Map<ElementType, ElementInfo> initializeElementInfo() {
         Map<ElementType, ElementInfo> map = new EnumMap<>(ElementType.class);
@@ -179,11 +180,12 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
                 "Frost Nova", "Create an explosion of ice around you", 50
         ));
 
+        // UPDATED: Metal with new upsides
         map.put(ElementType.METAL, new ElementInfo(
                 "Warriors of steel and chains (Advanced Reroller)",
                 Arrays.asList(
-                        "Resistance I",
-                        "Armor breaks slower (Upgrade II)"
+                        "Haste I",
+                        "Take 50% less knockback (Upgrade II)"
                 ),
                 "Metal Dash", "Dash forward, damaging enemies", 50,
                 "Chain Reel", "Pull an enemy toward you", 75

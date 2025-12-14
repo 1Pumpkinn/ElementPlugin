@@ -15,7 +15,7 @@ import java.util.*;
  * Smart utility class for cleaning up element effects
  * Only removes infinite effects that DON'T belong to the current element
  * Properly handles both basic and advanced element effects
- * FIXED: Now includes extensive logging to catch effect glitches
+ * UPDATED: Added Haste for Metal, removed Resistance
  */
 public class SmartEffectCleaner {
 
@@ -45,8 +45,8 @@ public class SmartEffectCleaner {
         // Life: Regeneration (infinite)
         ELEMENT_EFFECTS.put(ElementType.LIFE, Set.of(PotionEffectType.REGENERATION));
 
-        // Metal: Resistance (infinite)
-        ELEMENT_EFFECTS.put(ElementType.METAL, Set.of(PotionEffectType.RESISTANCE));
+        // Metal: Haste (infinite) - UPDATED
+        ELEMENT_EFFECTS.put(ElementType.METAL, Set.of(PotionEffectType.HASTE));
 
         // Death: No infinite potion effects
         ELEMENT_EFFECTS.put(ElementType.DEATH, Set.of());
@@ -99,7 +99,6 @@ public class SmartEffectCleaner {
      * Clear ALL element effects for element change (reroller/advanced reroller)
      * This is used when switching elements - clears old infinite effects, applies new
      * ONLY removes INFINITE effects (duration > threshold), preserves timed effects
-     * FIXED: Added comprehensive logging
      */
     public static void clearForElementChange(ElementPlugin plugin, Player player) {
         int clearedCount = 0;

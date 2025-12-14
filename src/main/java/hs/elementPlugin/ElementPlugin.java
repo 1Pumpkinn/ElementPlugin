@@ -157,23 +157,22 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);
         pm.registerEvents(new PassiveEffectMonitor(this, elementManager), this);
 
-        // CRITICAL: Reroller listeners - properly registered
+        // Reroller listeners
         pm.registerEvents(new hs.elementPlugin.listeners.items.RerollerListener(this), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.AdvancedRerollerListener(this), this);
         pm.registerEvents(new hs.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
 
+        // UPDATED: Metal listeners - Added knockback listener, removed armor durability
         pm.registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalJoinListener(elementManager), this);
-        pm.registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalArmorDurabilityListener(elementManager), this);
+        pm.registerEvents(new hs.elementPlugin.elements.impl.metal.listeners.MetalKnockbackListener(elementManager), this);
         pm.registerEvents(new MetalChainStunListener(), this);
 
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostNovaMovementListener(this), this);
-
-        // CRITICAL FIX: Register FrostCombatListener for freeze-on-hit effect
         pm.registerEvents(new hs.elementPlugin.elements.impl.frost.listeners.FrostCombatListener(elementManager, trustManager), this);
 
-        getLogger().info("Listeners registered successfully (including Reroller and AdvancedReroller)");
+        getLogger().info("Listeners registered successfully (Metal updated with knockback reduction)");
     }
 
     private void registerRecipes() {

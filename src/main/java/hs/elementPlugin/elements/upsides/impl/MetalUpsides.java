@@ -25,21 +25,21 @@ public class MetalUpsides extends BaseUpsides {
      */
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: Resistance 1 permanently
-        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, Integer.MAX_VALUE, 0, true, false));
+        // Upside 1: Haste 1 permanently
+        player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, Integer.MAX_VALUE, 0, true, false));
 
-        // Upside 2: Armor breaks slower (handled in MetalArmorDurabilityListener)
+        // Upside 2: Reduced knockback (handled in MetalKnockbackListener)
         // No passive effect needed here
     }
 
     /**
-     * Check if player should have armor durability reduction (Upside 2)
+     * Check if player should have reduced knockback (Upside 2)
      * Requires Upgrade 2
      *
      * @param player The Metal element player
-     * @return true if armor should break slower
+     * @return true if knockback should be reduced
      */
-    public boolean shouldReduceArmorDurability(Player player) {
+    public boolean shouldReduceKnockback(Player player) {
         return hasElement(player) && getUpgradeLevel(player) >= 2;
     }
 }

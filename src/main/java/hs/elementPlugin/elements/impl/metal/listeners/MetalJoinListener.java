@@ -20,8 +20,8 @@ public class MetalJoinListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (elementManager.getPlayerElement(player) == ElementType.METAL) {
-            // Apply resistance effect for Metal element users
-            player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, Integer.MAX_VALUE, 0, true, false));
+            // Apply haste effect for Metal element users
+            player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, Integer.MAX_VALUE, 0, true, false));
         }
     }
 }
