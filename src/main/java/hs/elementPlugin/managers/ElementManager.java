@@ -14,12 +14,17 @@ import hs.elementPlugin.elements.impl.life.LifeElement;
 import hs.elementPlugin.elements.impl.water.WaterElement;
 import hs.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.ChatColor;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Supplier;
 
+/**
+ * Manages element assignment, abilities, and passive effects
+ * Reroller logic has been moved to reroller listeners
+ */
 public class ElementManager {
 
     private final ElementPlugin plugin;
@@ -69,16 +74,21 @@ public class ElementManager {
                 .orElse(null);
     }
 
-    public void ensureAssigned(Player player) {
-        if (getPlayerElement(player) == null) {
-            rollAndAssign(player);
-        }
-    }
 
+    // ROLLING STATE MANAGEMENT (for rerollers)
+
+    /**
+     * Check if player is currently rolling for an element
+     * Used by reroller listeners to prevent double-usage
+     */
     public boolean isCurrentlyRolling(Player player) {
         return currentlyRolling.contains(player.getUniqueId());
     }
 
+    /**
+     * Set player's rolling state
+     * Called by reroller listeners during animation
+     */
     public void setCurrentlyRolling(Player player, boolean rolling) {
         if (rolling) {
             currentlyRolling.add(player.getUniqueId());
@@ -87,14 +97,19 @@ public class ElementManager {
         }
     }
 
+    /**
+     * Cancel rolling for a player
+     * Called when player disconnects during roll or animation completes
+     */
     public void cancelRolling(Player player) {
         currentlyRolling.remove(player.getUniqueId());
     }
 
-    /**
-     * Roll and assign a random basic element (for first-time player assignment)
-     * No animation - just picks and assigns
-     */
+    // ELEMENT ASSIGNMENT (DIRECT)
+
+     /**Assign a random basic element to a new player
+        No animation - just picks and assigns
+        Called on first join*/
     public void rollAndAssign(Player player) {
         ElementType[] basicElements = {
                 ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH
@@ -102,64 +117,72 @@ public class ElementManager {
 
         Random random = new Random();
         ElementType randomType = basicElements[random.nextInt(basicElements.length)];
+
         assignElement(player, randomType);
+
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+        player.sendMessage(ChatColor.GREEN + "You have been assigned " +
+                ChatColor.AQUA + randomType.name() + ChatColor.GREEN + "!");
     }
 
+    /** Directly assign an element to a player with title
+        Used by admin commands and first join */
     public void assignElement(Player player, ElementType type) {
-        assignElementInternal(player, type, "Element Chosen!", true);
-    }
-
-    /**
-     * FIXED: Set element using SmartEffectCleaner
-     */
-    public void setElement(Player player, ElementType type) {
         PlayerData pd = data(player.getUniqueId());
         ElementType old = pd.getCurrentElement();
 
-        // FIXED: Use SmartEffectCleaner if changing elements
+        // Clear old element effects if changing
         if (old != null && old != type) {
             SmartEffectCleaner.clearForElementChange(plugin, player);
         }
 
+        // Set new element (resets upgrade level)
         pd.setCurrentElement(type);
+        store.save(pd);
+
+        showElementTitle(player, type, "Element Chosen!");
+        // Apply new element effects
+        applyUpsides(player);
+    }
+
+    /** Set element without resetting upgrade level
+        Used by admin commands */
+    public void setElement(Player player, ElementType type) {
+        PlayerData pd = data(player.getUniqueId());
+        ElementType old = pd.getCurrentElement();
+
+        // Clear old element effects if changing
+        if (old != null && old != type) {
+            SmartEffectCleaner.clearForElementChange(plugin, player);
+        }
+
+        // Preserve upgrade level
+        int currentUpgrade = pd.getCurrentElementUpgradeLevel();
+        pd.setCurrentElementWithoutReset(type);
+        pd.setCurrentElementUpgradeLevel(currentUpgrade);
         store.save(pd);
 
         player.sendMessage(ChatColor.GOLD + "Your element is now " + ChatColor.AQUA + type.name());
         applyUpsides(player);
     }
 
-    /**
-     * Assign an element with title and optional level reset
-     * @param player The player to assign element to
-     * @param type The element type to assign
-     * @param titleText The title text to display
-     * @param resetLevel Whether to reset upgrade level (true) or preserve it (false)
-     */
-    public void assignElementWithTitle(Player player, ElementType type, String titleText, boolean resetLevel) {
-        assignElementInternal(player, type, titleText, resetLevel);
+
+     // Show element title to player
+    private void showElementTitle(Player player, ElementType type, String title) {
+        var titleObj = net.kyori.adventure.title.Title.title(
+                net.kyori.adventure.text.Component.text(title)
+                        .color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
+                net.kyori.adventure.text.Component.text(type.name())
+                        .color(net.kyori.adventure.text.format.NamedTextColor.AQUA),
+                net.kyori.adventure.title.Title.Times.times(
+                        java.time.Duration.ofMillis(500),
+                        java.time.Duration.ofMillis(2000),
+                        java.time.Duration.ofMillis(500)
+                ));
+        player.showTitle(titleObj);
     }
 
-    private void assignElementInternal(Player player, ElementType type, String titleText, boolean resetLevel) {
-        PlayerData pd = data(player.getUniqueId());
-        ElementType old = pd.getCurrentElement();
-
-        // FIXED: Use SmartEffectCleaner if changing elements
-        if (old != null && old != type) {
-            SmartEffectCleaner.clearForElementChange(plugin, player);
-        }
-
-        if (resetLevel) {
-            pd.setCurrentElement(type);
-        } else {
-            int currentUpgrade = pd.getCurrentElementUpgradeLevel();
-            pd.setCurrentElementWithoutReset(type);
-            pd.setCurrentElementUpgradeLevel(currentUpgrade);
-        }
-        store.save(pd);
-        showElementTitle(player, type, titleText);
-        applyUpsides(player);
-    }
-
+    // PASSIVE EFFECTS
     public void applyUpsides(Player player) {
         PlayerData pd = data(player.getUniqueId());
         ElementType type = pd.getCurrentElement();
@@ -172,6 +195,8 @@ public class ElementManager {
         }
     }
 
+
+    // ABILITY EXECUTION
     public boolean useAbility1(Player player) {
         return useAbility(player, 1);
     }
@@ -197,32 +222,5 @@ public class ElementManager {
                 .build();
 
         return number == 1 ? element.ability1(ctx) : element.ability2(ctx);
-    }
-
-    private void showElementTitle(Player player, ElementType type, String title) {
-        var titleObj = net.kyori.adventure.title.Title.title(
-                net.kyori.adventure.text.Component.text(title)
-                        .color(net.kyori.adventure.text.format.NamedTextColor.GOLD),
-                net.kyori.adventure.text.Component.text(type.name())
-                        .color(net.kyori.adventure.text.format.NamedTextColor.AQUA),
-                net.kyori.adventure.title.Title.Times.times(
-                        java.time.Duration.ofMillis(500),
-                        java.time.Duration.ofMillis(2000),
-                        java.time.Duration.ofMillis(500)
-                ));
-        player.showTitle(titleObj);
-    }
-
-    private boolean beginRoll(Player player) {
-        if (isCurrentlyRolling(player)) {
-            player.sendMessage(ChatColor.RED + "You are already rerolling your element!");
-            return false;
-        }
-        currentlyRolling.add(player.getUniqueId());
-        return true;
-    }
-
-    private void endRoll(Player player) {
-        currentlyRolling.remove(player.getUniqueId());
     }
 }
