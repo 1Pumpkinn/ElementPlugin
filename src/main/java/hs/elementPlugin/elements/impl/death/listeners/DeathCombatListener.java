@@ -67,9 +67,9 @@ public class DeathCombatListener implements Listener {
             DeathSlashAbility.applyBleeding(plugin, attacker, target);
         }
 
-        // FIXED: Apply wither on hit (35% chance) if player has Upgrade II
+        // FIXED: Apply wither on hit (10% chance) if player has Upgrade II
         if (data.getUpgradeLevel(ElementType.DEATH) >= 2) {
-            if (Math.random() < 0.35) { // 35% chance
+            if (Math.random() < 0.10) { // 10% chance
                 // Apply Wither II for 4 seconds (80 ticks)
                 target.addPotionEffect(new PotionEffect(
                         PotionEffectType.WITHER,

@@ -54,8 +54,8 @@ public class FrostCombatListener implements Listener {
             }
         }
 
-        // FIXED: 35% chance to apply freeze effect
-        if (Math.random() < 0.35) {
+        // FIXED: 10% chance to apply freeze effect
+        if (Math.random() < 0.10) {
             // Apply Slowness 4 for 3 seconds (freeze effect)
             target.addPotionEffect(new PotionEffect(
                     PotionEffectType.SLOWNESS,
