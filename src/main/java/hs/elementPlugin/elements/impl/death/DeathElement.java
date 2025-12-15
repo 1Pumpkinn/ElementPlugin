@@ -22,8 +22,8 @@ public class DeathElement extends BaseElement {
     public DeathElement(ElementPlugin plugin) {
         super(plugin);
         this.plugin = plugin;
-        this.ability1 = new DeathClockAbility(plugin);
-        this.ability2 = new DeathSlashAbility(plugin);
+        this.ability1 = new DeathSlashAbility(plugin);
+        this.ability2 = new DeathClockAbility(plugin);
     }
 
     @Override
