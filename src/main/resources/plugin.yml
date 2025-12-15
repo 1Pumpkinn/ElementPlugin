@@ -1,6 +1,6 @@
 name: ElementPlugin
 version: '1.1.16'
-main: hs.elementPlugin.ElementPlugin
+main: saturn.elementPlugin.ElementPlugin
 website: https://ko-fi.com/1pumpkinn
 api-version: '1.21.8'
 load: STARTUP
