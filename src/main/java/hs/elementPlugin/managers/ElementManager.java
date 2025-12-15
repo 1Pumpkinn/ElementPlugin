@@ -14,9 +14,7 @@ import hs.elementPlugin.elements.impl.life.LifeElement;
 import hs.elementPlugin.elements.impl.water.WaterElement;
 import hs.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.ChatColor;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -24,20 +22,12 @@ import java.util.function.Supplier;
 
 public class ElementManager {
 
-    private static final ElementType[] BASIC_ELEMENTS = {
-            ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH
-    };
-
-    private static final int ROLL_STEPS = 16;
-    private static final long ROLL_DELAY_TICKS = 3L;
-
     private final ElementPlugin plugin;
     private final DataStore store;
     private final ManaManager manaManager;
     private final TrustManager trustManager;
     private final Map<ElementType, Element> registry = new EnumMap<>(ElementType.class);
     private final Set<UUID> currentlyRolling = new HashSet<>();
-    private final Random random = new Random();
 
     public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager,
                           TrustManager trustManager) {
@@ -102,121 +92,17 @@ public class ElementManager {
     }
 
     /**
-     * Roll and assign a random element (can be any element)
-     * Used for first-time player assignment
+     * Roll and assign a random basic element (for first-time player assignment)
+     * No animation - just picks and assigns
      */
     public void rollAndAssign(Player player) {
-        if (!beginRoll(player)) return;
+        ElementType[] basicElements = {
+                ElementType.AIR, ElementType.WATER, ElementType.FIRE, ElementType.EARTH
+        };
 
-        player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
-
-        new RollingAnimation(player, BASIC_ELEMENTS)
-                .withSteps(ROLL_STEPS)
-                .withDelay(ROLL_DELAY_TICKS)
-                .onComplete(() -> {
-                    // CRITICAL: Check if player is still online before assignment
-                    if (player.isOnline()) {
-                        assignRandomWithTitle(player);
-                    }
-                    endRoll(player);
-                })
-                .start();
-    }
-
-    /**
-     * Roll and assign a DIFFERENT element (never the same as current)
-     * Used by rerollers to ensure players get a new element
-     */
-    public void rollAndAssignDifferent(Player player) {
-        if (!beginRoll(player)) return;
-
-        PlayerData pd = data(player.getUniqueId());
-        ElementType currentElement = pd.getCurrentElement();
-
-        // Get a different element
-        ElementType targetElement = getRandomDifferentElement(currentElement, BASIC_ELEMENTS);
-
-        player.playSound(player.getLocation(), Sound.UI_TOAST_IN, 1f, 1.2f);
-
-        new RollingAnimation(player, BASIC_ELEMENTS)
-                .withSteps(ROLL_STEPS)
-                .withDelay(ROLL_DELAY_TICKS)
-                .onComplete(() -> {
-                    // CRITICAL: Check if player is still online before assignment
-                    if (player.isOnline()) {
-                        assignRandomWithTitle(player, targetElement);
-                    }
-                    endRoll(player);
-                })
-                .start();
-    }
-
-    /**
-     * Get a random element that is different from the current one
-     * @param current The current element (can be null)
-     * @param availableElements The pool of elements to choose from
-     * @return A random element different from current, or random if current is null
-     */
-    private ElementType getRandomDifferentElement(ElementType current, ElementType[] availableElements) {
-        if (current == null || availableElements.length <= 1) {
-            return availableElements[random.nextInt(availableElements.length)];
-        }
-
-        // Build list of elements excluding the current one
-        List<ElementType> options = new ArrayList<>();
-        for (ElementType type : availableElements) {
-            if (type != current) {
-                options.add(type);
-            }
-        }
-
-        // If somehow we have no options (shouldn't happen), return random from all
-        if (options.isEmpty()) {
-            return availableElements[random.nextInt(availableElements.length)];
-        }
-
-        return options.get(random.nextInt(options.size()));
-    }
-
-    private void assignRandomWithTitle(Player player) {
-        ElementType randomType = BASIC_ELEMENTS[random.nextInt(BASIC_ELEMENTS.length)];
-        assignRandomWithTitle(player, randomType);
-    }
-
-    private void assignRandomWithTitle(Player player, ElementType targetElement) {
-        PlayerData pd = data(player.getUniqueId());
-        ElementType oldElement = pd.getCurrentElement();
-
-        // CRITICAL FIX: Clear effects AGAIN right before assignment
-        // This catches any effects that may have been applied during rolling animation
-        if (oldElement != null && oldElement != targetElement) {
-            SmartEffectCleaner.clearForElementChange(plugin, player);
-            plugin.getLogger().info("Cleared effects before assigning " + targetElement + " (was: " + oldElement + ")");
-        }
-
-        int currentUpgradeLevel = pd.getCurrentElementUpgradeLevel();
-        pd.setCurrentElementWithoutReset(targetElement);
-        pd.setCurrentElementUpgradeLevel(currentUpgradeLevel);
-        store.save(pd);
-
-        showElementTitle(player, targetElement, "Element Assigned!");
-
-        // Apply new element effects AFTER data is saved
-        applyUpsides(player);
-    }
-
-    public void assignRandomDifferentElement(Player player) {
-        ElementType current = getPlayerElement(player);
-
-        List<ElementType> available = Arrays.stream(BASIC_ELEMENTS)
-                .filter(type -> type != current)
-                .toList();
-
-        ElementType newType = available.isEmpty() ?
-                BASIC_ELEMENTS[random.nextInt(BASIC_ELEMENTS.length)] :
-                available.get(random.nextInt(available.size()));
-
-        assignElementInternal(player, newType, "Element Rerolled!");
+        Random random = new Random();
+        ElementType randomType = basicElements[random.nextInt(basicElements.length)];
+        assignElement(player, randomType);
     }
 
     public void assignElement(Player player, ElementType type) {
@@ -242,8 +128,15 @@ public class ElementManager {
         applyUpsides(player);
     }
 
-    private void assignElementInternal(Player player, ElementType type, String titleText) {
-        assignElementInternal(player, type, titleText, false);
+    /**
+     * Assign an element with title and optional level reset
+     * @param player The player to assign element to
+     * @param type The element type to assign
+     * @param titleText The title text to display
+     * @param resetLevel Whether to reset upgrade level (true) or preserve it (false)
+     */
+    public void assignElementWithTitle(Player player, ElementType type, String titleText, boolean resetLevel) {
+        assignElementInternal(player, type, titleText, resetLevel);
     }
 
     private void assignElementInternal(Player player, ElementType type, String titleText, boolean resetLevel) {
@@ -331,59 +224,5 @@ public class ElementManager {
 
     private void endRoll(Player player) {
         currentlyRolling.remove(player.getUniqueId());
-    }
-
-    private class RollingAnimation {
-        private final Player player;
-        private final ElementType[] elements;
-        private int steps = 16;
-        private long delayTicks = 3L;
-        private Runnable onComplete;
-
-        RollingAnimation(Player player, ElementType[] elements) {
-            this.player = player;
-            this.elements = elements;
-        }
-
-        RollingAnimation withSteps(int steps) {
-            this.steps = steps;
-            return this;
-        }
-
-        RollingAnimation withDelay(long ticks) {
-            this.delayTicks = ticks;
-            return this;
-        }
-
-        RollingAnimation onComplete(Runnable callback) {
-            this.onComplete = callback;
-            return this;
-        }
-
-        void start() {
-            new BukkitRunnable() {
-                int tick = 0;
-
-                @Override
-                public void run() {
-                    // CRITICAL: Check if player disconnected during animation
-                    if (!player.isOnline() || !isCurrentlyRolling(player)) {
-                        endRoll(player);
-                        cancel();
-                        return;
-                    }
-
-                    if (tick >= steps) {
-                        if (onComplete != null) onComplete.run();
-                        cancel();
-                        return;
-                    }
-
-                    String randomName = elements[random.nextInt(elements.length)].name();
-                    player.sendTitle(ChatColor.GOLD + "Rolling...", ChatColor.AQUA + randomName, 0, 10, 0);
-                    tick++;
-                }
-            }.runTaskTimer(plugin, 0L, delayTicks);
-        }
     }
 }
