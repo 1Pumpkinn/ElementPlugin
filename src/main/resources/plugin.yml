@@ -9,8 +9,12 @@ contributors: [ ___Vishini ]
 
 commands:
   trust:
-    description: Manage trust relationships
-    usage: /trust <list|add|remove|accept|deny> [player]
+    description: Manage individual trust relationships
+    usage: /trust <list|accept|deny|remove> [player]
+
+  team:
+    description: Manage team relationships and customization
+    usage: /team <create|invite|accept|leave|kick|disband|color|bold|italic> [args]
 
   element:
     description: Element admin commands
@@ -50,14 +54,3 @@ permissions:
     description: Allows use of mana management commands
     default: op
 
-  elementsmp.customblock:
-    description: Allows use of the customblock command
-    default: op
-
-  elementsmp.pedestal.admin:
-    description: Allows full admin control of pedestals
-    default: op
-
-  elementsmp.pedestal.bypass:
-    description: Allows bypassing pedestal ownership checks
-    default: op

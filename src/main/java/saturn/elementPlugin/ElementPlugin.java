@@ -110,7 +110,13 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("elements").setExecutor(elementInfoCmd);
         getCommand("elements").setTabCompleter(elementInfoCmd);
 
+        // UPDATED: Separate trust and team commands
         getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
+        getCommand("trust").setTabCompleter(new TrustCommand(this, trustManager));
+
+        getCommand("team").setExecutor(new TeamCommand(this, trustManager));
+        getCommand("team").setTabCompleter(new TeamCommand(this, trustManager));
+
         getCommand("element").setExecutor(new ElementCommand(this));
         getCommand("mana").setExecutor(new ManaCommand(manaManager));
         getCommand("util").setExecutor(new UtilCommand(this));
@@ -185,7 +191,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostNovaMovementListener(this), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostCombatListener(elementManager, trustManager), this);
 
-        getLogger().info("Listeners registered successfully (Enhanced trust system with tab list support)");
+        getLogger().info("Listeners registered successfully (Trust & Team commands separated)");
     }
 
     // Getters
