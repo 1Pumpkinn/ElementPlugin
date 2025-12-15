@@ -3,7 +3,7 @@ package saturn.elementPlugin.elements.abilities.impl.air;
 import saturn.elementPlugin.elements.ElementContext;
 import saturn.elementPlugin.elements.abilities.BaseAbility;
 import saturn.elementPlugin.managers.ManaManager;
-import saturn.elementPlugin.managers.TrustManager;
+import saturn.elementPlugin.managers.TeamManager;
 import org.bukkit.*;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -22,7 +22,7 @@ public class AirBlastAbility extends BaseAbility {
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
         ManaManager mana = context.getManaManager();
-        TrustManager trust = context.getTrustManager();
+        TeamManager trust = context.getTrustManager();
         int cost = 20;
         
         if (!mana.hasMana(player, cost)) {

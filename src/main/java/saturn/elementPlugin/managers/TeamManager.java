@@ -1,25 +1,22 @@
 package saturn.elementPlugin.managers;
 
 import saturn.elementPlugin.ElementPlugin;
-import saturn.elementPlugin.managers.trust.IndividualTrustManager;
-import saturn.elementPlugin.managers.trust.TeamManager;
 import org.bukkit.entity.Player;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
- * Main TrustManager - delegates to specialized managers
- * This is the main API that other classes use
+ * Main TrustManager - now ONLY handles teams (individual trust removed)
+ * Delegates everything to TeamManager
  */
-public class TrustManager {
+public class TeamManager {
     private final ElementPlugin plugin;
-    private final IndividualTrustManager individualTrust;
-    private final TeamManager teamManager;
+    private final saturn.elementPlugin.managers.trust.TeamManager teamManager;
 
-    public TrustManager(ElementPlugin plugin) {
+    public TeamManager(ElementPlugin plugin) {
         this.plugin = plugin;
-        this.individualTrust = new IndividualTrustManager(plugin);
-        this.teamManager = new TeamManager(plugin);
+        this.teamManager = new saturn.elementPlugin.managers.trust.TeamManager(plugin);
     }
 
     // ========================================
@@ -27,7 +24,7 @@ public class TrustManager {
     // ========================================
 
     /**
-     * Check if two players are trusted (either through team or individual trust)
+     * Check if two players are trusted (team or ally relationship)
      * This is the MAIN method used by all element abilities
      */
     public boolean isTrusted(UUID player1, UUID player2) {
@@ -37,40 +34,15 @@ public class TrustManager {
         // Check if they're on the same team (automatic trust)
         if (teamManager.areOnSameTeam(player1, player2)) return true;
 
-        // Check individual mutual trust
-        return individualTrust.areMutuallyTrusted(player1, player2);
+        // Check if they're allies
+        return teamManager.areAllies(player1, player2);
     }
 
-    // ========================================
-    // INDIVIDUAL TRUST - Delegate to IndividualTrustManager
-    // ========================================
-
-    public java.util.Set<UUID> getTrusted(UUID owner) {
-        return individualTrust.getTrusted(owner);
-    }
-
-    public void addMutualTrust(UUID a, UUID b) {
-        individualTrust.addMutualTrust(a, b);
-    }
-
-    public void removeMutualTrust(UUID a, UUID b) {
-        individualTrust.removeMutualTrust(a, b);
-    }
-
-    public void addPending(UUID target, UUID requestor) {
-        individualTrust.addPending(target, requestor);
-    }
-
-    public boolean hasPending(UUID target, UUID requestor) {
-        return individualTrust.hasPending(target, requestor);
-    }
-
-    public void clearPending(UUID target, UUID requestor) {
-        individualTrust.clearPending(target, requestor);
-    }
-
-    public java.util.List<String> getTrustedNames(UUID owner) {
-        return individualTrust.getTrustedNames(owner);
+    /**
+     * Get list of team member names for display (backwards compatibility)
+     */
+    public List<String> getTrustedNames(UUID owner) {
+        return teamManager.getTeamMemberNames(owner);
     }
 
     // ========================================
@@ -118,36 +90,56 @@ public class TrustManager {
     }
 
     // ========================================
-    // TEAM CUSTOMIZATION - Delegate to TeamManager
+    // ALLY MANAGEMENT - New functionality
     // ========================================
 
     /**
-     * Set team color
-     * @param leader Team leader
-     * @param teamName Team name
-     * @param color Color string (named or hex)
-     * @return true if successful
+     * Request to ally with another team
      */
+    public boolean requestAlly(Player requester, String targetTeamName) {
+        return teamManager.requestAlly(requester, targetTeamName);
+    }
+
+    /**
+     * Accept an ally request
+     */
+    public boolean acceptAlly(Player accepter, String requestingTeamName) {
+        return teamManager.acceptAlly(accepter, requestingTeamName);
+    }
+
+    /**
+     * Remove ally relationship between teams
+     */
+    public boolean removeAlly(Player player, String allyTeamName) {
+        return teamManager.removeAlly(player, allyTeamName);
+    }
+
+    /**
+     * Get all allied teams for a player's team
+     */
+    public java.util.Set<String> getAlliedTeams(UUID playerUUID) {
+        return teamManager.getAlliedTeams(playerUUID);
+    }
+
+    /**
+     * Get pending ally requests for a player's team
+     */
+    public java.util.Set<String> getPendingAllyRequests(UUID playerUUID) {
+        return teamManager.getPendingAllyRequests(playerUUID);
+    }
+
+    // ========================================
+    // TEAM CUSTOMIZATION - Delegate to TeamManager
+    // ========================================
+
     public boolean setTeamColor(Player leader, String teamName, String color) {
         return teamManager.setTeamColor(leader, teamName, color);
     }
 
-    /**
-     * Toggle team bold formatting
-     * @param leader Team leader
-     * @param teamName Team name
-     * @return true if successful
-     */
     public boolean toggleTeamBold(Player leader, String teamName) {
         return teamManager.toggleTeamBold(leader, teamName);
     }
 
-    /**
-     * Toggle team italic formatting
-     * @param leader Team leader
-     * @param teamName Team name
-     * @return true if successful
-     */
     public boolean toggleTeamItalic(Player leader, String teamName) {
         return teamManager.toggleTeamItalic(leader, teamName);
     }

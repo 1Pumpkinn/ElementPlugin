@@ -1,7 +1,7 @@
 package saturn.elementPlugin.commands;
 
 import saturn.elementPlugin.ElementPlugin;
-import saturn.elementPlugin.managers.TrustManager;
+import saturn.elementPlugin.managers.TeamManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
  */
 public class TrustCommand implements CommandExecutor, TabCompleter {
     private final ElementPlugin plugin;
-    private final TrustManager trust;
+    private final TeamManager trust;
 
-    public TrustCommand(ElementPlugin plugin, TrustManager trust) {
+    public TrustCommand(ElementPlugin plugin, TeamManager trust) {
         this.plugin = plugin;
         this.trust = trust;
     }

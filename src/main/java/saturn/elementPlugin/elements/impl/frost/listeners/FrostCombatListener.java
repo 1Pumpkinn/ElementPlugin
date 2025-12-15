@@ -2,7 +2,7 @@ package saturn.elementPlugin.elements.impl.frost.listeners;
 
 import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.managers.ElementManager;
-import saturn.elementPlugin.managers.TrustManager;import org.bukkit.entity.LivingEntity;
+import saturn.elementPlugin.managers.TeamManager;import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -17,11 +17,11 @@ import org.bukkit.potion.PotionEffectType;
  */
 public class FrostCombatListener implements Listener {
     private final ElementManager elementManager;
-    private final TrustManager trustManager;
+    private final TeamManager teamManager;
 
-    public FrostCombatListener(ElementManager elementManager, TrustManager trustManager) {
+    public FrostCombatListener(ElementManager elementManager, TeamManager teamManager) {
         this.elementManager = elementManager;
-        this.trustManager = trustManager;
+        this.teamManager = teamManager;
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -48,7 +48,7 @@ public class FrostCombatListener implements Listener {
 
         // Don't apply to trusted players
         if (target instanceof Player victim) {
-            if (trustManager.isTrusted(damager.getUniqueId(), victim.getUniqueId())) {
+            if (teamManager.isTrusted(damager.getUniqueId(), victim.getUniqueId())) {
                 return;
             }
         }

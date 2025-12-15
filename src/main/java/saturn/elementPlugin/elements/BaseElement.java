@@ -3,7 +3,7 @@ package saturn.elementPlugin.elements;
 import saturn.elementPlugin.ElementPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import saturn.elementPlugin.managers.TrustManager;
+import saturn.elementPlugin.managers.TeamManager;
 /**
  * Abstract base class for all elements that provides common functionality
  * and reduces code duplication in element implementations.
@@ -144,7 +144,7 @@ public abstract class BaseElement implements Element {
     /**
      * Helper method to check if target is valid (not player or not trusted)
      */
-    protected boolean isValidTarget(Player player, org.bukkit.entity.LivingEntity target, TrustManager trust) {
+    protected boolean isValidTarget(Player player, org.bukkit.entity.LivingEntity target, TeamManager trust) {
         if (target.equals(player)) return false;
         if (target instanceof Player other && trust.isTrusted(player.getUniqueId(), other.getUniqueId())) {
             return false;

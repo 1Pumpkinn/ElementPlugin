@@ -1,5 +1,5 @@
 name: ElementPlugin
-version: '1.1.16'
+version: '1.2.0'
 main: saturn.elementPlugin.ElementPlugin
 website: https://ko-fi.com/1pumpkinn
 api-version: '1.21.8'
@@ -8,13 +8,9 @@ authors: [ ___Pumpkinn ]
 contributors: [ ___Vishini ]
 
 commands:
-  trust:
-    description: Manage individual trust relationships
-    usage: /trust <list|accept|deny|remove> [player]
-
   team:
-    description: Manage team relationships and customization
-    usage: /team <create|invite|accept|leave|kick|disband|color|bold|italic> [args]
+    description: Manage team relationships, allies, and customization
+    usage: /team <create|invite|accept|leave|kick|disband|ally|color|bold|italic|list> [args]
 
   element:
     description: Element admin commands
@@ -53,4 +49,3 @@ permissions:
   element.mana:
     description: Allows use of mana management commands
     default: op
-

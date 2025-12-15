@@ -1,16 +1,16 @@
 package saturn.elementPlugin.listeners.core;
 
 import saturn.elementPlugin.managers.ElementManager;
-import saturn.elementPlugin.managers.TrustManager;import org.bukkit.entity.Player;
+import saturn.elementPlugin.managers.TeamManager;import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 public class CombatListener implements Listener {
-    private final TrustManager trust;
+    private final TeamManager trust;
     private final ElementManager elements;
 
-    public CombatListener(TrustManager trust, ElementManager elements) {
+    public CombatListener(TeamManager trust, ElementManager elements) {
         this.trust = trust;
         this.elements = elements;
     }

@@ -32,7 +32,7 @@ import saturn.elementPlugin.listeners.items.handlers.ElementItemUseListener;
 import saturn.elementPlugin.managers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
-import saturn.elementPlugin.managers.TrustManager;
+import saturn.elementPlugin.managers.TeamManager;
 import static saturn.elementPlugin.recipes.util.UtilRecipes.registerRecipes;
 
 public final class ElementPlugin extends JavaPlugin {
@@ -40,7 +40,7 @@ public final class ElementPlugin extends JavaPlugin {
     private DataStore dataStore;
     private ElementManager elementManager;
     private ManaManager manaManager;
-    private TrustManager trustManager;
+    private TeamManager teamManager;
     private ItemManager itemManager;
     private AbilityManager abilityManager;
     private ElementRegistry elementRegistry;
@@ -70,10 +70,10 @@ public final class ElementPlugin extends JavaPlugin {
 
     private void initializeManagers() {
         this.dataStore = new DataStore(this);
-        this.trustManager = new TrustManager(this);
+        this.teamManager = new TeamManager(this);
         this.manaManager = new ManaManager(this, dataStore);
         this.abilityManager = new AbilityManager(this);
-        this.elementManager = new ElementManager(this, dataStore, manaManager, trustManager);
+        this.elementManager = new ElementManager(this, dataStore, manaManager, teamManager);
         this.itemManager = new ItemManager(this, manaManager);
     }
 
@@ -110,12 +110,9 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("elements").setExecutor(elementInfoCmd);
         getCommand("elements").setTabCompleter(elementInfoCmd);
 
-        // UPDATED: Separate trust and team commands
-        getCommand("trust").setExecutor(new TrustCommand(this, trustManager));
-        getCommand("trust").setTabCompleter(new TrustCommand(this, trustManager));
-
-        getCommand("team").setExecutor(new TeamCommand(this, trustManager));
-        getCommand("team").setTabCompleter(new TeamCommand(this, trustManager));
+        // UPDATED: Only team command (trust removed)
+        getCommand("team").setExecutor(new TeamCommand(this, teamManager));
+        getCommand("team").setTabCompleter(new TeamCommand(this, teamManager));
 
         getCommand("element").setExecutor(new ElementCommand(this));
         getCommand("mana").setExecutor(new ManaCommand(manaManager));
@@ -123,19 +120,19 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("damagetest").setExecutor(new saturn.elementPlugin.util.DamageTester());
         getCommand("data").setExecutor(new DataCommand(this));
 
-        getLogger().info("Commands registered successfully");
+        getLogger().info("Commands registered successfully (Trust system removed)");
     }
 
     private void registerListeners() {
         var pm = Bukkit.getPluginManager();
 
-        // Core listeners - UPDATED with trust parameter
-        pm.registerEvents(new JoinListener(this, elementManager, manaManager, trustManager), this);
-        pm.registerEvents(new QuitListener(this, manaManager, trustManager), this);
-        pm.registerEvents(new CombatListener(trustManager, elementManager), this);
+        // Core listeners
+        pm.registerEvents(new JoinListener(this, elementManager, manaManager, teamManager), this);
+        pm.registerEvents(new QuitListener(this, manaManager, teamManager), this);
+        pm.registerEvents(new CombatListener(teamManager, elementManager), this);
         pm.registerEvents(new DeathListener(this, elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.listeners.AbilityListener(this, elementManager), this);
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager, trustManager), this);
+        pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager, teamManager), this);
 
         // Item listeners
         pm.registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);
@@ -155,7 +152,7 @@ public final class ElementPlugin extends JavaPlugin {
         // Fire element listeners
         pm.registerEvents(new saturn.elementPlugin.elements.impl.fire.listeners.FireImmunityListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.fire.listeners.FireJoinListener(elementManager), this);
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.fire.listeners.FireCombatListener(elementManager, trustManager), this);
+        pm.registerEvents(new saturn.elementPlugin.elements.impl.fire.listeners.FireCombatListener(elementManager, teamManager), this);
 
         // Earth element listeners
         pm.registerEvents(new saturn.elementPlugin.elements.impl.earth.listeners.EarthquakeMovementListener(this), this);
@@ -166,7 +163,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new saturn.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
 
         // Death element listeners
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager, trustManager), this);
+        pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager, teamManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathXPDropListener(elementManager), this);
 
@@ -189,16 +186,16 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostNovaMovementListener(this), this);
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostCombatListener(elementManager, trustManager), this);
+        pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostCombatListener(elementManager, teamManager), this);
 
-        getLogger().info("Listeners registered successfully (Trust & Team commands separated)");
+        getLogger().info("Listeners registered successfully (Team-based system only)");
     }
 
     // Getters
     public DataStore getDataStore() { return dataStore; }
     public ElementManager getElementManager() { return elementManager; }
     public ManaManager getManaManager() { return manaManager; }
-    public TrustManager getTrustManager() { return trustManager; }
+    public TeamManager getTrustManager() { return teamManager; }
     public ItemManager getItemManager() { return itemManager; }
     public AbilityManager getAbilityManager() { return abilityManager; }
 

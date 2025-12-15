@@ -5,7 +5,7 @@ import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.elements.abilities.impl.death.DeathClockAbility;
 import saturn.elementPlugin.elements.abilities.impl.death.DeathSlashAbility;
 import saturn.elementPlugin.managers.ElementManager;
-import saturn.elementPlugin.managers.TrustManager;import org.bukkit.entity.LivingEntity;
+import saturn.elementPlugin.managers.TeamManager;import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -23,12 +23,12 @@ import org.bukkit.potion.PotionEffectType;
 public class DeathCombatListener implements Listener {
     private final ElementPlugin plugin;
     private final ElementManager elementManager;
-    private final TrustManager trustManager;
+    private final TeamManager teamManager;
 
-    public DeathCombatListener(ElementPlugin plugin, ElementManager elementManager, TrustManager trustManager) {
+    public DeathCombatListener(ElementPlugin plugin, ElementManager elementManager, TeamManager teamManager) {
         this.plugin = plugin;
         this.elementManager = elementManager;
-        this.trustManager = trustManager;
+        this.teamManager = teamManager;
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -48,8 +48,8 @@ public class DeathCombatListener implements Listener {
 
         // Don't apply to trusted players (check both directions)
         if (target instanceof Player victim) {
-            if (trustManager.isTrusted(attacker.getUniqueId(), victim.getUniqueId()) ||
-                    trustManager.isTrusted(victim.getUniqueId(), attacker.getUniqueId())) {
+            if (teamManager.isTrusted(attacker.getUniqueId(), victim.getUniqueId()) ||
+                    teamManager.isTrusted(victim.getUniqueId(), attacker.getUniqueId())) {
                 return;
             }
         }

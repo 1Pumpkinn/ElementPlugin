@@ -2,7 +2,7 @@ package saturn.elementPlugin.elements.impl.fire.listeners;
 
 import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.managers.ElementManager;
-import saturn.elementPlugin.managers.TrustManager;import org.bukkit.entity.Player;
+import saturn.elementPlugin.managers.TeamManager;import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -13,11 +13,11 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
  */
 public class FireCombatListener implements Listener {
     private final ElementManager elementManager;
-    private final TrustManager trustManager;
+    private final TeamManager teamManager;
 
-    public FireCombatListener(ElementManager elementManager, TrustManager trustManager) {
+    public FireCombatListener(ElementManager elementManager, TeamManager teamManager) {
         this.elementManager = elementManager;
-        this.trustManager = trustManager;
+        this.teamManager = teamManager;
     }
 
     @EventHandler
@@ -39,7 +39,7 @@ public class FireCombatListener implements Listener {
 
         // Don't apply to trusted players
         if (event.getEntity() instanceof Player victim) {
-            if (trustManager.isTrusted(damager.getUniqueId(), victim.getUniqueId())) {
+            if (teamManager.isTrusted(damager.getUniqueId(), victim.getUniqueId())) {
                 return;
             }
         }

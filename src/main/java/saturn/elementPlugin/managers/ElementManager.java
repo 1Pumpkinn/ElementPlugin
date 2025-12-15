@@ -12,7 +12,7 @@ import saturn.elementPlugin.elements.impl.earth.EarthElement;
 import saturn.elementPlugin.elements.impl.fire.FireElement;
 import saturn.elementPlugin.elements.impl.life.LifeElement;
 import saturn.elementPlugin.elements.impl.water.WaterElement;
-import saturn.elementPlugin.managers.TrustManager;import saturn.elementPlugin.util.SmartEffectCleaner;
+import saturn.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -30,16 +30,16 @@ public class ElementManager {
     private final ElementPlugin plugin;
     private final DataStore store;
     private final ManaManager manaManager;
-    private final TrustManager trustManager;
+    private final TeamManager teamManager;
     private final Map<ElementType, Element> registry = new EnumMap<>(ElementType.class);
     private final Set<UUID> currentlyRolling = new HashSet<>();
 
     public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager,
-                          TrustManager trustManager) {
+                          TeamManager teamManager) {
         this.plugin = plugin;
         this.store = store;
         this.manaManager = manaManager;
-        this.trustManager = trustManager;
+        this.teamManager = teamManager;
         registerAllElements();
     }
 
@@ -217,7 +217,7 @@ public class ElementManager {
                 .upgradeLevel(pd.getUpgradeLevel(type))
                 .elementType(type)
                 .manaManager(manaManager)
-                .trustManager(trustManager)
+                .trustManager(teamManager)
                 .plugin(plugin)
                 .build();
 

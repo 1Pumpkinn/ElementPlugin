@@ -5,7 +5,7 @@ import saturn.elementPlugin.data.PlayerData;
 import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.managers.ElementManager;
 import saturn.elementPlugin.managers.ManaManager;
-import saturn.elementPlugin.managers.TrustManager;
+import saturn.elementPlugin.managers.TeamManager;
 import saturn.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,9 +18,9 @@ public class JoinListener implements Listener {
     private final ElementPlugin plugin;
     private final ElementManager elements;
     private final ManaManager mana;
-    private final TrustManager trust;
+    private final TeamManager trust;
 
-    public JoinListener(ElementPlugin plugin, ElementManager elements, ManaManager mana, TrustManager trust) {
+    public JoinListener(ElementPlugin plugin, ElementManager elements, ManaManager mana, TeamManager trust) {
         this.plugin = plugin;
         this.elements = elements;
         this.mana = mana;

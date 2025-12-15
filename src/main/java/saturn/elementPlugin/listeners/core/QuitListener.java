@@ -3,7 +3,7 @@ package saturn.elementPlugin.listeners.core;
 import saturn.elementPlugin.ElementPlugin;
 import saturn.elementPlugin.data.PlayerData;
 import saturn.elementPlugin.managers.ManaManager;
-import saturn.elementPlugin.managers.TrustManager;import saturn.elementPlugin.util.SmartEffectCleaner;
+import saturn.elementPlugin.managers.TeamManager;import saturn.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -15,9 +15,9 @@ import java.util.UUID;
 public class QuitListener implements Listener {
     private final ElementPlugin plugin;
     private final ManaManager mana;
-    private final TrustManager trust;
+    private final TeamManager trust;
 
-    public QuitListener(ElementPlugin plugin, ManaManager mana, TrustManager trust) {
+    public QuitListener(ElementPlugin plugin, ManaManager mana, TeamManager trust) {
         this.plugin = plugin;
         this.mana = mana;
         this.trust = trust;
