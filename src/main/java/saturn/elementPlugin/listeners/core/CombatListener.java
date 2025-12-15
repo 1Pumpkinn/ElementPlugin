@@ -1,7 +1,7 @@
 package saturn.elementPlugin.listeners.core;
 
 import saturn.elementPlugin.managers.ElementManager;
-import saturn.elementPlugin.managers.TrustManager;
+import saturn.elementPlugin.managers.trust.TrustManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

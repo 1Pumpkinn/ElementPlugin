@@ -12,6 +12,7 @@ import saturn.elementPlugin.elements.impl.earth.EarthElement;
 import saturn.elementPlugin.elements.impl.fire.FireElement;
 import saturn.elementPlugin.elements.impl.life.LifeElement;
 import saturn.elementPlugin.elements.impl.water.WaterElement;
+import saturn.elementPlugin.managers.trust.TrustManager;
 import saturn.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;

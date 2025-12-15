@@ -3,7 +3,7 @@ package saturn.elementPlugin.elements.abilities.impl.air;
 import saturn.elementPlugin.elements.ElementContext;
 import saturn.elementPlugin.elements.abilities.BaseAbility;
 import saturn.elementPlugin.managers.ManaManager;
-import saturn.elementPlugin.managers.TrustManager;
+import saturn.elementPlugin.managers.trust.TrustManager;
 import org.bukkit.*;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;

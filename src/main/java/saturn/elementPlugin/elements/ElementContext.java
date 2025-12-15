@@ -2,7 +2,7 @@ package saturn.elementPlugin.elements;
 
 import saturn.elementPlugin.ElementPlugin;
 import saturn.elementPlugin.managers.ManaManager;
-import saturn.elementPlugin.managers.TrustManager;
+import saturn.elementPlugin.managers.trust.TrustManager;
 import org.bukkit.entity.Player;
 
 /**

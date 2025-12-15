@@ -3,7 +3,7 @@ package saturn.elementPlugin.listeners.core;
 import saturn.elementPlugin.ElementPlugin;
 import saturn.elementPlugin.data.PlayerData;
 import saturn.elementPlugin.managers.ManaManager;
-import saturn.elementPlugin.managers.TrustManager;
+import saturn.elementPlugin.managers.trust.TrustManager;
 import saturn.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

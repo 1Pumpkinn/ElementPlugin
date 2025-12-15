@@ -5,7 +5,7 @@ import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.elements.abilities.impl.death.DeathClockAbility;
 import saturn.elementPlugin.elements.abilities.impl.death.DeathSlashAbility;
 import saturn.elementPlugin.managers.ElementManager;
-import saturn.elementPlugin.managers.TrustManager;
+import saturn.elementPlugin.managers.trust.TrustManager;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

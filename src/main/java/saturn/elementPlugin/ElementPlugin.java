@@ -32,6 +32,7 @@ import saturn.elementPlugin.listeners.items.handlers.ElementItemUseListener;
 import saturn.elementPlugin.managers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
+import saturn.elementPlugin.managers.trust.TrustManager;
 
 import static saturn.elementPlugin.recipes.util.UtilRecipes.registerRecipes;
 
