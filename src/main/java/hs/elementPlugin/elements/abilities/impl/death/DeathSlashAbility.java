@@ -16,7 +16,7 @@ public class DeathSlashAbility extends BaseAbility {
     public static final String META_BLEEDING = "death_slash_bleeding";
 
     public DeathSlashAbility(ElementPlugin plugin) {
-        super("death_slash", 75, 10, 2);
+        super("death_slash", 50, 10, 1);
         this.plugin = plugin;
     }
 

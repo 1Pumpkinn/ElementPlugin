@@ -20,7 +20,7 @@ public class DeathClockAbility extends BaseAbility {
     public static final String META_DEATH_CLOCK_ACTIVE = "death_clock_active";
 
     public DeathClockAbility(ElementPlugin plugin) {
-        super("death_clock", 50, 10, 1);
+        super("death_clock", 75, 10, 2);
         this.plugin = plugin;
     }
 

@@ -91,8 +91,8 @@ public final class ElementPlugin extends JavaPlugin {
         abilityManager.registerAbility(ElementType.LIFE, 1, new LifeRegenAbility(this));
         abilityManager.registerAbility(ElementType.LIFE, 2, new TransfusionAbility(this));
 
-        abilityManager.registerAbility(ElementType.DEATH, 1, new DeathClockAbility(this));
-        abilityManager.registerAbility(ElementType.DEATH, 2, new DeathSlashAbility(this));
+        abilityManager.registerAbility(ElementType.DEATH, 1, new DeathSlashAbility(this));
+        abilityManager.registerAbility(ElementType.DEATH, 2, new DeathClockAbility(this));
 
         abilityManager.registerAbility(ElementType.METAL, 1, new MetalDashAbility(this));
         abilityManager.registerAbility(ElementType.METAL, 2, new MetalChainAbility(this));

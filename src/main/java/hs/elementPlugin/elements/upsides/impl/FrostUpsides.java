@@ -22,7 +22,7 @@ public class FrostUpsides extends BaseUpsides {
     /**
      * Apply all Frost element upsides to a player
      * Upside 1: Speed III on ice (always active)
-     * Upside 2: Freeze on hit (35% chance, Upgrade II) - handled in FrostCombatListener
+     * Upside 2: Freeze on hit (10% chance, Upgrade II) - handled in FrostCombatListener
      *
      * @param player The player to apply upsides to
      * @param upgradeLevel The player's upgrade level for Frost element
@@ -32,7 +32,7 @@ public class FrostUpsides extends BaseUpsides {
         // Upside 1: Speed III on ice (handled by FrostPassiveListener)
         // No potion effect needed here - it's applied dynamically
 
-        // Upside 2: Freeze on hit (35% chance) - requires Upgrade II
+        // Upside 2: Freeze on hit (10% chance) - requires Upgrade II
         // This is handled passively in FrostCombatListener
         // No potion effect needed here
     }
@@ -63,12 +63,12 @@ public class FrostUpsides extends BaseUpsides {
      * Check if player should apply freeze effect on hit (Upside 2)
      * Requires Upgrade 2
      * @param player The Frost element player
-     * @return true if freeze should be applied (35% chance)
+     * @return true if freeze should be applied (10% chance)
      */
     public boolean shouldApplyFreezeOnHit(Player player) {
         if (!hasElement(player) || getUpgradeLevel(player) < 2) {
             return false;
         }
-        return Math.random() < 0.35; // 35% chance
+        return Math.random() < 0.10; // 10% chance
     }
 }

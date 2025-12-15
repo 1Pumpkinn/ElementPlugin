@@ -17,9 +17,9 @@ import org.bukkit.potion.PotionEffectType;
 
 /**
  * Listener for Death element combat abilities and passive effects
- * - Death Clock ability (on-hit curse)
- * - Death Slash ability (bleeding)
- * - Wither on hit (35% chance, Upgrade II passive)
+ * - Death Slash ability (bleeding) - Ability 1
+ * - Death Clock ability (curse) - Ability 2
+ * - Wither on hit (10% chance, Upgrade II passive)
  */
 public class DeathCombatListener implements Listener {
     private final ElementPlugin plugin;
@@ -67,7 +67,7 @@ public class DeathCombatListener implements Listener {
             DeathSlashAbility.applyBleeding(plugin, attacker, target);
         }
 
-        // FIXED: Apply wither on hit (10% chance) if player has Upgrade II
+        // UPDATED: Apply wither on hit (10% chance) if player has Upgrade II
         if (data.getUpgradeLevel(ElementType.DEATH) >= 2) {
             if (Math.random() < 0.10) { // 10% chance
                 // Apply Wither II for 4 seconds (80 ticks)

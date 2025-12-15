@@ -67,10 +67,12 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
                 .decorate(TextDecoration.BOLD));
         player.sendMessage(Component.empty());
 
-        // Description
-        player.sendMessage(Component.text("📖 " + info.description)
-                .color(NamedTextColor.GRAY));
-        player.sendMessage(Component.empty());
+        // Description - only show if not empty
+        if (info.description != null && !info.description.isEmpty()) {
+            player.sendMessage(Component.text("📖 " + info.description)
+                    .color(NamedTextColor.GRAY));
+            player.sendMessage(Component.empty());
+        }
 
         // Passive Benefits
         player.sendMessage(Component.text("⭐ Passive Benefits:")
@@ -125,13 +127,13 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
 
     /**
      * Initialize all element information
-     * UPDATED: Metal upsides changed to Haste 1 and reduced knockback
+     * UPDATED: Removed descriptive sentences, Death abilities swapped
      */
     private Map<ElementType, ElementInfo> initializeElementInfo() {
         Map<ElementType, ElementInfo> map = new EnumMap<>(ElementType.class);
 
         map.put(ElementType.WATER, new ElementInfo(
-                "Controllers of water and ocean currents",
+                "",
                 Arrays.asList(
                         "Conduit Power (underwater breathing)",
                         "Mine faster underwater (Upgrade II)"
@@ -141,7 +143,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         ));
 
         map.put(ElementType.FIRE, new ElementInfo(
-                "Wielders of flame and destruction",
+                "",
                 Arrays.asList(
                         "Fire Resistance (immune to fire/lava)",
                         "Fire Aspect on all attacks (Upgrade II)"
@@ -151,7 +153,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         ));
 
         map.put(ElementType.EARTH, new ElementInfo(
-                "Masters of stone and terrain",
+                "",
                 Arrays.asList(
                         "Hero of The Village",
                         "1.5x ore drops (Upgrade II)"
@@ -161,7 +163,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         ));
 
         map.put(ElementType.AIR, new ElementInfo(
-                "Masters of the sky and wind",
+                "",
                 Arrays.asList(
                         "No fall damage",
                         "Immunity to powdered snow, soul sand, and slow blocks"
@@ -171,18 +173,17 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         ));
 
         map.put(ElementType.FROST, new ElementInfo(
-                "Controllers of ice and cold (Advanced Reroller)",
+                "",
                 Arrays.asList(
                         "Speed III on ice",
-                        "Freeze on hit (35% chance, slows but no freeze damage, Upgrade II)"
+                        "Freeze on hit (10% chance, Upgrade II)"
                 ),
                 "Ice Shard Volley", "Fire 5 ice shards in a cone", 75,
                 "Frost Nova", "Create an explosion of ice around you", 50
         ));
 
-        // UPDATED: Metal with new upsides
         map.put(ElementType.METAL, new ElementInfo(
-                "Warriors of steel and chains (Advanced Reroller)",
+                "",
                 Arrays.asList(
                         "Haste I",
                         "Take 50% less knockback (Upgrade II)"
@@ -192,7 +193,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         ));
 
         map.put(ElementType.LIFE, new ElementInfo(
-                "Healers with power over vitality (Advanced Reroller)",
+                "",
                 Arrays.asList(
                         "Regeneration I",
                         "15 hearts total"
@@ -201,14 +202,15 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
                 "Healing Beam", "Heal an ally directly", 75
         ));
 
+        // SWAPPED: Death Slash is ability 1, Death Clock is ability 2
         map.put(ElementType.DEATH, new ElementInfo(
-                "Masters of decay and darkness (Advanced Reroller)",
+                "",
                 Arrays.asList(
                         "25% more XP from kills",
-                        "Wither on hit (35% chance, Upgrade II)"
+                        "Wither on hit (10% chance, Upgrade II)"
                 ),
-                "Death Clock", "Your next hit curses with blindness, weakness, and wither", 50,
-                "Death Slash", "Your next hit causes bleeding for 5 seconds", 75
+                "Death Slash", "Your next hit causes bleeding for 5 seconds", 50,
+                "Death Clock", "Your next hit curses with blindness, weakness, and wither", 75
         ));
 
         return map;
