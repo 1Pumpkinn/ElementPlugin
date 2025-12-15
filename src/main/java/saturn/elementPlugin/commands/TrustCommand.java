@@ -4,7 +4,9 @@ import saturn.elementPlugin.ElementPlugin;
 import saturn.elementPlugin.managers.TrustManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -21,7 +23,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Enhanced trust command with team support
+ * Enhanced trust command with team support and improved UI
  */
 public class TrustCommand implements CommandExecutor, TabCompleter {
     private final ElementPlugin plugin;
@@ -32,6 +34,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         this.trust = trust;
     }
 
+    @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player p)) {
             sender.sendMessage("Players only");
@@ -57,48 +60,69 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendUsage(Player p) {
-        p.sendMessage(ChatColor.GOLD + "=== Trust & Team Commands ===");
-        p.sendMessage(ChatColor.YELLOW + "/trust list " + ChatColor.GRAY + "- View trusted players and team");
-        p.sendMessage(ChatColor.YELLOW + "/trust add <player> " + ChatColor.GRAY + "- Send trust request");
-        p.sendMessage(ChatColor.YELLOW + "/trust remove <player> " + ChatColor.GRAY + "- Remove trust");
-        p.sendMessage(ChatColor.YELLOW + "/trust accept <player> " + ChatColor.GRAY + "- Accept trust request");
-        p.sendMessage(ChatColor.YELLOW + "/trust deny <player> " + ChatColor.GRAY + "- Deny trust request");
-        p.sendMessage(ChatColor.YELLOW + "/trust team " + ChatColor.GRAY + "- Team management");
+        p.sendMessage(Component.text("=== Trust & Team Commands ===", NamedTextColor.GOLD, TextDecoration.BOLD));
+        p.sendMessage(Component.empty());
+        p.sendMessage(Component.text("Individual Trust:", NamedTextColor.YELLOW));
+        p.sendMessage(Component.text("  /trust list ", NamedTextColor.AQUA)
+                .append(Component.text("- View trust & team status", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust add <player> ", NamedTextColor.AQUA)
+                .append(Component.text("- Send trust request", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust remove <player> ", NamedTextColor.AQUA)
+                .append(Component.text("- Remove trust", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust accept <player> ", NamedTextColor.AQUA)
+                .append(Component.text("- Accept trust request", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust deny <player> ", NamedTextColor.AQUA)
+                .append(Component.text("- Deny trust request", NamedTextColor.GRAY)));
+        p.sendMessage(Component.empty());
+        p.sendMessage(Component.text("Teams (Automatic Trust):", NamedTextColor.YELLOW));
+        p.sendMessage(Component.text("  /trust team ", NamedTextColor.AQUA)
+                .append(Component.text("- Team management menu", NamedTextColor.GRAY)));
     }
 
     private void handleList(Player p) {
+        p.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY));
+
         // Show team info
         String teamName = trust.getPlayerTeam(p.getUniqueId());
         if (teamName != null) {
-            p.sendMessage(ChatColor.AQUA + "Team: " + ChatColor.WHITE + teamName);
-
             boolean isLeader = trust.isTeamLeader(p.getUniqueId(), teamName);
+
+            p.sendMessage(Component.text("⚔ Team: ", NamedTextColor.GOLD, TextDecoration.BOLD)
+                    .append(Component.text(teamName, NamedTextColor.AQUA)));
+
             if (isLeader) {
-                p.sendMessage(ChatColor.GOLD + "  Role: Team Leader");
+                p.sendMessage(Component.text("  Role: ", NamedTextColor.YELLOW)
+                        .append(Component.text("Leader ⭐", NamedTextColor.GOLD)));
             }
 
-            p.sendMessage(ChatColor.AQUA + "Members:");
+            p.sendMessage(Component.text("  Members:", NamedTextColor.YELLOW));
             for (UUID memberUUID : trust.getTeamMembers(teamName)) {
                 OfflinePlayer member = Bukkit.getOfflinePlayer(memberUUID);
                 String memberName = member.getName() != null ? member.getName() : "Unknown";
                 boolean online = member.isOnline();
-                String status = online ? ChatColor.GREEN + "●" : ChatColor.GRAY + "●";
+
+                Component statusIcon = online
+                        ? Component.text("●", NamedTextColor.GREEN)
+                        : Component.text("●", NamedTextColor.GRAY);
+
+                Component nameComponent = Component.text("    ")
+                        .append(statusIcon)
+                        .append(Component.text(" " + memberName, NamedTextColor.WHITE));
 
                 if (memberUUID.equals(p.getUniqueId())) {
-                    p.sendMessage("  " + status + " " + ChatColor.WHITE + memberName + ChatColor.YELLOW + " (You)");
+                    nameComponent = nameComponent.append(Component.text(" (You)", NamedTextColor.YELLOW));
                 } else if (trust.isTeamLeader(memberUUID, teamName)) {
-                    p.sendMessage("  " + status + " " + ChatColor.WHITE + memberName + ChatColor.GOLD + " (Leader)");
-                } else {
-                    p.sendMessage("  " + status + " " + ChatColor.WHITE + memberName);
+                    nameComponent = nameComponent.append(Component.text(" ⭐", NamedTextColor.GOLD));
                 }
+
+                p.sendMessage(nameComponent);
             }
-            p.sendMessage("");
+            p.sendMessage(Component.empty());
         }
 
         // Show individual trust
         var names = trust.getTrustedNames(p.getUniqueId());
         List<String> displayNames = new ArrayList<>();
-        List<String> unknownUUIDs = new ArrayList<>();
 
         for (String name : names) {
             try {
@@ -107,144 +131,152 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
                 String playerName = offlinePlayer.getName();
                 if (playerName != null) {
                     displayNames.add(playerName);
-                } else {
-                    unknownUUIDs.add(uuid.toString().substring(0, 8) + "...");
                 }
             } catch (IllegalArgumentException e) {
                 displayNames.add(name);
             }
         }
 
-        if (displayNames.isEmpty() && unknownUUIDs.isEmpty()) {
-            p.sendMessage(ChatColor.AQUA + "Individual Trust: " + ChatColor.WHITE + "(none)");
+        if (displayNames.isEmpty()) {
+            p.sendMessage(Component.text("❤ Individual Trust: ", NamedTextColor.RED)
+                    .append(Component.text("(none)", NamedTextColor.GRAY)));
         } else {
-            p.sendMessage(ChatColor.AQUA + "Individual Trust: " + ChatColor.WHITE + String.join(", ", displayNames));
-            if (!unknownUUIDs.isEmpty()) {
-                p.sendMessage(ChatColor.GRAY + "Unknown players: " + String.join(", ", unknownUUIDs));
+            p.sendMessage(Component.text("❤ Individual Trust: ", NamedTextColor.RED)
+                    .append(Component.text(String.join(", ", displayNames), NamedTextColor.WHITE)));
+        }
+
+        // Show pending invites
+        var pendingInvites = trust.getPendingInvites(p.getUniqueId());
+        if (!pendingInvites.isEmpty()) {
+            p.sendMessage(Component.empty());
+            p.sendMessage(Component.text("📨 Pending Team Invites:", NamedTextColor.YELLOW));
+            for (String invite : pendingInvites) {
+                Component inviteMsg = Component.text("  • " + invite + " ", NamedTextColor.WHITE)
+                        .append(Component.text("[ACCEPT]", NamedTextColor.GREEN, TextDecoration.BOLD)
+                                .clickEvent(ClickEvent.runCommand("/trust team accept " + invite))
+                                .hoverEvent(HoverEvent.showText(Component.text("Click to join " + invite))));
+                p.sendMessage(inviteMsg);
             }
         }
+
+        p.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY));
     }
 
     private void handleAdd(Player p, String[] args) {
         if (args.length < 2) {
-            p.sendMessage(ChatColor.RED + "Usage: /trust add <player>");
+            p.sendMessage(Component.text("Usage: /trust add <player>", NamedTextColor.RED));
             return;
         }
 
         Player target = Bukkit.getPlayer(args[1]);
         if (target == null) {
-            p.sendMessage(ChatColor.RED + "Player not found");
+            p.sendMessage(Component.text("Player not found", NamedTextColor.RED));
             return;
         }
 
         if (target.equals(p)) {
-            p.sendMessage(ChatColor.RED + "You cannot trust yourself");
+            p.sendMessage(Component.text("You cannot trust yourself", NamedTextColor.RED));
             return;
         }
 
-        if (trust.isTrusted(p.getUniqueId(), target.getUniqueId()) &&
-                trust.isTrusted(target.getUniqueId(), p.getUniqueId())) {
-            p.sendMessage(ChatColor.YELLOW + "You are already mutually trusted.");
+        if (trust.isTrusted(p.getUniqueId(), target.getUniqueId())) {
+            p.sendMessage(Component.text("You are already trusted with " + target.getName(), NamedTextColor.YELLOW));
             return;
         }
 
         trust.addPending(target.getUniqueId(), p.getUniqueId());
 
         Component msg = Component.text(p.getName() + " wants to trust with you. ", NamedTextColor.GOLD)
-                .append(Component.text("[ACCEPT]", NamedTextColor.GREEN)
-                        .clickEvent(ClickEvent.runCommand("/trust accept " + p.getUniqueId())))
+                .append(Component.text("[ACCEPT]", NamedTextColor.GREEN, TextDecoration.BOLD)
+                        .clickEvent(ClickEvent.runCommand("/trust accept " + p.getName()))
+                        .hoverEvent(HoverEvent.showText(Component.text("Click to accept"))))
                 .append(Component.text(" "))
-                .append(Component.text("[DENY]", NamedTextColor.RED)
-                        .clickEvent(ClickEvent.runCommand("/trust deny " + p.getUniqueId())));
+                .append(Component.text("[DENY]", NamedTextColor.RED, TextDecoration.BOLD)
+                        .clickEvent(ClickEvent.runCommand("/trust deny " + p.getName()))
+                        .hoverEvent(HoverEvent.showText(Component.text("Click to deny"))));
         target.sendMessage(msg);
-        p.sendMessage(ChatColor.GREEN + "Sent trust request to " + target.getName());
+
+        p.sendMessage(Component.text("✓ Sent trust request to " + target.getName(), NamedTextColor.GREEN));
     }
 
     private void handleRemove(Player p, String[] args) {
         if (args.length < 2) {
-            p.sendMessage(ChatColor.RED + "Usage: /trust remove <player>");
+            p.sendMessage(Component.text("Usage: /trust remove <player>", NamedTextColor.RED));
             return;
         }
 
         Player target = Bukkit.getPlayer(args[1]);
         UUID uuid;
+
         if (target != null) {
             uuid = target.getUniqueId();
         } else {
             try {
                 uuid = UUID.fromString(args[1]);
             } catch (IllegalArgumentException ex) {
-                p.sendMessage(ChatColor.RED + "Player must be online or provide UUID");
+                p.sendMessage(Component.text("Player must be online or provide UUID", NamedTextColor.RED));
                 return;
             }
         }
 
         trust.removeMutualTrust(p.getUniqueId(), uuid);
-        p.sendMessage(ChatColor.YELLOW + "Removed mutual trust.");
+        p.sendMessage(Component.text("✓ Removed mutual trust", NamedTextColor.YELLOW));
     }
 
     private void handleAccept(Player p, String[] args) {
         if (args.length < 2) {
-            p.sendMessage(ChatColor.RED + "Usage: /trust accept <player|uuid>");
+            p.sendMessage(Component.text("Usage: /trust accept <player>", NamedTextColor.RED));
             return;
         }
 
         Player from = Bukkit.getPlayer(args[1]);
-        UUID fromId = null;
-        if (from != null) {
-            fromId = from.getUniqueId();
-        } else {
-            try {
-                fromId = UUID.fromString(args[1]);
-            } catch (Exception ex) {
-                p.sendMessage(ChatColor.RED + "Player not found");
-                return;
-            }
+        UUID fromId = from != null ? from.getUniqueId() : null;
+
+        if (fromId == null) {
+            p.sendMessage(Component.text("Player not found", NamedTextColor.RED));
+            return;
         }
 
         if (!trust.hasPending(p.getUniqueId(), fromId)) {
-            p.sendMessage(ChatColor.YELLOW + "No pending request from that player.");
+            p.sendMessage(Component.text("No pending request from that player", NamedTextColor.YELLOW));
             return;
         }
 
         trust.clearPending(p.getUniqueId(), fromId);
         trust.addMutualTrust(p.getUniqueId(), fromId);
-        p.sendMessage(ChatColor.GREEN + "You are now mutually trusted.");
+
+        p.sendMessage(Component.text("✓ You are now mutually trusted with " + args[1], NamedTextColor.GREEN));
 
         Player other = Bukkit.getPlayer(fromId);
         if (other != null) {
-            other.sendMessage(ChatColor.GREEN + p.getName() + " accepted your trust request.");
+            other.sendMessage(Component.text("✓ " + p.getName() + " accepted your trust request", NamedTextColor.GREEN));
         }
     }
 
     private void handleDeny(Player p, String[] args) {
         if (args.length < 2) {
-            p.sendMessage(ChatColor.RED + "Usage: /trust deny <player|uuid>");
+            p.sendMessage(Component.text("Usage: /trust deny <player>", NamedTextColor.RED));
             return;
         }
 
         Player from = Bukkit.getPlayer(args[1]);
-        UUID fromId = null;
-        if (from != null) {
-            fromId = from.getUniqueId();
-        } else {
-            try {
-                fromId = UUID.fromString(args[1]);
-            } catch (Exception ex) {
-                p.sendMessage(ChatColor.RED + "Player not found");
-                return;
-            }
+        UUID fromId = from != null ? from.getUniqueId() : null;
+
+        if (fromId == null) {
+            p.sendMessage(Component.text("Player not found", NamedTextColor.RED));
+            return;
         }
 
         if (trust.hasPending(p.getUniqueId(), fromId)) {
             trust.clearPending(p.getUniqueId(), fromId);
-            p.sendMessage(ChatColor.YELLOW + "Denied trust request.");
+            p.sendMessage(Component.text("✓ Denied trust request", NamedTextColor.YELLOW));
+
             Player other = Bukkit.getPlayer(fromId);
             if (other != null) {
-                other.sendMessage(ChatColor.RED + p.getName() + " denied your trust request.");
+                other.sendMessage(Component.text(p.getName() + " denied your trust request", NamedTextColor.RED));
             }
         } else {
-            p.sendMessage(ChatColor.YELLOW + "No pending request from that player.");
+            p.sendMessage(Component.text("No pending request from that player", NamedTextColor.YELLOW));
         }
     }
 
@@ -266,87 +298,114 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendTeamUsage(Player p) {
-        p.sendMessage(ChatColor.GOLD + "=== Team Commands ===");
-        p.sendMessage(ChatColor.YELLOW + "/trust team create <name> " + ChatColor.GRAY + "- Create a team");
-        p.sendMessage(ChatColor.YELLOW + "/trust team invite <player> " + ChatColor.GRAY + "- Invite to your team");
-        p.sendMessage(ChatColor.YELLOW + "/trust team accept <name> " + ChatColor.GRAY + "- Accept team invite");
-        p.sendMessage(ChatColor.YELLOW + "/trust team leave " + ChatColor.GRAY + "- Leave your team");
-        p.sendMessage(ChatColor.YELLOW + "/trust team kick <player> " + ChatColor.GRAY + "- Kick from team (leader)");
-        p.sendMessage(ChatColor.YELLOW + "/trust team disband " + ChatColor.GRAY + "- Disband team (leader)");
+        p.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY));
+        p.sendMessage(Component.text("⚔ Team Commands", NamedTextColor.GOLD, TextDecoration.BOLD));
+        p.sendMessage(Component.empty());
+        p.sendMessage(Component.text("  /trust team create <name> ", NamedTextColor.AQUA)
+                .append(Component.text("- Create a team", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust team invite <player> ", NamedTextColor.AQUA)
+                .append(Component.text("- Invite to your team", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust team accept <name> ", NamedTextColor.AQUA)
+                .append(Component.text("- Accept team invite", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust team leave ", NamedTextColor.AQUA)
+                .append(Component.text("- Leave your team", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust team kick <player> ", NamedTextColor.AQUA)
+                .append(Component.text("- Kick from team (leader)", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust team disband ", NamedTextColor.AQUA)
+                .append(Component.text("- Disband team (leader)", NamedTextColor.GRAY)));
+        p.sendMessage(Component.empty());
+        p.sendMessage(Component.text("ℹ Team members have automatic trust", NamedTextColor.YELLOW));
+        p.sendMessage(Component.text("ℹ Team name shows in tab list", NamedTextColor.YELLOW));
+        p.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY));
     }
 
     private void handleTeamCreate(Player p, String[] args) {
         if (args.length < 3) {
-            p.sendMessage(ChatColor.RED + "Usage: /trust team create <name>");
+            p.sendMessage(Component.text("Usage: /trust team create <name>", NamedTextColor.RED));
+            p.sendMessage(Component.text("Note: Team name must be 1-16 characters, no spaces", NamedTextColor.GRAY));
             return;
         }
 
         String teamName = args[2];
+
         if (trust.createTeam(p, teamName)) {
-            p.sendMessage(ChatColor.GREEN + "Created team: " + ChatColor.AQUA + teamName);
-            p.sendMessage(ChatColor.GRAY + "Use /trust team invite <player> to add members");
+            p.sendMessage(Component.text("✓ Created team: ", NamedTextColor.GREEN)
+                    .append(Component.text(teamName, NamedTextColor.AQUA, TextDecoration.BOLD)));
+            p.sendMessage(Component.text("  Use /trust team invite <player> to add members", NamedTextColor.GRAY));
         } else {
-            p.sendMessage(ChatColor.RED + "Failed to create team. You may already be in a team, or the name is taken/invalid.");
+            p.sendMessage(Component.text("✗ Failed to create team", NamedTextColor.RED));
+            p.sendMessage(Component.text("  • You may already be in a team", NamedTextColor.GRAY));
+            p.sendMessage(Component.text("  • Team name may be taken or invalid", NamedTextColor.GRAY));
+            p.sendMessage(Component.text("  • Team name must be 1-16 chars, no spaces", NamedTextColor.GRAY));
         }
     }
 
     private void handleTeamInvite(Player p, String[] args) {
         if (args.length < 3) {
-            p.sendMessage(ChatColor.RED + "Usage: /trust team invite <player>");
+            p.sendMessage(Component.text("Usage: /trust team invite <player>", NamedTextColor.RED));
             return;
         }
 
         String teamName = trust.getPlayerTeam(p.getUniqueId());
         if (teamName == null) {
-            p.sendMessage(ChatColor.RED + "You are not in a team.");
+            p.sendMessage(Component.text("You are not in a team", NamedTextColor.RED));
             return;
         }
 
         Player target = Bukkit.getPlayer(args[2]);
         if (target == null) {
-            p.sendMessage(ChatColor.RED + "Player not found.");
+            p.sendMessage(Component.text("Player not found", NamedTextColor.RED));
             return;
         }
 
         if (trust.inviteToTeam(p, target, teamName)) {
             Component msg = Component.text(p.getName() + " invited you to team ", NamedTextColor.GOLD)
-                    .append(Component.text(teamName, NamedTextColor.AQUA))
+                    .append(Component.text(teamName, NamedTextColor.AQUA, TextDecoration.BOLD))
                     .append(Component.text(". ", NamedTextColor.GOLD))
-                    .append(Component.text("[ACCEPT]", NamedTextColor.GREEN)
-                            .clickEvent(ClickEvent.runCommand("/trust team accept " + teamName)));
+                    .append(Component.text("[ACCEPT]", NamedTextColor.GREEN, TextDecoration.BOLD)
+                            .clickEvent(ClickEvent.runCommand("/trust team accept " + teamName))
+                            .hoverEvent(HoverEvent.showText(Component.text("Click to join " + teamName))));
             target.sendMessage(msg);
-            p.sendMessage(ChatColor.GREEN + "Sent team invite to " + target.getName());
+
+            p.sendMessage(Component.text("✓ Sent team invite to " + target.getName(), NamedTextColor.GREEN));
         } else {
-            p.sendMessage(ChatColor.RED + "Failed to invite. You must be team leader, and they must not be in another team.");
+            p.sendMessage(Component.text("✗ Failed to invite", NamedTextColor.RED));
+            p.sendMessage(Component.text("  • You must be team leader", NamedTextColor.GRAY));
+            p.sendMessage(Component.text("  • Player may already be in a team", NamedTextColor.GRAY));
         }
     }
 
     private void handleTeamAccept(Player p, String[] args) {
         if (args.length < 3) {
-            p.sendMessage(ChatColor.RED + "Usage: /trust team accept <team_name>");
+            p.sendMessage(Component.text("Usage: /trust team accept <team_name>", NamedTextColor.RED));
             return;
         }
 
         String teamName = args[2];
+
         if (trust.acceptTeamInvite(p, teamName)) {
-            p.sendMessage(ChatColor.GREEN + "Joined team: " + ChatColor.AQUA + teamName);
+            p.sendMessage(Component.text("✓ Joined team: ", NamedTextColor.GREEN)
+                    .append(Component.text(teamName, NamedTextColor.AQUA, TextDecoration.BOLD)));
 
             // Notify team members
             for (UUID memberUUID : trust.getTeamMembers(teamName)) {
                 Player member = Bukkit.getPlayer(memberUUID);
                 if (member != null && !member.equals(p)) {
-                    member.sendMessage(ChatColor.AQUA + p.getName() + ChatColor.GREEN + " joined the team!");
+                    member.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
+                            .append(Component.text(p.getName(), NamedTextColor.AQUA))
+                            .append(Component.text(" joined the team!", NamedTextColor.GREEN)));
                 }
             }
         } else {
-            p.sendMessage(ChatColor.RED + "Failed to join team. No pending invite or invalid team.");
+            p.sendMessage(Component.text("✗ Failed to join team", NamedTextColor.RED));
+            p.sendMessage(Component.text("  • No pending invite or invalid team", NamedTextColor.GRAY));
         }
     }
 
     private void handleTeamLeave(Player p) {
         String teamName = trust.getPlayerTeam(p.getUniqueId());
         if (teamName == null) {
-            p.sendMessage(ChatColor.RED + "You are not in a team.");
+            p.sendMessage(Component.text("You are not in a team", NamedTextColor.RED));
             return;
         }
 
@@ -354,58 +413,58 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
 
         if (trust.leaveTeam(p)) {
             if (isLeader) {
-                p.sendMessage(ChatColor.YELLOW + "Team disbanded (you were the leader).");
+                p.sendMessage(Component.text("✓ Team disbanded (you were the leader)", NamedTextColor.YELLOW));
             } else {
-                p.sendMessage(ChatColor.YELLOW + "Left team: " + teamName);
+                p.sendMessage(Component.text("✓ Left team: " + teamName, NamedTextColor.YELLOW));
 
                 // Notify remaining members
                 for (UUID memberUUID : trust.getTeamMembers(teamName)) {
                     Player member = Bukkit.getPlayer(memberUUID);
                     if (member != null) {
-                        member.sendMessage(ChatColor.YELLOW + p.getName() + " left the team.");
+                        member.sendMessage(Component.text(p.getName() + " left the team", NamedTextColor.YELLOW));
                     }
                 }
             }
         } else {
-            p.sendMessage(ChatColor.RED + "Failed to leave team.");
+            p.sendMessage(Component.text("✗ Failed to leave team", NamedTextColor.RED));
         }
     }
 
     private void handleTeamKick(Player p, String[] args) {
         if (args.length < 3) {
-            p.sendMessage(ChatColor.RED + "Usage: /trust team kick <player>");
+            p.sendMessage(Component.text("Usage: /trust team kick <player>", NamedTextColor.RED));
             return;
         }
 
         String teamName = trust.getPlayerTeam(p.getUniqueId());
         if (teamName == null) {
-            p.sendMessage(ChatColor.RED + "You are not in a team.");
+            p.sendMessage(Component.text("You are not in a team", NamedTextColor.RED));
             return;
         }
 
         Player target = Bukkit.getPlayer(args[2]);
         if (target == null) {
-            p.sendMessage(ChatColor.RED + "Player not found.");
+            p.sendMessage(Component.text("Player not found", NamedTextColor.RED));
             return;
         }
 
         if (trust.kickFromTeam(p, target, teamName)) {
-            p.sendMessage(ChatColor.GREEN + "Kicked " + target.getName() + " from the team.");
-            target.sendMessage(ChatColor.RED + "You were kicked from team: " + teamName);
+            p.sendMessage(Component.text("✓ Kicked " + target.getName() + " from the team", NamedTextColor.GREEN));
+            target.sendMessage(Component.text("You were kicked from team: " + teamName, NamedTextColor.RED));
         } else {
-            p.sendMessage(ChatColor.RED + "Failed to kick. You must be team leader.");
+            p.sendMessage(Component.text("✗ Failed to kick. You must be team leader", NamedTextColor.RED));
         }
     }
 
     private void handleTeamDisband(Player p) {
         String teamName = trust.getPlayerTeam(p.getUniqueId());
         if (teamName == null) {
-            p.sendMessage(ChatColor.RED + "You are not in a team.");
+            p.sendMessage(Component.text("You are not in a team", NamedTextColor.RED));
             return;
         }
 
         if (!trust.isTeamLeader(p.getUniqueId(), teamName)) {
-            p.sendMessage(ChatColor.RED + "Only the team leader can disband the team.");
+            p.sendMessage(Component.text("Only the team leader can disband the team", NamedTextColor.RED));
             return;
         }
 
@@ -413,17 +472,17 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         for (UUID memberUUID : trust.getTeamMembers(teamName)) {
             Player member = Bukkit.getPlayer(memberUUID);
             if (member != null) {
-                member.sendMessage(ChatColor.RED + "Team " + teamName + " has been disbanded.");
+                member.sendMessage(Component.text("Team " + teamName + " has been disbanded", NamedTextColor.RED));
             }
         }
 
         trust.disbandTeam(teamName);
-        p.sendMessage(ChatColor.YELLOW + "Team disbanded.");
+        p.sendMessage(Component.text("✓ Team disbanded", NamedTextColor.YELLOW));
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player p)) {
+        if (!(sender instanceof Player)) {
             return new ArrayList<>();
         }
 
@@ -444,16 +503,8 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
                         .collect(Collectors.toList());
             }
 
-            switch (subcommand) {
-                case "add" -> {
-                    return getOnlinePlayers(args[1]);
-                }
-                case "remove" -> {
-                    return getTrustedPlayers(p, args[1]);
-                }
-                case "accept", "deny" -> {
-                    return getPendingPlayers(p, args[1]);
-                }
+            if ("add".equals(subcommand) || "remove".equals(subcommand)) {
+                return getOnlinePlayers(args[1]);
             }
         }
 
@@ -471,24 +522,5 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
                 .map(Player::getName)
                 .filter(name -> name.toLowerCase().startsWith(prefix.toLowerCase()))
                 .collect(Collectors.toList());
-    }
-
-    private List<String> getTrustedPlayers(Player p, String prefix) {
-        List<String> names = trust.getTrustedNames(p.getUniqueId());
-        return names.stream()
-                .filter(name -> name.toLowerCase().startsWith(prefix.toLowerCase()))
-                .collect(Collectors.toList());
-    }
-
-    private List<String> getPendingPlayers(Player p, String prefix) {
-        List<String> suggestions = new ArrayList<>();
-        for (Player online : Bukkit.getOnlinePlayers()) {
-            if (trust.hasPending(p.getUniqueId(), online.getUniqueId())) {
-                if (online.getName().toLowerCase().startsWith(prefix.toLowerCase())) {
-                    suggestions.add(online.getName());
-                }
-            }
-        }
-        return suggestions;
     }
 }

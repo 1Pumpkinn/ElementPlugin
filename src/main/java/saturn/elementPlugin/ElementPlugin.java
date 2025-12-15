@@ -33,6 +33,8 @@ import saturn.elementPlugin.managers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import static saturn.elementPlugin.recipes.util.UtilRecipes.registerRecipes;
+
 public final class ElementPlugin extends JavaPlugin {
 
     private DataStore dataStore;
@@ -56,7 +58,7 @@ public final class ElementPlugin extends JavaPlugin {
         registerAbilities();
         registerCommands();
         registerListeners();
-        registerRecipes();
+        registerRecipes(this);
         manaManager.start();
     }
 
@@ -121,38 +123,48 @@ public final class ElementPlugin extends JavaPlugin {
     private void registerListeners() {
         var pm = Bukkit.getPluginManager();
 
-        pm.registerEvents(new JoinListener(this, elementManager, manaManager), this);
+        // Core listeners - UPDATED with trust parameter
+        pm.registerEvents(new JoinListener(this, elementManager, manaManager, trustManager), this);
+        pm.registerEvents(new QuitListener(this, manaManager, trustManager), this);
         pm.registerEvents(new CombatListener(trustManager, elementManager), this);
         pm.registerEvents(new DeathListener(this, elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.listeners.AbilityListener(this, elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager, trustManager), this);
 
+        // Item listeners
         pm.registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);
         pm.registerEvents(new ElementItemDropListener(this), this);
         pm.registerEvents(new ElementItemPickupListener(this, elementManager), this);
         pm.registerEvents(new ElementCombatProjectileListener(itemManager), this);
 
+        // Air element listeners
         pm.registerEvents(new saturn.elementPlugin.elements.impl.air.listeners.FallDamageListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.air.listeners.AirJoinListener(elementManager), this);
 
+        // Water element listeners
         pm.registerEvents(new saturn.elementPlugin.elements.impl.water.listeners.WaterDrowningImmunityListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.water.listeners.WaterJoinListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.water.listeners.WaterPrisonMovementListener(), this);
 
+        // Fire element listeners
         pm.registerEvents(new saturn.elementPlugin.elements.impl.fire.listeners.FireImmunityListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.fire.listeners.FireJoinListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.fire.listeners.FireCombatListener(elementManager, trustManager), this);
 
+        // Earth element listeners
         pm.registerEvents(new saturn.elementPlugin.elements.impl.earth.listeners.EarthquakeMovementListener(this), this);
         pm.registerEvents(new EarthOreDropListener(elementManager), this);
 
+        // Life element listeners
         pm.registerEvents(new saturn.elementPlugin.elements.impl.life.listeners.LifeRegenListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
 
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager,trustManager ), this);
+        // Death element listeners
+        pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager, trustManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathXPDropListener(elementManager), this);
-        pm.registerEvents(new QuitListener(this, manaManager), this);
+
+        // Game management listeners
         pm.registerEvents(new GameModeListener(manaManager), this);
         pm.registerEvents(new PassiveEffectReapplyListener(this, elementManager), this);
         pm.registerEvents(new PassiveEffectMonitor(this, elementManager), this);
@@ -162,24 +174,18 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new saturn.elementPlugin.listeners.items.AdvancedRerollerListener(this), this);
         pm.registerEvents(new saturn.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
 
-        // UPDATED: Metal listeners - Added knockback listener, removed armor durability
+        // Metal listeners
         pm.registerEvents(new saturn.elementPlugin.elements.impl.metal.listeners.MetalJoinListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.metal.listeners.MetalKnockbackListener(elementManager), this);
         pm.registerEvents(new MetalChainStunListener(), this);
 
+        // Frost listeners
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostNovaMovementListener(this), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostCombatListener(elementManager, trustManager), this);
 
-        getLogger().info("Listeners registered successfully (Metal updated with knockback reduction)");
-    }
-
-    private void registerRecipes() {
-        Bukkit.getScheduler().runTaskLater(this, () -> {
-            saturn.elementPlugin.recipes.util.UtilRecipes.registerRecipes(this);
-            getLogger().info("Recipes registered successfully");
-        }, 20L);
+        getLogger().info("Listeners registered successfully (Enhanced trust system with tab list support)");
     }
 
     // Getters

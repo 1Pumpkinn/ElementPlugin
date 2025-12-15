@@ -3,6 +3,7 @@ package saturn.elementPlugin.listeners.core;
 import saturn.elementPlugin.ElementPlugin;
 import saturn.elementPlugin.data.PlayerData;
 import saturn.elementPlugin.managers.ManaManager;
+import saturn.elementPlugin.managers.TrustManager;
 import saturn.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,16 +16,21 @@ import java.util.UUID;
 public class QuitListener implements Listener {
     private final ElementPlugin plugin;
     private final ManaManager mana;
+    private final TrustManager trust;
 
-    public QuitListener(ElementPlugin plugin, ManaManager mana) {
+    public QuitListener(ElementPlugin plugin, ManaManager mana, TrustManager trust) {
         this.plugin = plugin;
         this.mana = mana;
+        this.trust = trust;
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent e) {
         Player player = e.getPlayer();
         UUID uuid = player.getUniqueId();
+
+        // Handle trust cleanup
+        trust.handlePlayerQuit(uuid);
 
         // CRITICAL: Cancel any ongoing rolling animation
         if (plugin.getElementManager().isCurrentlyRolling(player)) {
@@ -35,8 +41,7 @@ public class QuitListener implements Listener {
         // Save mana data
         mana.save(uuid);
 
-        // FIXED: Use SmartEffectCleaner to clear element effects before logout
-        // This ensures a clean state when they log back in
+        // Clear element effects before logout
         SmartEffectCleaner.clearForElementChange(plugin, player);
 
         // Save player data to ensure any changes are persisted

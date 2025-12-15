@@ -5,6 +5,7 @@ import saturn.elementPlugin.data.PlayerData;
 import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.managers.ElementManager;
 import saturn.elementPlugin.managers.ManaManager;
+import saturn.elementPlugin.managers.TrustManager;
 import saturn.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,16 +18,21 @@ public class JoinListener implements Listener {
     private final ElementPlugin plugin;
     private final ElementManager elements;
     private final ManaManager mana;
+    private final TrustManager trust;
 
-    public JoinListener(ElementPlugin plugin, ElementManager elements, ManaManager mana) {
+    public JoinListener(ElementPlugin plugin, ElementManager elements, ManaManager mana, TrustManager trust) {
         this.plugin = plugin;
         this.elements = elements;
         this.mana = mana;
+        this.trust = trust;
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
+
+        // Restore tab list for teams
+        trust.handlePlayerJoin(p);
 
         // Check if player has an element
         PlayerData pd = elements.data(p.getUniqueId());
@@ -48,7 +54,7 @@ public class JoinListener implements Listener {
                 }
             }.runTaskLater(plugin, 20L); // 1 second delay
         } else {
-            // FIXED: Use SmartEffectCleaner to validate effects on join
+            // Validate effects on join
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -63,10 +69,6 @@ public class JoinListener implements Listener {
         mana.get(p.getUniqueId());
     }
 
-    /**
-     * FIXED: Validate that player only has their current element's effects
-     * Uses SmartEffectCleaner to remove invalid infinite effects
-     */
     private void validateAndCleanupEffects(Player player) {
         PlayerData pd = elements.data(player.getUniqueId());
         ElementType currentElement = pd.getCurrentElement();
