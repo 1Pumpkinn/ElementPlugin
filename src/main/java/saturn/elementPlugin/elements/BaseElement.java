@@ -3,8 +3,7 @@ package saturn.elementPlugin.elements;
 import saturn.elementPlugin.ElementPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import saturn.elementPlugin.managers.trust.TrustManager;
-
+import saturn.elementPlugin.managers.TrustManager;
 /**
  * Abstract base class for all elements that provides common functionality
  * and reduces code duplication in element implementations.

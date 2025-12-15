@@ -2,8 +2,7 @@ package saturn.elementPlugin.elements.impl.fire.listeners;
 
 import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.managers.ElementManager;
-import saturn.elementPlugin.managers.trust.TrustManager;
-import org.bukkit.entity.Player;
+import saturn.elementPlugin.managers.TrustManager;import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
