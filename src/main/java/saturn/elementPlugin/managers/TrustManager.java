@@ -118,6 +118,41 @@ public class TrustManager {
     }
 
     // ========================================
+    // TEAM CUSTOMIZATION - Delegate to TeamManager
+    // ========================================
+
+    /**
+     * Set team color
+     * @param leader Team leader
+     * @param teamName Team name
+     * @param color Color string (named or hex)
+     * @return true if successful
+     */
+    public boolean setTeamColor(Player leader, String teamName, String color) {
+        return teamManager.setTeamColor(leader, teamName, color);
+    }
+
+    /**
+     * Toggle team bold formatting
+     * @param leader Team leader
+     * @param teamName Team name
+     * @return true if successful
+     */
+    public boolean toggleTeamBold(Player leader, String teamName) {
+        return teamManager.toggleTeamBold(leader, teamName);
+    }
+
+    /**
+     * Toggle team italic formatting
+     * @param leader Team leader
+     * @param teamName Team name
+     * @return true if successful
+     */
+    public boolean toggleTeamItalic(Player leader, String teamName) {
+        return teamManager.toggleTeamItalic(leader, teamName);
+    }
+
+    // ========================================
     // LIFECYCLE METHODS
     // ========================================
 

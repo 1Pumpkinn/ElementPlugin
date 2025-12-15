@@ -3,6 +3,7 @@ package saturn.elementPlugin.managers.trust;
 import saturn.elementPlugin.ElementPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -13,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Manages team creation, invites, and tab list display
+ * Manages team creation, invites, and tab list display with customization
  */
 public class TeamManager {
     private final ElementPlugin plugin;
@@ -24,13 +25,17 @@ public class TeamManager {
     private final Map<String, UUID> teamLeaders = new ConcurrentHashMap<>();
     private final Map<UUID, Set<String>> teamInvites = new ConcurrentHashMap<>();
 
-    // Tab list colors
-    private static final NamedTextColor[] TEAM_COLORS = {
+    // Team customization
+    private final Map<String, TextColor> teamColors = new ConcurrentHashMap<>();
+    private final Map<String, Boolean> teamBold = new ConcurrentHashMap<>();
+    private final Map<String, Boolean> teamItalic = new ConcurrentHashMap<>();
+
+    // Default colors for new teams
+    private static final NamedTextColor[] DEFAULT_COLORS = {
             NamedTextColor.AQUA, NamedTextColor.GREEN, NamedTextColor.YELLOW,
             NamedTextColor.LIGHT_PURPLE, NamedTextColor.GOLD, NamedTextColor.RED,
             NamedTextColor.DARK_AQUA, NamedTextColor.DARK_GREEN, NamedTextColor.BLUE
     };
-    private final Map<String, NamedTextColor> teamColors = new ConcurrentHashMap<>();
     private int colorIndex = 0;
 
     public TeamManager(ElementPlugin plugin) {
@@ -77,8 +82,8 @@ public class TeamManager {
         teamLeaders.put(teamName, leader.getUniqueId());
         playerTeams.put(leader.getUniqueId(), teamName);
 
-        // Assign color
-        assignTeamColor(teamName);
+        // Assign default color and formatting
+        assignDefaultFormatting(teamName);
 
         // Create scoreboard team and update tab list
         createScoreboardTeam(teamName);
@@ -189,6 +194,8 @@ public class TeamManager {
         teams.remove(teamName);
         teamLeaders.remove(teamName);
         teamColors.remove(teamName);
+        teamBold.remove(teamName);
+        teamItalic.remove(teamName);
 
         // Remove scoreboard team
         removeScoreboardTeam(teamName);
@@ -224,6 +231,91 @@ public class TeamManager {
     }
 
     // ========================================
+    // TEAM CUSTOMIZATION
+    // ========================================
+
+    /**
+     * Set team color
+     * @param leader Team leader
+     * @param teamName Team name
+     * @param color Color (hex or named color)
+     * @return true if successful
+     */
+    public boolean setTeamColor(Player leader, String teamName, String color) {
+        if (!isTeamLeader(leader.getUniqueId(), teamName)) {
+            leader.sendMessage(Component.text("Only the team leader can change the team color!", NamedTextColor.RED));
+            return false;
+        }
+
+        TextColor textColor = parseColor(color);
+        if (textColor == null) {
+            leader.sendMessage(Component.text("Invalid color! Use a color name (red, blue, etc.) or hex (#FF5733)", NamedTextColor.RED));
+            return false;
+        }
+
+        teamColors.put(teamName, textColor);
+        refreshTeamDisplay(teamName);
+
+        leader.sendMessage(Component.text("Team color updated to ", NamedTextColor.GREEN)
+                .append(Component.text(color, textColor)));
+        return true;
+    }
+
+    /**
+     * Toggle team name bold formatting
+     */
+    public boolean toggleTeamBold(Player leader, String teamName) {
+        if (!isTeamLeader(leader.getUniqueId(), teamName)) {
+            leader.sendMessage(Component.text("Only the team leader can change formatting!", NamedTextColor.RED));
+            return false;
+        }
+
+        boolean currentBold = teamBold.getOrDefault(teamName, false);
+        teamBold.put(teamName, !currentBold);
+        refreshTeamDisplay(teamName);
+
+        leader.sendMessage(Component.text("Team bold formatting " + (!currentBold ? "enabled" : "disabled"), NamedTextColor.GREEN));
+        return true;
+    }
+
+    /**
+     * Toggle team name italic formatting
+     */
+    public boolean toggleTeamItalic(Player leader, String teamName) {
+        if (!isTeamLeader(leader.getUniqueId(), teamName)) {
+            leader.sendMessage(Component.text("Only the team leader can change formatting!", NamedTextColor.RED));
+            return false;
+        }
+
+        boolean currentItalic = teamItalic.getOrDefault(teamName, false);
+        teamItalic.put(teamName, !currentItalic);
+        refreshTeamDisplay(teamName);
+
+        leader.sendMessage(Component.text("Team italic formatting " + (!currentItalic ? "enabled" : "disabled"), NamedTextColor.GREEN));
+        return true;
+    }
+
+    /**
+     * Refresh tab list display for all team members
+     */
+    private void refreshTeamDisplay(String teamName) {
+        // Recreate scoreboard team with new formatting
+        removeScoreboardTeam(teamName);
+        createScoreboardTeam(teamName);
+
+        // Update all team members
+        Set<UUID> members = teams.get(teamName);
+        if (members != null) {
+            for (UUID memberUUID : members) {
+                Player member = Bukkit.getPlayer(memberUUID);
+                if (member != null) {
+                    updatePlayerTabList(member);
+                }
+            }
+        }
+    }
+
+    // ========================================
     // TEAM QUERIES
     // ========================================
 
@@ -246,13 +338,33 @@ public class TeamManager {
         return invites != null ? new HashSet<>(invites) : new HashSet<>();
     }
 
+    /**
+     * Get team color
+     */
+    public TextColor getTeamColor(String teamName) {
+        return teamColors.get(teamName);
+    }
+
+    /**
+     * Check if team is bold
+     */
+    public boolean isTeamBold(String teamName) {
+        return teamBold.getOrDefault(teamName, false);
+    }
+
+    /**
+     * Check if team is italic
+     */
+    public boolean isTeamItalic(String teamName) {
+        return teamItalic.getOrDefault(teamName, false);
+    }
+
     // ========================================
     // TAB LIST MANAGEMENT
     // ========================================
 
     /**
      * Update player's display in tab list with team prefix
-     * FIXED: Now properly shows team name beside username
      */
     public void updatePlayerTabList(Player player) {
         String teamName = playerTeams.get(player.getUniqueId());
@@ -298,16 +410,30 @@ public class TeamManager {
 
         Team scoreboardTeam = scoreboard.registerNewTeam(teamName);
 
-        // Get team color
-        NamedTextColor color = teamColors.getOrDefault(teamName, NamedTextColor.WHITE);
+        // Get team formatting
+        TextColor color = teamColors.getOrDefault(teamName, NamedTextColor.WHITE);
+        boolean bold = teamBold.getOrDefault(teamName, false);
+        boolean italic = teamItalic.getOrDefault(teamName, false);
 
-        // FIXED: Set prefix with team name - this shows beside username in tab list
-        scoreboardTeam.prefix(Component.text("[" + teamName + "] ")
-                .color(color)
-                .decoration(TextDecoration.BOLD, true));
+        // Create formatted prefix with cleaner design: [TeamName]
+        Component prefix = Component.text("[" + teamName + "] ", color);
 
-        // Set team color for name
-        scoreboardTeam.color(color);
+        if (bold) {
+            prefix = prefix.decoration(TextDecoration.BOLD, true);
+        }
+        if (italic) {
+            prefix = prefix.decoration(TextDecoration.ITALIC, true);
+        }
+
+        scoreboardTeam.prefix(prefix);
+
+        // Set team color for player names (converts NamedTextColor or uses white)
+        if (color instanceof NamedTextColor namedColor) {
+            scoreboardTeam.color(namedColor);
+        } else {
+            // Hex colors can't be set as team color in scoreboard, use white
+            scoreboardTeam.color(NamedTextColor.WHITE);
+        }
 
         // Disable friendly fire
         scoreboardTeam.setAllowFriendlyFire(false);
@@ -315,7 +441,7 @@ public class TeamManager {
         // Enable see invisible teammates
         scoreboardTeam.setCanSeeFriendlyInvisibles(true);
 
-        plugin.getLogger().info("Created scoreboard team '" + teamName + "' with prefix");
+        plugin.getLogger().info("Created scoreboard team '" + teamName + "' with custom formatting");
 
         return scoreboardTeam;
     }
@@ -332,10 +458,30 @@ public class TeamManager {
     // UTILITY METHODS
     // ========================================
 
-    private void assignTeamColor(String teamName) {
-        NamedTextColor color = TEAM_COLORS[colorIndex % TEAM_COLORS.length];
+    private void assignDefaultFormatting(String teamName) {
+        NamedTextColor color = DEFAULT_COLORS[colorIndex % DEFAULT_COLORS.length];
         teamColors.put(teamName, color);
+        teamBold.put(teamName, false);
+        teamItalic.put(teamName, false);
         colorIndex++;
+    }
+
+    private TextColor parseColor(String colorStr) {
+        // Try hex color first
+        if (colorStr.startsWith("#")) {
+            try {
+                return TextColor.fromHexString(colorStr);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+
+        // Try named color
+        try {
+            return NamedTextColor.NAMES.value(colorStr.toLowerCase());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private boolean isValidTeamName(String teamName) {

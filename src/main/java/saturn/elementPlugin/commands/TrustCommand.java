@@ -19,12 +19,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Simplified trust command with easier usage
- * /trust <player> - Send trust request (replaces /trust add)
- * /trust accept <player> - Accept trust
- * /trust remove <player> - Remove trust
- * /trust list - View your trust status
- * /trust team ... - Team management
+ * Simplified trust command with team customization
  */
 public class TrustCommand implements CommandExecutor, TabCompleter {
     private final ElementPlugin plugin;
@@ -43,7 +38,6 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0) {
-            // Show list by default (easier than requiring /trust list)
             handleList(p);
             return true;
         }
@@ -57,19 +51,12 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             case "remove", "untrust" -> handleRemove(p, args);
             case "team" -> handleTeam(p, args);
             case "help" -> sendUsage(p);
-            default -> {
-                // If it's not a subcommand, treat it as a player name for quick trust
-                handleQuickTrust(p, args[0]);
-            }
+            default -> handleQuickTrust(p, args[0]);
         }
 
         return true;
     }
 
-    /**
-     * Quick trust: /trust <player>
-     * Simplified - no need to type "add"
-     */
     private void handleQuickTrust(Player p, String targetName) {
         Player target = Bukkit.getPlayer(targetName);
         if (target == null) {
@@ -89,7 +76,6 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
 
         trust.addPending(target.getUniqueId(), p.getUniqueId());
 
-        // Send interactive message to target
         Component msg = Component.text(p.getName() + " wants to trust with you. ", NamedTextColor.GOLD)
                 .append(Component.text("[ACCEPT]", NamedTextColor.GREEN, TextDecoration.BOLD)
                         .clickEvent(ClickEvent.runCommand("/trust accept " + p.getName()))
@@ -106,7 +92,6 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
     private void handleList(Player p) {
         p.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY));
 
-        // Show team info
         String teamName = trust.getPlayerTeam(p.getUniqueId());
         if (teamName != null) {
             boolean isLeader = trust.isTeamLeader(p.getUniqueId(), teamName);
@@ -144,7 +129,6 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             p.sendMessage(Component.empty());
         }
 
-        // Show individual trust
         var names = trust.getTrustedNames(p.getUniqueId());
         List<String> displayNames = new ArrayList<>();
 
@@ -169,7 +153,6 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
                     .append(Component.text(String.join(", ", displayNames), NamedTextColor.WHITE)));
         }
 
-        // Show pending invites
         var pendingInvites = trust.getPendingInvites(p.getUniqueId());
         if (!pendingInvites.isEmpty()) {
             p.sendMessage(Component.empty());
@@ -281,6 +264,9 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             case "leave" -> handleTeamLeave(p);
             case "kick" -> handleTeamKick(p, args);
             case "disband" -> handleTeamDisband(p);
+            case "color", "colour" -> handleTeamColor(p, args);
+            case "bold" -> handleTeamBold(p);
+            case "italic" -> handleTeamItalic(p);
             default -> sendTeamUsage(p);
         }
     }
@@ -296,7 +282,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         if (trust.createTeam(p, teamName)) {
             p.sendMessage(Component.text("✓ Created team: ", NamedTextColor.GREEN)
                     .append(Component.text(teamName, NamedTextColor.AQUA, TextDecoration.BOLD)));
-            p.sendMessage(Component.text("  Use /trust team invite <player> to add members", NamedTextColor.GRAY));
+            p.sendMessage(Component.text("  Use /trust team color <color> to customize", NamedTextColor.GRAY));
         }
     }
 
@@ -343,7 +329,6 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             p.sendMessage(Component.text("✓ Joined team: ", NamedTextColor.GREEN)
                     .append(Component.text(teamName, NamedTextColor.AQUA, TextDecoration.BOLD)));
 
-            // Notify team members
             for (UUID memberUUID : trust.getTeamMembers(teamName)) {
                 Player member = Bukkit.getPlayer(memberUUID);
                 if (member != null && !member.equals(p)) {
@@ -370,7 +355,6 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             } else {
                 p.sendMessage(Component.text("✓ Left team: " + teamName, NamedTextColor.YELLOW));
 
-                // Notify remaining members
                 for (UUID memberUUID : trust.getTeamMembers(teamName)) {
                     Player member = Bukkit.getPlayer(memberUUID);
                     if (member != null) {
@@ -417,7 +401,6 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Notify all members
         for (UUID memberUUID : trust.getTeamMembers(teamName)) {
             Player member = Bukkit.getPlayer(memberUUID);
             if (member != null) {
@@ -427,6 +410,42 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
 
         trust.disbandTeam(teamName);
         p.sendMessage(Component.text("✓ Team disbanded", NamedTextColor.YELLOW));
+    }
+
+    private void handleTeamColor(Player p, String[] args) {
+        if (args.length < 3) {
+            p.sendMessage(Component.text("Usage: /trust team color <color>", NamedTextColor.RED));
+            p.sendMessage(Component.text("Examples: red, blue, #FF5733", NamedTextColor.GRAY));
+            return;
+        }
+
+        String teamName = trust.getPlayerTeam(p.getUniqueId());
+        if (teamName == null) {
+            p.sendMessage(Component.text("You are not in a team", NamedTextColor.RED));
+            return;
+        }
+
+        trust.setTeamColor(p, teamName, args[2]);
+    }
+
+    private void handleTeamBold(Player p) {
+        String teamName = trust.getPlayerTeam(p.getUniqueId());
+        if (teamName == null) {
+            p.sendMessage(Component.text("You are not in a team", NamedTextColor.RED));
+            return;
+        }
+
+        trust.toggleTeamBold(p, teamName);
+    }
+
+    private void handleTeamItalic(Player p) {
+        String teamName = trust.getPlayerTeam(p.getUniqueId());
+        if (teamName == null) {
+            p.sendMessage(Component.text("You are not in a team", NamedTextColor.RED));
+            return;
+        }
+
+        trust.toggleTeamItalic(p, teamName);
     }
 
     private void sendUsage(Player p) {
@@ -452,6 +471,14 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text("- Join team", NamedTextColor.GRAY)));
         p.sendMessage(Component.text("  /trust team leave ", NamedTextColor.AQUA)
                 .append(Component.text("- Leave team", NamedTextColor.GRAY)));
+        p.sendMessage(Component.empty());
+        p.sendMessage(Component.text("Customization:", NamedTextColor.YELLOW));
+        p.sendMessage(Component.text("  /trust team color <color> ", NamedTextColor.AQUA)
+                .append(Component.text("- Change team color", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust team bold ", NamedTextColor.AQUA)
+                .append(Component.text("- Toggle bold", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust team italic ", NamedTextColor.AQUA)
+                .append(Component.text("- Toggle italic", NamedTextColor.GRAY)));
         p.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY));
     }
 
@@ -472,6 +499,14 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         p.sendMessage(Component.text("  /trust team disband ", NamedTextColor.AQUA)
                 .append(Component.text("- Disband team (leader)", NamedTextColor.GRAY)));
         p.sendMessage(Component.empty());
+        p.sendMessage(Component.text("Customization (Leader Only):", NamedTextColor.YELLOW));
+        p.sendMessage(Component.text("  /trust team color <color> ", NamedTextColor.AQUA)
+                .append(Component.text("- Set team color", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust team bold ", NamedTextColor.AQUA)
+                .append(Component.text("- Toggle bold formatting", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("  /trust team italic ", NamedTextColor.AQUA)
+                .append(Component.text("- Toggle italic formatting", NamedTextColor.GRAY)));
+        p.sendMessage(Component.empty());
         p.sendMessage(Component.text("ℹ Team members have automatic trust", NamedTextColor.YELLOW));
         p.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY));
     }
@@ -484,7 +519,6 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             List<String> subcommands = Arrays.asList("list", "accept", "deny", "remove", "team", "help");
-            // Also include online player names for quick trust
             List<String> completions = new ArrayList<>(subcommands);
             completions.addAll(getOnlinePlayers(args[0]));
             return completions.stream()
@@ -496,7 +530,8 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             String subcommand = args[0].toLowerCase();
 
             if ("team".equals(subcommand)) {
-                List<String> teamCommands = Arrays.asList("create", "invite", "accept", "join", "leave", "kick", "disband");
+                List<String> teamCommands = Arrays.asList("create", "invite", "accept", "join", "leave",
+                        "kick", "disband", "color", "bold", "italic");
                 return teamCommands.stream()
                         .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
@@ -510,6 +545,10 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         if (args.length == 3 && "team".equals(args[0].toLowerCase())) {
             if ("invite".equals(args[1].toLowerCase()) || "kick".equals(args[1].toLowerCase())) {
                 return getOnlinePlayers(args[2]);
+            }
+            if ("color".equals(args[1].toLowerCase())) {
+                return Arrays.asList("red", "blue", "green", "yellow", "aqua", "gold", "light_purple",
+                        "dark_red", "dark_blue", "#FF5733");
             }
         }
 
