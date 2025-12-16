@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 /**
  * Manages team creation, invites, allies (ONE ally per team), and tab list display with customization
  * UPDATED: Now properly saves and loads team data from DataStore
+ * FIXED: Added null checks for ScoreboardManager to prevent crashes during initialization
  */
 public class TeamManager {
     private final ElementPlugin plugin;
@@ -60,8 +61,9 @@ public class TeamManager {
         // Load customization data
         loadCustomizationData();
 
-        // Recreate scoreboard teams on startup
-        recreateScoreboardTeams();
+        // FIXED: Delay scoreboard recreation until server is fully loaded
+        // Schedule for next tick to ensure ScoreboardManager is available
+        Bukkit.getScheduler().runTask(plugin, this::recreateScoreboardTeams);
 
         plugin.getLogger().info("TeamManager initialized with " + teams.size() + " teams");
     }
@@ -610,7 +612,14 @@ public class TeamManager {
 
     public void updatePlayerTabList(Player player) {
         String teamName = playerTeams.get(player.getUniqueId());
-        Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
+
+        org.bukkit.scoreboard.ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
+        if (scoreboardManager == null) {
+            plugin.getLogger().warning("ScoreboardManager not available - cannot update tab for " + player.getName());
+            return;
+        }
+
+        Scoreboard scoreboard = scoreboardManager.getMainScoreboard();
 
         Team existingTeam = scoreboard.getPlayerTeam(player);
         if (existingTeam != null) {
@@ -619,13 +628,21 @@ public class TeamManager {
 
         if (teamName != null) {
             Team scoreboardTeam = getOrCreateScoreboardTeam(teamName);
-            scoreboardTeam.addEntry(player.getName());
-            plugin.getLogger().fine("Added " + player.getName() + " to scoreboard team '" + teamName + "'");
+            if (scoreboardTeam != null) {
+                scoreboardTeam.addEntry(player.getName());
+                plugin.getLogger().fine("Added " + player.getName() + " to scoreboard team '" + teamName + "'");
+            }
         }
     }
 
     private Team getOrCreateScoreboardTeam(String teamName) {
-        Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
+        org.bukkit.scoreboard.ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
+        if (scoreboardManager == null) {
+            plugin.getLogger().warning("ScoreboardManager not available - cannot get team '" + teamName + "'");
+            return null;
+        }
+
+        Scoreboard scoreboard = scoreboardManager.getMainScoreboard();
         Team scoreboardTeam = scoreboard.getTeam(teamName);
 
         if (scoreboardTeam == null) {
@@ -636,7 +653,14 @@ public class TeamManager {
     }
 
     private Team createScoreboardTeam(String teamName) {
-        Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
+        // FIXED: Add null check for ScoreboardManager
+        org.bukkit.scoreboard.ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
+        if (scoreboardManager == null) {
+            plugin.getLogger().warning("ScoreboardManager not available yet - cannot create team '" + teamName + "'");
+            return null;
+        }
+
+        Scoreboard scoreboard = scoreboardManager.getMainScoreboard();
 
         Team existing = scoreboard.getTeam(teamName);
         if (existing != null) {
@@ -675,7 +699,13 @@ public class TeamManager {
     }
 
     private void removeScoreboardTeam(String teamName) {
-        Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
+        org.bukkit.scoreboard.ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
+        if (scoreboardManager == null) {
+            plugin.getLogger().warning("ScoreboardManager not available - cannot remove team '" + teamName + "'");
+            return;
+        }
+
+        Scoreboard scoreboard = scoreboardManager.getMainScoreboard();
         Team scoreboardTeam = scoreboard.getTeam(teamName);
         if (scoreboardTeam != null) {
             scoreboardTeam.unregister();
