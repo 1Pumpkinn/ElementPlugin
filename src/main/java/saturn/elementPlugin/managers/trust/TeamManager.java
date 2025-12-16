@@ -16,8 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * Manages team creation, invites, allies, and tab list display with customization
- * UPDATED: Added ally system
+ * Manages team creation, invites, allies (ONE ally per team), and tab list display with customization
+ * UPDATED: Only one ally allowed per team. Changed "request/accept" to direct "add"
  */
 public class TeamManager {
     private final ElementPlugin plugin;
@@ -28,9 +28,8 @@ public class TeamManager {
     private final Map<String, UUID> teamLeaders = new ConcurrentHashMap<>();
     private final Map<UUID, Set<String>> teamInvites = new ConcurrentHashMap<>();
 
-    // Ally system - NEW
-    private final Map<String, Set<String>> teamAllies = new ConcurrentHashMap<>();
-    private final Map<String, Set<String>> pendingAllyRequests = new ConcurrentHashMap<>();
+    // Ally system - ONE ally per team (simplified)
+    private final Map<String, String> teamAllies = new ConcurrentHashMap<>();
 
     // Team customization
     private final Map<String, TextColor> teamColors = new ConcurrentHashMap<>();
@@ -70,18 +69,25 @@ public class TeamManager {
             return false; // Same team or no team
         }
 
-        Set<String> allies1 = teamAllies.get(team1);
-        return allies1 != null && allies1.contains(team2);
+        // Check if team1's ally is team2
+        String team1Ally = teamAllies.get(team1);
+        if (team1Ally != null && team1Ally.equals(team2)) {
+            return true;
+        }
+
+        // Check if team2's ally is team1
+        String team2Ally = teamAllies.get(team2);
+        return team2Ally != null && team2Ally.equals(team1);
     }
 
     // ========================================
-    // ALLY SYSTEM - NEW
+    // ALLY SYSTEM - SIMPLIFIED (ONE ALLY ONLY)
     // ========================================
 
     /**
-     * Request to ally with another team
+     * Add an ally team (ONE ally maximum, direct add)
      */
-    public boolean requestAlly(Player requester, String targetTeamName) {
+    public boolean addAlly(Player requester, String targetTeamName) {
         String requesterTeam = playerTeams.get(requester.getUniqueId());
 
         // Check if requester is in a team
@@ -92,7 +98,7 @@ public class TeamManager {
 
         // Check if requester is team leader
         if (!isTeamLeader(requester.getUniqueId(), requesterTeam)) {
-            requester.sendMessage(Component.text("Only the team leader can send ally requests!", NamedTextColor.RED));
+            requester.sendMessage(Component.text("Only the team leader can manage allies!", NamedTextColor.RED));
             return false;
         }
 
@@ -108,87 +114,38 @@ public class TeamManager {
             return false;
         }
 
-        // Check if already allies
-        Set<String> currentAllies = teamAllies.get(requesterTeam);
-        if (currentAllies != null && currentAllies.contains(targetTeamName)) {
-            requester.sendMessage(Component.text("Your team is already allied with " + targetTeamName + "!", NamedTextColor.YELLOW));
+        // Check if requester team already has an ally
+        if (teamAllies.containsKey(requesterTeam)) {
+            String currentAlly = teamAllies.get(requesterTeam);
+            requester.sendMessage(Component.text("You can only have ONE ally! Current ally: ", NamedTextColor.RED)
+                    .append(Component.text(currentAlly, NamedTextColor.AQUA)));
+            requester.sendMessage(Component.text("Remove your current ally first with /team ally remove " + currentAlly, NamedTextColor.GRAY));
             return false;
         }
 
-        // Add to pending requests
-        pendingAllyRequests.computeIfAbsent(targetTeamName, k -> ConcurrentHashMap.newKeySet())
-                .add(requesterTeam);
-
-        // Notify target team leader
-        UUID targetLeaderUUID = teamLeaders.get(targetTeamName);
-        Player targetLeader = Bukkit.getPlayer(targetLeaderUUID);
-        if (targetLeader != null) {
-            targetLeader.sendMessage(Component.text("Team ", NamedTextColor.GOLD)
-                    .append(Component.text(requesterTeam, NamedTextColor.AQUA, TextDecoration.BOLD))
-                    .append(Component.text(" wants to ally with your team!", NamedTextColor.GOLD)));
-            targetLeader.sendMessage(Component.text("Use ", NamedTextColor.GRAY)
-                    .append(Component.text("/team ally accept " + requesterTeam, NamedTextColor.AQUA))
-                    .append(Component.text(" to accept", NamedTextColor.GRAY)));
-        }
-
-        requester.sendMessage(Component.text("✓ Sent ally request to team " + targetTeamName, NamedTextColor.GREEN));
-        plugin.getLogger().info("Team '" + requesterTeam + "' requested ally with '" + targetTeamName + "'");
-        return true;
-    }
-
-    /**
-     * Accept an ally request
-     */
-    public boolean acceptAlly(Player accepter, String requestingTeamName) {
-        String accepterTeam = playerTeams.get(accepter.getUniqueId());
-
-        // Check if accepter is in a team
-        if (accepterTeam == null) {
-            accepter.sendMessage(Component.text("You must be in a team!", NamedTextColor.RED));
-            return false;
-        }
-
-        // Check if accepter is team leader
-        if (!isTeamLeader(accepter.getUniqueId(), accepterTeam)) {
-            accepter.sendMessage(Component.text("Only the team leader can accept ally requests!", NamedTextColor.RED));
-            return false;
-        }
-
-        // Check if there's a pending request
-        Set<String> pending = pendingAllyRequests.get(accepterTeam);
-        if (pending == null || !pending.contains(requestingTeamName)) {
-            accepter.sendMessage(Component.text("No pending ally request from team " + requestingTeamName, NamedTextColor.RED));
-            return false;
-        }
-
-        // Check if requesting team still exists
-        if (!teams.containsKey(requestingTeamName)) {
-            pending.remove(requestingTeamName);
-            accepter.sendMessage(Component.text("That team no longer exists!", NamedTextColor.RED));
+        // Check if target team already has an ally
+        if (teamAllies.containsKey(targetTeamName)) {
+            requester.sendMessage(Component.text("That team already has an ally!", NamedTextColor.RED));
             return false;
         }
 
         // Create mutual ally relationship
-        teamAllies.computeIfAbsent(accepterTeam, k -> ConcurrentHashMap.newKeySet())
-                .add(requestingTeamName);
-        teamAllies.computeIfAbsent(requestingTeamName, k -> ConcurrentHashMap.newKeySet())
-                .add(accepterTeam);
-
-        // Remove from pending
-        pending.remove(requestingTeamName);
+        teamAllies.put(requesterTeam, targetTeamName);
+        teamAllies.put(targetTeamName, requesterTeam);
 
         // Notify both teams
-        accepter.sendMessage(Component.text("✓ Your team is now allied with ", NamedTextColor.GREEN)
-                .append(Component.text(requestingTeamName, NamedTextColor.AQUA, TextDecoration.BOLD)));
+        requester.sendMessage(Component.text("✓ Your team is now allied with ", NamedTextColor.GREEN)
+                .append(Component.text(targetTeamName, NamedTextColor.AQUA, TextDecoration.BOLD)));
 
-        UUID requestingLeaderUUID = teamLeaders.get(requestingTeamName);
-        Player requestingLeader = Bukkit.getPlayer(requestingLeaderUUID);
-        if (requestingLeader != null) {
-            requestingLeader.sendMessage(Component.text("✓ Your ally request was accepted by team ", NamedTextColor.GREEN)
-                    .append(Component.text(accepterTeam, NamedTextColor.AQUA, TextDecoration.BOLD)));
+        UUID targetLeaderUUID = teamLeaders.get(targetTeamName);
+        Player targetLeader = Bukkit.getPlayer(targetLeaderUUID);
+        if (targetLeader != null) {
+            targetLeader.sendMessage(Component.text("✓ Team ", NamedTextColor.GREEN)
+                    .append(Component.text(requesterTeam, NamedTextColor.AQUA, TextDecoration.BOLD))
+                    .append(Component.text(" is now your ally!", NamedTextColor.GREEN)));
         }
 
-        plugin.getLogger().info("Teams '" + accepterTeam + "' and '" + requestingTeamName + "' are now allies");
+        plugin.getLogger().info("Teams '" + requesterTeam + "' and '" + targetTeamName + "' are now allies");
         return true;
     }
 
@@ -211,18 +168,15 @@ public class TeamManager {
         }
 
         // Check if they're actually allies
-        Set<String> allies = teamAllies.get(playerTeam);
-        if (allies == null || !allies.contains(allyTeamName)) {
+        String currentAlly = teamAllies.get(playerTeam);
+        if (currentAlly == null || !currentAlly.equals(allyTeamName)) {
             player.sendMessage(Component.text("Your team is not allied with " + allyTeamName, NamedTextColor.RED));
             return false;
         }
 
         // Remove mutual ally relationship
-        allies.remove(allyTeamName);
-        Set<String> otherAllies = teamAllies.get(allyTeamName);
-        if (otherAllies != null) {
-            otherAllies.remove(playerTeam);
-        }
+        teamAllies.remove(playerTeam);
+        teamAllies.remove(allyTeamName);
 
         // Notify both teams
         player.sendMessage(Component.text("✓ Removed ally relationship with team " + allyTeamName, NamedTextColor.YELLOW));
@@ -240,29 +194,17 @@ public class TeamManager {
     }
 
     /**
-     * Get all allied teams for a player's team
+     * Get the allied team for a player's team (only ONE)
      */
-    public Set<String> getAlliedTeams(UUID playerUUID) {
+    public String getAllyTeam(UUID playerUUID) {
         String team = playerTeams.get(playerUUID);
-        if (team == null) return new HashSet<>();
+        if (team == null) return null;
 
-        Set<String> allies = teamAllies.get(team);
-        return allies != null ? new HashSet<>(allies) : new HashSet<>();
-    }
-
-    /**
-     * Get pending ally requests for a player's team
-     */
-    public Set<String> getPendingAllyRequests(UUID playerUUID) {
-        String team = playerTeams.get(playerUUID);
-        if (team == null) return new HashSet<>();
-
-        Set<String> pending = pendingAllyRequests.get(team);
-        return pending != null ? new HashSet<>(pending) : new HashSet<>();
+        return teamAllies.get(team);
     }
 
     // ========================================
-    // TEAM CREATION & MANAGEMENT (existing code continues...)
+    // TEAM CREATION & MANAGEMENT
     // ========================================
 
     public boolean createTeam(Player leader, String teamName) {
@@ -376,18 +318,11 @@ public class TeamManager {
             }
         }
 
-        // Clean up ally relationships
-        Set<String> allies = teamAllies.remove(teamName);
-        if (allies != null) {
-            for (String allyTeam : allies) {
-                Set<String> otherAllies = teamAllies.get(allyTeam);
-                if (otherAllies != null) {
-                    otherAllies.remove(teamName);
-                }
-            }
+        // Clean up ally relationship
+        String allyTeam = teamAllies.remove(teamName);
+        if (allyTeam != null) {
+            teamAllies.remove(allyTeam);
         }
-
-        pendingAllyRequests.remove(teamName);
 
         teams.remove(teamName);
         teamLeaders.remove(teamName);
@@ -422,8 +357,66 @@ public class TeamManager {
     }
 
     // ========================================
-    // TEAM CUSTOMIZATION (same as before)
+    // TEAM CUSTOMIZATION
     // ========================================
+
+    /**
+     * Rename a team (NEW)
+     */
+    public boolean renameTeam(Player leader, String oldName, String newName) {
+        if (!isTeamLeader(leader.getUniqueId(), oldName)) {
+            leader.sendMessage(Component.text("Only the team leader can rename the team!", NamedTextColor.RED));
+            return false;
+        }
+
+        if (!isValidTeamName(newName)) {
+            leader.sendMessage(Component.text("Invalid team name! Must be 1-16 characters, no spaces.", NamedTextColor.RED));
+            return false;
+        }
+
+        if (teams.containsKey(newName)) {
+            leader.sendMessage(Component.text("A team with that name already exists!", NamedTextColor.RED));
+            return false;
+        }
+
+        // Move team data to new name
+        Set<UUID> members = teams.remove(oldName);
+        UUID leaderUUID = teamLeaders.remove(oldName);
+        TextColor color = teamColors.remove(oldName);
+        Boolean bold = teamBold.remove(oldName);
+        Boolean italic = teamItalic.remove(oldName);
+        String ally = teamAllies.remove(oldName);
+
+        teams.put(newName, members);
+        teamLeaders.put(newName, leaderUUID);
+        if (color != null) teamColors.put(newName, color);
+        if (bold != null) teamBold.put(newName, bold);
+        if (italic != null) teamItalic.put(newName, italic);
+        if (ally != null) {
+            teamAllies.put(newName, ally);
+            teamAllies.put(ally, newName); // Update ally's reference
+        }
+
+        // Update player mappings
+        for (UUID memberUUID : members) {
+            playerTeams.put(memberUUID, newName);
+        }
+
+        // Recreate scoreboard team
+        removeScoreboardTeam(oldName);
+        createScoreboardTeam(newName);
+
+        // Update tab lists
+        for (UUID memberUUID : members) {
+            Player member = Bukkit.getPlayer(memberUUID);
+            if (member != null) {
+                updatePlayerTabList(member);
+            }
+        }
+
+        plugin.getLogger().info("Team '" + oldName + "' renamed to '" + newName + "'");
+        return true;
+    }
 
     public boolean setTeamColor(Player leader, String teamName, String color) {
         if (!isTeamLeader(leader.getUniqueId(), teamName)) {
@@ -541,7 +534,7 @@ public class TeamManager {
     }
 
     // ========================================
-    // TAB LIST MANAGEMENT (same as before)
+    // TAB LIST MANAGEMENT
     // ========================================
 
     public void updatePlayerTabList(Player player) {

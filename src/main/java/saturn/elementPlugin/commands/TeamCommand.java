@@ -20,7 +20,8 @@ import java.util.stream.Collectors;
 
 /**
  * Handles all team-related commands including allies and individual trust
- * Usage: /team <create|invite|accept|leave|kick|disband|trust|untrust|ally|color|bold|italic|list>
+ * Usage: /team <create|invite|accept|leave|kick|disband|edit|trust|untrust|ally|list>
+ * UPDATED: Added /team edit with rename, bold, italic, color. Changed ally to "add" instead of "request"
  */
 public class TeamCommand implements CommandExecutor, TabCompleter {
     private final ElementPlugin plugin;
@@ -50,9 +51,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             case "leave" -> handleTeamLeave(p);
             case "kick" -> handleTeamKick(p, args);
             case "disband" -> handleTeamDisband(p);
-            case "color", "colour" -> handleTeamColor(p, args);
-            case "bold" -> handleTeamBold(p);
-            case "italic" -> handleTeamItalic(p);
+            case "edit" -> handleTeamEdit(p, args);
             case "ally" -> handleAlly(p, args);
             case "list" -> handleList(p);
             case "trust" -> handleTrust(p, args);
@@ -74,7 +73,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         if (trust.createTeam(p, teamName)) {
             p.sendMessage(Component.text("✓ Created team: ", NamedTextColor.GREEN)
                     .append(Component.text(teamName, NamedTextColor.AQUA, TextDecoration.BOLD)));
-            p.sendMessage(Component.text("  Use /team color <color> to customize", NamedTextColor.GRAY));
+            p.sendMessage(Component.text("  Use /team edit to customize", NamedTextColor.GRAY));
         }
     }
 
@@ -204,76 +203,101 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         p.sendMessage(Component.text("✓ Team disbanded", NamedTextColor.YELLOW));
     }
 
-    private void handleTeamColor(Player p, String[] args) {
+    private void handleTeamEdit(Player p, String[] args) {
+        String teamName = trust.getPlayerTeam(p.getUniqueId());
+        if (teamName == null) {
+            p.sendMessage(Component.text("You are not in a team", NamedTextColor.RED));
+            return;
+        }
+
+        if (!trust.isTeamLeader(p.getUniqueId(), teamName)) {
+            p.sendMessage(Component.text("Only the team leader can edit the team", NamedTextColor.RED));
+            return;
+        }
+
         if (args.length < 2) {
-            p.sendMessage(Component.text("Usage: /team color <color>", NamedTextColor.RED));
-            p.sendMessage(Component.text("Examples: red, blue, #FF5733", NamedTextColor.GRAY));
-            return;
-        }
-
-        String teamName = trust.getPlayerTeam(p.getUniqueId());
-        if (teamName == null) {
-            p.sendMessage(Component.text("You are not in a team", NamedTextColor.RED));
-            return;
-        }
-
-        trust.setTeamColor(p, teamName, args[1]);
-    }
-
-    private void handleTeamBold(Player p) {
-        String teamName = trust.getPlayerTeam(p.getUniqueId());
-        if (teamName == null) {
-            p.sendMessage(Component.text("You are not in a team", NamedTextColor.RED));
-            return;
-        }
-
-        trust.toggleTeamBold(p, teamName);
-    }
-
-    private void handleTeamItalic(Player p) {
-        String teamName = trust.getPlayerTeam(p.getUniqueId());
-        if (teamName == null) {
-            p.sendMessage(Component.text("You are not in a team", NamedTextColor.RED));
-            return;
-        }
-
-        trust.toggleTeamItalic(p, teamName);
-    }
-
-    private void handleAlly(Player p, String[] args) {
-        if (args.length < 2) {
-            p.sendMessage(Component.text("Usage: /team ally <request|accept|remove> <team_name>", NamedTextColor.RED));
+            sendEditUsage(p);
             return;
         }
 
         String subCommand = args[1].toLowerCase();
 
         switch (subCommand) {
-            case "request" -> handleAllyRequest(p, args);
-            case "accept" -> handleAllyAccept(p, args);
-            case "remove" -> handleAllyRemove(p, args);
-            default -> p.sendMessage(Component.text("Usage: /team ally <request|accept|remove> <team_name>", NamedTextColor.RED));
+            case "rename" -> handleEditRename(p, args, teamName);
+            case "color", "colour" -> handleEditColor(p, args, teamName);
+            case "bold" -> handleEditBold(p, teamName);
+            case "italic" -> handleEditItalic(p, teamName);
+            default -> sendEditUsage(p);
         }
     }
 
-    private void handleAllyRequest(Player p, String[] args) {
+    private void handleEditRename(Player p, String[] args, String oldTeamName) {
         if (args.length < 3) {
-            p.sendMessage(Component.text("Usage: /team ally request <team_name>", NamedTextColor.RED));
+            p.sendMessage(Component.text("Usage: /team edit rename <new_name>", NamedTextColor.RED));
+            return;
+        }
+
+        String newTeamName = args[2];
+
+        if (trust.renameTeam(p, oldTeamName, newTeamName)) {
+            p.sendMessage(Component.text("✓ Team renamed to: ", NamedTextColor.GREEN)
+                    .append(Component.text(newTeamName, NamedTextColor.AQUA, TextDecoration.BOLD)));
+        }
+    }
+
+    private void handleEditColor(Player p, String[] args, String teamName) {
+        if (args.length < 3) {
+            p.sendMessage(Component.text("Usage: /team edit color <color>", NamedTextColor.RED));
+            p.sendMessage(Component.text("Examples: red, blue, #FF5733", NamedTextColor.GRAY));
+            return;
+        }
+
+        trust.setTeamColor(p, teamName, args[2]);
+    }
+
+    private void handleEditBold(Player p, String teamName) {
+        trust.toggleTeamBold(p, teamName);
+    }
+
+    private void handleEditItalic(Player p, String teamName) {
+        trust.toggleTeamItalic(p, teamName);
+    }
+
+    private void sendEditUsage(Player p) {
+        p.sendMessage(Component.text("=== Team Edit Commands ===", NamedTextColor.GOLD));
+        p.sendMessage(Component.text("/team edit rename <new_name>", NamedTextColor.AQUA)
+                .append(Component.text(" - Rename your team", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("/team edit color <color>", NamedTextColor.AQUA)
+                .append(Component.text(" - Change team color", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("/team edit bold", NamedTextColor.AQUA)
+                .append(Component.text(" - Toggle bold formatting", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("/team edit italic", NamedTextColor.AQUA)
+                .append(Component.text(" - Toggle italic formatting", NamedTextColor.GRAY)));
+    }
+
+    private void handleAlly(Player p, String[] args) {
+        if (args.length < 2) {
+            p.sendMessage(Component.text("Usage: /team ally <add|remove> <team_name>", NamedTextColor.RED));
+            return;
+        }
+
+        String subCommand = args[1].toLowerCase();
+
+        switch (subCommand) {
+            case "add" -> handleAllyAdd(p, args);
+            case "remove" -> handleAllyRemove(p, args);
+            default -> p.sendMessage(Component.text("Usage: /team ally <add|remove> <team_name>", NamedTextColor.RED));
+        }
+    }
+
+    private void handleAllyAdd(Player p, String[] args) {
+        if (args.length < 3) {
+            p.sendMessage(Component.text("Usage: /team ally add <team_name>", NamedTextColor.RED));
             return;
         }
 
         String targetTeamName = args[2];
-        trust.requestAlly(p, targetTeamName);
-    }
-
-    private void handleAllyAccept(Player p, String[] args) {
-        if (args.length < 3) {
-            p.sendMessage(Component.text("Usage: /team ally accept <team_name>", NamedTextColor.RED));
-            return;
-        }
-
-        String requestingTeamName = args[2];
-        trust.acceptAlly(p, requestingTeamName);
+        trust.addAlly(p, targetTeamName);
     }
 
     private void handleAllyRemove(Player p, String[] args) {
@@ -394,28 +418,12 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
                 p.sendMessage(nameComponent);
             }
 
-            // Show allies
-            Set<String> allies = trust.getAlliedTeams(p.getUniqueId());
-            if (!allies.isEmpty()) {
+            // Show ally
+            String ally = trust.getAllyTeam(p.getUniqueId());
+            if (ally != null) {
                 p.sendMessage(Component.empty());
-                p.sendMessage(Component.text("🤝 Allied Teams:", NamedTextColor.GREEN));
-                for (String allyTeam : allies) {
-                    p.sendMessage(Component.text("  • " + allyTeam, NamedTextColor.WHITE));
-                }
-            }
-
-            // Show pending ally requests
-            Set<String> pendingAllyRequests = trust.getPendingAllyRequests(p.getUniqueId());
-            if (!pendingAllyRequests.isEmpty() && isLeader) {
-                p.sendMessage(Component.empty());
-                p.sendMessage(Component.text("📨 Pending Ally Requests:", NamedTextColor.YELLOW));
-                for (String requestingTeam : pendingAllyRequests) {
-                    Component requestMsg = Component.text("  • " + requestingTeam + " ", NamedTextColor.WHITE)
-                            .append(Component.text("[ACCEPT]", NamedTextColor.GREEN, TextDecoration.BOLD)
-                                    .clickEvent(ClickEvent.runCommand("/team ally accept " + requestingTeam))
-                                    .hoverEvent(HoverEvent.showText(Component.text("Click to ally with " + requestingTeam))));
-                    p.sendMessage(requestMsg);
-                }
+                p.sendMessage(Component.text("🤝 Allied Team: ", NamedTextColor.GREEN)
+                        .append(Component.text(ally, NamedTextColor.WHITE)));
             }
 
             p.sendMessage(Component.empty());
@@ -480,21 +488,15 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         p.sendMessage(Component.text("  /team untrust <player> ", NamedTextColor.AQUA)
                 .append(Component.text("- Remove trust", NamedTextColor.GRAY)));
         p.sendMessage(Component.empty());
-        p.sendMessage(Component.text("Allies:", NamedTextColor.YELLOW));
-        p.sendMessage(Component.text("  /team ally request <team> ", NamedTextColor.AQUA)
-                .append(Component.text("- Request ally", NamedTextColor.GRAY)));
-        p.sendMessage(Component.text("  /team ally accept <team> ", NamedTextColor.AQUA)
-                .append(Component.text("- Accept ally request", NamedTextColor.GRAY)));
+        p.sendMessage(Component.text("Team Customization (Leader):", NamedTextColor.YELLOW));
+        p.sendMessage(Component.text("  /team edit ", NamedTextColor.AQUA)
+                .append(Component.text("- Edit team settings", NamedTextColor.GRAY)));
+        p.sendMessage(Component.empty());
+        p.sendMessage(Component.text("Allies (One ally per team):", NamedTextColor.YELLOW));
+        p.sendMessage(Component.text("  /team ally add <team> ", NamedTextColor.AQUA)
+                .append(Component.text("- Add ally team", NamedTextColor.GRAY)));
         p.sendMessage(Component.text("  /team ally remove <team> ", NamedTextColor.AQUA)
                 .append(Component.text("- Remove ally", NamedTextColor.GRAY)));
-        p.sendMessage(Component.empty());
-        p.sendMessage(Component.text("Customization (Leader Only):", NamedTextColor.YELLOW));
-        p.sendMessage(Component.text("  /team color <color> ", NamedTextColor.AQUA)
-                .append(Component.text("- Set team color", NamedTextColor.GRAY)));
-        p.sendMessage(Component.text("  /team bold ", NamedTextColor.AQUA)
-                .append(Component.text("- Toggle bold formatting", NamedTextColor.GRAY)));
-        p.sendMessage(Component.text("  /team italic ", NamedTextColor.AQUA)
-                .append(Component.text("- Toggle italic formatting", NamedTextColor.GRAY)));
         p.sendMessage(Component.empty());
         p.sendMessage(Component.text("ℹ Team members, allies, and trusted players cannot hurt each other", NamedTextColor.YELLOW));
         p.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY));
@@ -508,7 +510,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             List<String> teamCommands = Arrays.asList("list", "create", "invite", "accept", "join", "leave",
-                    "kick", "disband", "color", "bold", "italic", "ally", "trust", "untrust", "remove");
+                    "kick", "disband", "edit", "ally", "trust", "untrust", "remove");
             return teamCommands.stream()
                     .filter(s -> s.toLowerCase().startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
@@ -520,13 +522,17 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
                     "remove".equals(args[0].toLowerCase())) {
                 return getOnlinePlayers(args[1]);
             }
-            if ("color".equals(args[0].toLowerCase())) {
-                return Arrays.asList("red", "blue", "green", "yellow", "aqua", "gold", "light_purple",
-                        "dark_red", "dark_blue", "#FF5733");
+            if ("edit".equals(args[0].toLowerCase())) {
+                return Arrays.asList("rename", "color", "bold", "italic");
             }
             if ("ally".equals(args[0].toLowerCase())) {
-                return Arrays.asList("request", "accept", "remove");
+                return Arrays.asList("add", "remove");
             }
+        }
+
+        if (args.length == 3 && "edit".equals(args[0].toLowerCase()) && "color".equals(args[1].toLowerCase())) {
+            return Arrays.asList("red", "blue", "green", "yellow", "aqua", "gold", "light_purple",
+                    "dark_red", "dark_blue", "#FF5733");
         }
 
         return new ArrayList<>();

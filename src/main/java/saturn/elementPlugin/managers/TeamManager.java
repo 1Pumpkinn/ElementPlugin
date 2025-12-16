@@ -9,8 +9,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Main TrustManager - handles both teams AND individual trust
+ * Main TeamManager - handles both teams AND individual trust
  * Individual trust is managed in-memory and persisted via DataStore
+ * UPDATED: Simplified ally system (ONE ally per team)
  */
 public class TeamManager {
     private final ElementPlugin plugin;
@@ -151,21 +152,14 @@ public class TeamManager {
     }
 
     // ========================================
-    // ALLY MANAGEMENT - New functionality
+    // ALLY MANAGEMENT - SIMPLIFIED (ONE ALLY)
     // ========================================
 
     /**
-     * Request to ally with another team
+     * Add an ally team (ONE ally maximum, direct add)
      */
-    public boolean requestAlly(Player requester, String targetTeamName) {
-        return teamManager.requestAlly(requester, targetTeamName);
-    }
-
-    /**
-     * Accept an ally request
-     */
-    public boolean acceptAlly(Player accepter, String requestingTeamName) {
-        return teamManager.acceptAlly(accepter, requestingTeamName);
+    public boolean addAlly(Player requester, String targetTeamName) {
+        return teamManager.addAlly(requester, targetTeamName);
     }
 
     /**
@@ -176,22 +170,22 @@ public class TeamManager {
     }
 
     /**
-     * Get all allied teams for a player's team
+     * Get the allied team for a player's team (only ONE)
      */
-    public java.util.Set<String> getAlliedTeams(UUID playerUUID) {
-        return teamManager.getAlliedTeams(playerUUID);
-    }
-
-    /**
-     * Get pending ally requests for a player's team
-     */
-    public java.util.Set<String> getPendingAllyRequests(UUID playerUUID) {
-        return teamManager.getPendingAllyRequests(playerUUID);
+    public String getAllyTeam(UUID playerUUID) {
+        return teamManager.getAllyTeam(playerUUID);
     }
 
     // ========================================
     // TEAM CUSTOMIZATION - Delegate to TeamManager
     // ========================================
+
+    /**
+     * Rename a team (NEW)
+     */
+    public boolean renameTeam(Player leader, String oldName, String newName) {
+        return teamManager.renameTeam(leader, oldName, newName);
+    }
 
     public boolean setTeamColor(Player leader, String teamName, String color) {
         return teamManager.setTeamColor(leader, teamName, color);
