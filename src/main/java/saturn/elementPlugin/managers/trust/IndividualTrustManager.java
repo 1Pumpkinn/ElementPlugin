@@ -16,13 +16,23 @@ public class IndividualTrustManager {
     private final ElementPlugin plugin;
     private final DataStore store;
 
-    // Individual trust relationships
+    // Individual trust relationships (in-memory only, not persisted)
     private final Map<UUID, Set<UUID>> trusted = new ConcurrentHashMap<>();
     private final Map<UUID, Set<UUID>> pending = new ConcurrentHashMap<>();
 
     public IndividualTrustManager(ElementPlugin plugin) {
         this.plugin = plugin;
         this.store = plugin.getDataStore();
+    }
+
+    /**
+     * Load trust relationships from data store for a player
+     */
+    private void loadTrustFromStore(UUID owner) {
+        if (!trusted.containsKey(owner)) {
+            Set<UUID> storedTrust = store.getTrusted(owner);
+            trusted.put(owner, storedTrust);
+        }
     }
 
     /**
@@ -37,7 +47,8 @@ public class IndividualTrustManager {
      * Get all players that this player trusts
      */
     public Set<UUID> getTrusted(UUID owner) {
-        return trusted.computeIfAbsent(owner, store::getTrusted);
+        loadTrustFromStore(owner);
+        return trusted.computeIfAbsent(owner, k -> ConcurrentHashMap.newKeySet());
     }
 
     /**
