@@ -1,6 +1,7 @@
 package saturn.elementPlugin.managers.trust;
 
 import saturn.elementPlugin.ElementPlugin;
+import saturn.elementPlugin.data.TeamData;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
@@ -17,19 +18,18 @@ import java.util.stream.Collectors;
 
 /**
  * Manages team creation, invites, allies (ONE ally per team), and tab list display with customization
- * UPDATED: Only one ally allowed per team. Changed "request/accept" to direct "add"
+ * UPDATED: Now properly saves and loads team data from DataStore
  */
 public class TeamManager {
     private final ElementPlugin plugin;
+    private final TeamData teamData;
 
-    // Team data structures
-    private final Map<UUID, String> playerTeams = new ConcurrentHashMap<>();
-    private final Map<String, Set<UUID>> teams = new ConcurrentHashMap<>();
-    private final Map<String, UUID> teamLeaders = new ConcurrentHashMap<>();
-    private final Map<UUID, Set<String>> teamInvites = new ConcurrentHashMap<>();
-
-    // Ally system - ONE ally per team (simplified)
-    private final Map<String, String> teamAllies = new ConcurrentHashMap<>();
+    // Team data structures (now synchronized with TeamData)
+    private final Map<UUID, String> playerTeams;
+    private final Map<String, Set<UUID>> teams;
+    private final Map<String, UUID> teamLeaders;
+    private final Map<UUID, Set<String>> teamInvites;
+    private final Map<String, String> teamAllies;
 
     // Team customization
     private final Map<String, TextColor> teamColors = new ConcurrentHashMap<>();
@@ -46,6 +46,84 @@ public class TeamManager {
 
     public TeamManager(ElementPlugin plugin) {
         this.plugin = plugin;
+
+        // Get TeamData from DataStore
+        this.teamData = plugin.getDataStore().getTeamData();
+
+        // Initialize maps directly from TeamData
+        this.playerTeams = teamData.getPlayerTeams();
+        this.teams = teamData.getTeams();
+        this.teamLeaders = teamData.getTeamLeaders();
+        this.teamInvites = teamData.getTeamInvites();
+        this.teamAllies = teamData.getTeamAllies();
+
+        // Load customization data
+        loadCustomizationData();
+
+        // Recreate scoreboard teams on startup
+        recreateScoreboardTeams();
+
+        plugin.getLogger().info("TeamManager initialized with " + teams.size() + " teams");
+    }
+
+    /**
+     * Load team customization data from TeamData
+     */
+    private void loadCustomizationData() {
+        for (String teamName : teams.keySet()) {
+            String colorStr = teamData.getTeamColor(teamName);
+            if (colorStr != null) {
+                TextColor color = parseColor(colorStr);
+                if (color != null) {
+                    teamColors.put(teamName, color);
+                }
+            }
+
+            Boolean bold = teamData.isTeamBold(teamName);
+            if (bold != null) {
+                teamBold.put(teamName, bold);
+            }
+
+            Boolean italic = teamData.isTeamItalic(teamName);
+            if (italic != null) {
+                teamItalic.put(teamName, italic);
+            }
+        }
+
+        plugin.getLogger().info("Loaded customization for " + teamColors.size() + " teams");
+    }
+
+    /**
+     * Recreate all scoreboard teams on server startup
+     */
+    private void recreateScoreboardTeams() {
+        for (String teamName : teams.keySet()) {
+            createScoreboardTeam(teamName);
+        }
+
+        // Update tab list for online players
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            updatePlayerTabList(player);
+        }
+
+        plugin.getLogger().info("Recreated " + teams.size() + " scoreboard teams");
+    }
+
+    /**
+     * Save team data to disk
+     * Call this when team data changes or on server shutdown
+     */
+    private void saveTeamData() {
+        // Save customization data back to TeamData
+        for (Map.Entry<String, TextColor> entry : teamColors.entrySet()) {
+            String colorStr = entry.getValue() instanceof NamedTextColor
+                    ? ((NamedTextColor) entry.getValue()).toString()
+                    : entry.getValue().asHexString();
+            teamData.setTeamColor(entry.getKey(), colorStr);
+        }
+
+        // Save to disk
+        plugin.getDataStore().saveTeamData();
     }
 
     // ========================================
@@ -58,82 +136,66 @@ public class TeamManager {
         return team1 != null && team1.equals(team2);
     }
 
-    /**
-     * Check if two players are allies (their teams are allied)
-     */
     public boolean areAllies(UUID player1, UUID player2) {
         String team1 = playerTeams.get(player1);
         String team2 = playerTeams.get(player2);
 
         if (team1 == null || team2 == null || team1.equals(team2)) {
-            return false; // Same team or no team
+            return false;
         }
 
-        // Check if team1's ally is team2
         String team1Ally = teamAllies.get(team1);
         if (team1Ally != null && team1Ally.equals(team2)) {
             return true;
         }
 
-        // Check if team2's ally is team1
         String team2Ally = teamAllies.get(team2);
         return team2Ally != null && team2Ally.equals(team1);
     }
 
     // ========================================
-    // ALLY SYSTEM - SIMPLIFIED (ONE ALLY ONLY)
+    // ALLY SYSTEM
     // ========================================
 
-    /**
-     * Add an ally team (ONE ally maximum, direct add)
-     */
     public boolean addAlly(Player requester, String targetTeamName) {
         String requesterTeam = playerTeams.get(requester.getUniqueId());
 
-        // Check if requester is in a team
         if (requesterTeam == null) {
             requester.sendMessage(Component.text("You must be in a team to ally with others!", NamedTextColor.RED));
             return false;
         }
 
-        // Check if requester is team leader
         if (!isTeamLeader(requester.getUniqueId(), requesterTeam)) {
             requester.sendMessage(Component.text("Only the team leader can manage allies!", NamedTextColor.RED));
             return false;
         }
 
-        // Check if target team exists
         if (!teams.containsKey(targetTeamName)) {
             requester.sendMessage(Component.text("Team '" + targetTeamName + "' does not exist!", NamedTextColor.RED));
             return false;
         }
 
-        // Can't ally with yourself
         if (requesterTeam.equals(targetTeamName)) {
             requester.sendMessage(Component.text("You cannot ally with your own team!", NamedTextColor.RED));
             return false;
         }
 
-        // Check if requester team already has an ally
         if (teamAllies.containsKey(requesterTeam)) {
             String currentAlly = teamAllies.get(requesterTeam);
             requester.sendMessage(Component.text("You can only have ONE ally! Current ally: ", NamedTextColor.RED)
                     .append(Component.text(currentAlly, NamedTextColor.AQUA)));
-            requester.sendMessage(Component.text("Remove your current ally first with /team ally remove " + currentAlly, NamedTextColor.GRAY));
             return false;
         }
 
-        // Check if target team already has an ally
         if (teamAllies.containsKey(targetTeamName)) {
             requester.sendMessage(Component.text("That team already has an ally!", NamedTextColor.RED));
             return false;
         }
 
-        // Create mutual ally relationship
-        teamAllies.put(requesterTeam, targetTeamName);
-        teamAllies.put(targetTeamName, requesterTeam);
+        teamData.setAlly(requesterTeam, targetTeamName);
+        teamData.setAlly(targetTeamName, requesterTeam);
+        saveTeamData();
 
-        // Notify both teams
         requester.sendMessage(Component.text("✓ Your team is now allied with ", NamedTextColor.GREEN)
                 .append(Component.text(targetTeamName, NamedTextColor.AQUA, TextDecoration.BOLD)));
 
@@ -149,36 +211,29 @@ public class TeamManager {
         return true;
     }
 
-    /**
-     * Remove ally relationship
-     */
     public boolean removeAlly(Player player, String allyTeamName) {
         String playerTeam = playerTeams.get(player.getUniqueId());
 
-        // Check if player is in a team
         if (playerTeam == null) {
             player.sendMessage(Component.text("You must be in a team!", NamedTextColor.RED));
             return false;
         }
 
-        // Check if player is team leader
         if (!isTeamLeader(player.getUniqueId(), playerTeam)) {
             player.sendMessage(Component.text("Only the team leader can remove allies!", NamedTextColor.RED));
             return false;
         }
 
-        // Check if they're actually allies
         String currentAlly = teamAllies.get(playerTeam);
         if (currentAlly == null || !currentAlly.equals(allyTeamName)) {
             player.sendMessage(Component.text("Your team is not allied with " + allyTeamName, NamedTextColor.RED));
             return false;
         }
 
-        // Remove mutual ally relationship
-        teamAllies.remove(playerTeam);
-        teamAllies.remove(allyTeamName);
+        teamData.removeAlly(playerTeam);
+        teamData.removeAlly(allyTeamName);
+        saveTeamData();
 
-        // Notify both teams
         player.sendMessage(Component.text("✓ Removed ally relationship with team " + allyTeamName, NamedTextColor.YELLOW));
 
         UUID otherLeaderUUID = teamLeaders.get(allyTeamName);
@@ -193,13 +248,9 @@ public class TeamManager {
         return true;
     }
 
-    /**
-     * Get the allied team for a player's team (only ONE)
-     */
     public String getAllyTeam(UUID playerUUID) {
         String team = playerTeams.get(playerUUID);
         if (team == null) return null;
-
         return teamAllies.get(team);
     }
 
@@ -225,13 +276,16 @@ public class TeamManager {
 
         Set<UUID> members = ConcurrentHashMap.newKeySet();
         members.add(leader.getUniqueId());
-        teams.put(teamName, members);
-        teamLeaders.put(teamName, leader.getUniqueId());
-        playerTeams.put(leader.getUniqueId(), teamName);
+
+        teamData.createTeam(teamName, members);
+        teamData.setTeamLeader(teamName, leader.getUniqueId());
+        teamData.setPlayerTeam(leader.getUniqueId(), teamName);
 
         assignDefaultFormatting(teamName);
         createScoreboardTeam(teamName);
         updatePlayerTabList(leader);
+
+        saveTeamData();
 
         plugin.getLogger().info("Team '" + teamName + "' created by " + leader.getName());
         return true;
@@ -248,7 +302,9 @@ public class TeamManager {
             return false;
         }
 
-        teamInvites.computeIfAbsent(target.getUniqueId(), k -> ConcurrentHashMap.newKeySet()).add(teamName);
+        teamData.addInvite(target.getUniqueId(), teamName);
+        saveTeamData();
+
         plugin.getLogger().info(inviter.getName() + " invited " + target.getName() + " to team '" + teamName + "'");
         return true;
     }
@@ -262,7 +318,7 @@ public class TeamManager {
 
         Set<UUID> members = teams.get(teamName);
         if (members == null) {
-            invites.remove(teamName);
+            teamData.removeInvite(player.getUniqueId(), teamName);
             player.sendMessage(Component.text("That team no longer exists!", NamedTextColor.RED));
             return false;
         }
@@ -272,11 +328,13 @@ public class TeamManager {
             return false;
         }
 
-        members.add(player.getUniqueId());
-        playerTeams.put(player.getUniqueId(), teamName);
-        invites.remove(teamName);
+        teamData.addTeamMember(teamName, player.getUniqueId());
+        teamData.setPlayerTeam(player.getUniqueId(), teamName);
+        teamData.removeInvite(player.getUniqueId(), teamName);
 
         updatePlayerTabList(player);
+        saveTeamData();
+
         plugin.getLogger().info(player.getName() + " joined team '" + teamName + "'");
         return true;
     }
@@ -293,13 +351,12 @@ public class TeamManager {
             return true;
         }
 
-        Set<UUID> members = teams.get(teamName);
-        if (members != null) {
-            members.remove(player.getUniqueId());
-        }
-        playerTeams.remove(player.getUniqueId());
+        teamData.removeTeamMember(teamName, player.getUniqueId());
+        teamData.setPlayerTeam(player.getUniqueId(), null);
 
         updatePlayerTabList(player);
+        saveTeamData();
+
         plugin.getLogger().info(player.getName() + " left team '" + teamName + "'");
         return true;
     }
@@ -311,7 +368,7 @@ public class TeamManager {
         plugin.getLogger().info("Disbanding team '" + teamName + "'");
 
         for (UUID memberUUID : new ArrayList<>(members)) {
-            playerTeams.remove(memberUUID);
+            teamData.setPlayerTeam(memberUUID, null);
             Player member = Bukkit.getPlayer(memberUUID);
             if (member != null) {
                 updatePlayerTabList(member);
@@ -321,16 +378,20 @@ public class TeamManager {
         // Clean up ally relationship
         String allyTeam = teamAllies.remove(teamName);
         if (allyTeam != null) {
-            teamAllies.remove(allyTeam);
+            teamData.removeAlly(allyTeam);
         }
 
-        teams.remove(teamName);
-        teamLeaders.remove(teamName);
+        teamData.removeTeam(teamName);
+        teamData.removeTeamLeader(teamName);
+        teamData.removeTeamCustomization(teamName);
+
         teamColors.remove(teamName);
         teamBold.remove(teamName);
         teamItalic.remove(teamName);
 
         removeScoreboardTeam(teamName);
+        saveTeamData();
+
         return true;
     }
 
@@ -348,10 +409,12 @@ public class TeamManager {
         Set<UUID> members = teams.get(teamName);
         if (members == null) return false;
 
-        members.remove(target.getUniqueId());
-        playerTeams.remove(target.getUniqueId());
+        teamData.removeTeamMember(teamName, target.getUniqueId());
+        teamData.setPlayerTeam(target.getUniqueId(), null);
 
         updatePlayerTabList(target);
+        saveTeamData();
+
         plugin.getLogger().info(leader.getName() + " kicked " + target.getName() + " from team '" + teamName + "'");
         return true;
     }
@@ -360,9 +423,6 @@ public class TeamManager {
     // TEAM CUSTOMIZATION
     // ========================================
 
-    /**
-     * Rename a team (NEW)
-     */
     public boolean renameTeam(Player leader, String oldName, String newName) {
         if (!isTeamLeader(leader.getUniqueId(), oldName)) {
             leader.sendMessage(Component.text("Only the team leader can rename the team!", NamedTextColor.RED));
@@ -379,7 +439,6 @@ public class TeamManager {
             return false;
         }
 
-        // Move team data to new name
         Set<UUID> members = teams.remove(oldName);
         UUID leaderUUID = teamLeaders.remove(oldName);
         TextColor color = teamColors.remove(oldName);
@@ -387,26 +446,34 @@ public class TeamManager {
         Boolean italic = teamItalic.remove(oldName);
         String ally = teamAllies.remove(oldName);
 
-        teams.put(newName, members);
-        teamLeaders.put(newName, leaderUUID);
+        teamData.removeTeam(oldName);
+        teamData.removeTeamLeader(oldName);
+        teamData.removeTeamCustomization(oldName);
+
+        teamData.createTeam(newName, members);
+        teamData.setTeamLeader(newName, leaderUUID);
+
         if (color != null) teamColors.put(newName, color);
-        if (bold != null) teamBold.put(newName, bold);
-        if (italic != null) teamItalic.put(newName, italic);
+        if (bold != null) {
+            teamBold.put(newName, bold);
+            teamData.setTeamBold(newName, bold);
+        }
+        if (italic != null) {
+            teamItalic.put(newName, italic);
+            teamData.setTeamItalic(newName, italic);
+        }
         if (ally != null) {
-            teamAllies.put(newName, ally);
-            teamAllies.put(ally, newName); // Update ally's reference
+            teamData.setAlly(newName, ally);
+            teamData.setAlly(ally, newName);
         }
 
-        // Update player mappings
         for (UUID memberUUID : members) {
-            playerTeams.put(memberUUID, newName);
+            teamData.setPlayerTeam(memberUUID, newName);
         }
 
-        // Recreate scoreboard team
         removeScoreboardTeam(oldName);
         createScoreboardTeam(newName);
 
-        // Update tab lists
         for (UUID memberUUID : members) {
             Player member = Bukkit.getPlayer(memberUUID);
             if (member != null) {
@@ -414,6 +481,7 @@ public class TeamManager {
             }
         }
 
+        saveTeamData();
         plugin.getLogger().info("Team '" + oldName + "' renamed to '" + newName + "'");
         return true;
     }
@@ -431,7 +499,9 @@ public class TeamManager {
         }
 
         teamColors.put(teamName, textColor);
+        teamData.setTeamColor(teamName, color);
         refreshTeamDisplay(teamName);
+        saveTeamData();
 
         leader.sendMessage(Component.text("Team color updated to ", NamedTextColor.GREEN)
                 .append(Component.text(color, textColor)));
@@ -446,7 +516,9 @@ public class TeamManager {
 
         boolean currentBold = teamBold.getOrDefault(teamName, false);
         teamBold.put(teamName, !currentBold);
+        teamData.setTeamBold(teamName, !currentBold);
         refreshTeamDisplay(teamName);
+        saveTeamData();
 
         leader.sendMessage(Component.text("Team bold formatting " + (!currentBold ? "enabled" : "disabled"), NamedTextColor.GREEN));
         return true;
@@ -460,7 +532,9 @@ public class TeamManager {
 
         boolean currentItalic = teamItalic.getOrDefault(teamName, false);
         teamItalic.put(teamName, !currentItalic);
+        teamData.setTeamItalic(teamName, !currentItalic);
         refreshTeamDisplay(teamName);
+        saveTeamData();
 
         leader.sendMessage(Component.text("Team italic formatting " + (!currentItalic ? "enabled" : "disabled"), NamedTextColor.GREEN));
         return true;
@@ -516,9 +590,6 @@ public class TeamManager {
         return teamItalic.getOrDefault(teamName, false);
     }
 
-    /**
-     * Get team member names for display (for backwards compatibility)
-     */
     public List<String> getTeamMemberNames(UUID owner) {
         String teamName = playerTeams.get(owner);
         if (teamName == null) return new ArrayList<>();
@@ -618,6 +689,7 @@ public class TeamManager {
     private void assignDefaultFormatting(String teamName) {
         NamedTextColor color = DEFAULT_COLORS[colorIndex % DEFAULT_COLORS.length];
         teamColors.put(teamName, color);
+        teamData.setTeamColor(teamName, color.toString());
         teamBold.put(teamName, false);
         teamItalic.put(teamName, false);
         colorIndex++;
@@ -647,6 +719,7 @@ public class TeamManager {
     }
 
     public void handlePlayerQuit(UUID playerUUID) {
-        teamInvites.remove(playerUUID);
+        teamData.clearPlayerInvites(playerUUID);
+        saveTeamData();
     }
 }
