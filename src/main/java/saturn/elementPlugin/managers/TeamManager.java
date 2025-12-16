@@ -107,6 +107,20 @@ public class TeamManager {
         return individualTrustManager.getTrusted(owner);
     }
 
+    /**
+     * Check if player has hidden their team prefix
+     */
+    public boolean isTeamHidden(UUID playerUUID) {
+        return teamManager.isTeamHidden(playerUUID);
+    }
+
+    /**
+     * Toggle team prefix visibility for a player
+     */
+    public void toggleTeamHidden(UUID playerUUID) {
+        teamManager.toggleTeamHidden(playerUUID);
+    }
+
     // ========================================
     // TEAM MANAGEMENT - Delegate to TeamManager
     // ========================================

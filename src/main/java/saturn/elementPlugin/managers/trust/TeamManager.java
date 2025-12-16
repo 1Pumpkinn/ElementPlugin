@@ -37,6 +37,9 @@ public class TeamManager {
     private final Map<String, Boolean> teamBold = new ConcurrentHashMap<>();
     private final Map<String, Boolean> teamItalic = new ConcurrentHashMap<>();
 
+    // Team visibility (per-player setting - NOT persisted, resets on restart)
+    private final Map<UUID, Boolean> teamHidden = new ConcurrentHashMap<>();
+
     // Default colors for new teams
     private static final NamedTextColor[] DEFAULT_COLORS = {
             NamedTextColor.AQUA, NamedTextColor.GREEN, NamedTextColor.YELLOW,

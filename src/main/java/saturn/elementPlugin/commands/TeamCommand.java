@@ -56,6 +56,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             case "list" -> handleList(p);
             case "trust" -> handleTrust(p, args);
             case "untrust", "remove" -> handleUntrust(p, args);
+            case "hide" -> handleHide(p);
             default -> sendTeamUsage(p);
         }
 
