@@ -18,6 +18,7 @@ import java.util.logging.Level;
  * - Dirty flag optimization (only save changed data)
  * - Thread-safe operations
  * - Better error handling and recovery
+ * UPDATED: Added TeamData support, removed trust system from PlayerData
  */
 public class DataStore {
     private static final String PLAYERS_PATH = "players";
@@ -27,12 +28,15 @@ public class DataStore {
     private final ElementPlugin plugin;
     private final File dataDir;
     private final File playerFile;
+    private final File teamFile;
     private final File backupDir;
 
     private FileConfiguration playerConfig;
+    private FileConfiguration teamConfig;
 
     // Thread-safe cache
     private final Map<UUID, PlayerData> playerDataCache = new ConcurrentHashMap<>();
+    private TeamData teamData;
 
     // Track last save time for debugging
     private long lastSaveTime = 0;
@@ -49,7 +53,9 @@ public class DataStore {
 
         // Setup files
         this.playerFile = new File(dataDir, "players.yml");
+        this.teamFile = new File(dataDir, "teams.yml");
         ensureFileExists(playerFile);
+        ensureFileExists(teamFile);
 
         // Load configuration
         loadConfiguration();
@@ -100,6 +106,18 @@ public class DataStore {
                 plugin.getLogger().warning("Created new empty player configuration");
             }
         }
+
+        try {
+            this.teamConfig = YamlConfiguration.loadConfiguration(teamFile);
+            ConfigurationSection teamSection = teamConfig.getConfigurationSection("teamData");
+            this.teamData = new TeamData(teamSection);
+            plugin.getLogger().info("Loaded team configuration from disk");
+        } catch (Exception e) {
+            plugin.getLogger().severe("Failed to load team configuration: " + e.getMessage());
+            this.teamConfig = new YamlConfiguration();
+            this.teamData = new TeamData();
+            plugin.getLogger().warning("Created new empty team configuration");
+        }
     }
 
     // ========================================
@@ -129,6 +147,11 @@ public class DataStore {
                 save(pd);
                 savedCount++;
             }
+        }
+
+        // Save team data if dirty
+        if (teamData.isDirty()) {
+            saveTeamData();
         }
 
         if (savedCount > 0) {
@@ -261,7 +284,39 @@ public class DataStore {
             }
         }
 
+        // Save team data
+        if (teamData.isDirty()) {
+            saveTeamData();
+        }
+
         plugin.getLogger().info("Flushed " + count + " player(s) to disk");
+    }
+
+    // ========================================
+    // TEAM DATA OPERATIONS
+    // ========================================
+
+    /**
+     * Get TeamData singleton
+     */
+    public TeamData getTeamData() {
+        return teamData;
+    }
+
+    /**
+     * Save team data to disk
+     */
+    public synchronized void saveTeamData() {
+        try {
+            teamConfig.set("teamData", null);
+            ConfigurationSection section = teamConfig.createSection("teamData");
+            teamData.saveTo(section);
+
+            teamConfig.save(teamFile);
+            plugin.getLogger().fine("Saved team data");
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to save team data", e);
+        }
     }
 
     // ========================================
@@ -352,21 +407,6 @@ public class DataStore {
             plugin.getLogger().log(Level.SEVERE, "Failed to recover from backup", e);
             return false;
         }
-    }
-
-    // ========================================
-    // TRUST SYSTEM (Backwards Compatibility)
-    // ========================================
-
-    public synchronized Set<UUID> getTrusted(UUID owner) {
-        PlayerData pd = getPlayerData(owner);
-        return pd.getTrustedPlayers();
-    }
-
-    public synchronized void setTrusted(UUID owner, Set<UUID> trusted) {
-        PlayerData pd = getPlayerData(owner);
-        pd.setTrustedPlayers(trusted);
-        save(pd);
     }
 
     // ========================================

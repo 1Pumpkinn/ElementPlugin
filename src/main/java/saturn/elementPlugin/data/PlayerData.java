@@ -4,13 +4,12 @@ import saturn.elementPlugin.elements.ElementType;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 /**
  * Represents all data for a single player.
  * This class is immutable-friendly with clear getters/setters.
+ * UPDATED: Removed trust system data (moved to TeamData)
  */
 public class PlayerData {
     // Core identity
@@ -23,9 +22,6 @@ public class PlayerData {
 
     // Mana system
     private int mana = 100;
-
-    // Trust system
-    private final Set<UUID> trustedPlayers = new HashSet<>();
 
     // Dirty flag for efficient saving
     private transient boolean dirty = false;
@@ -70,19 +66,6 @@ public class PlayerData {
                 this.ownedItems.add(type);
             } catch (IllegalArgumentException e) {
                 // Skip invalid items
-            }
-        }
-
-        // Load trust list
-        ConfigurationSection trustSection = section.getConfigurationSection("trust");
-        if (trustSection != null) {
-            for (String key : trustSection.getKeys(false)) {
-                try {
-                    UUID trustedUuid = UUID.fromString(key);
-                    this.trustedPlayers.add(trustedUuid);
-                } catch (IllegalArgumentException e) {
-                    // Skip invalid UUIDs
-                }
             }
         }
 
@@ -187,7 +170,7 @@ public class PlayerData {
     // OWNED ITEMS
     // ========================================
 
-    public Set<ElementType> getOwnedItems() {
+    public java.util.Set<ElementType> getOwnedItems() {
         return ownedItems;
     }
 
@@ -225,38 +208,6 @@ public class PlayerData {
 
     public void addMana(int delta) {
         setMana(this.mana + delta);
-    }
-
-    // ========================================
-    // TRUST SYSTEM
-    // ========================================
-
-    public Set<UUID> getTrustedPlayers() {
-        return new HashSet<>(trustedPlayers);
-    }
-
-    public void addTrustedPlayer(UUID uuid) {
-        if (trustedPlayers.add(uuid)) {
-            markDirty();
-        }
-    }
-
-    public void removeTrustedPlayer(UUID uuid) {
-        if (trustedPlayers.remove(uuid)) {
-            markDirty();
-        }
-    }
-
-    public boolean isTrusted(UUID uuid) {
-        return trustedPlayers.contains(uuid);
-    }
-
-    public void setTrustedPlayers(Set<UUID> trusted) {
-        this.trustedPlayers.clear();
-        if (trusted != null) {
-            this.trustedPlayers.addAll(trusted);
-        }
-        markDirty();
     }
 
     // ========================================
@@ -303,15 +254,6 @@ public class PlayerData {
         }
         section.set("items", itemNames);
 
-        // Save trust list
-        section.set("trust", null); // Clear existing
-        if (!trustedPlayers.isEmpty()) {
-            ConfigurationSection trustSection = section.createSection("trust");
-            for (UUID trustedUuid : trustedPlayers) {
-                trustSection.set(trustedUuid.toString(), true);
-            }
-        }
-
         markClean();
     }
 
@@ -327,7 +269,6 @@ public class PlayerData {
                 ", upgradeLevel=" + currentElementUpgradeLevel +
                 ", mana=" + mana +
                 ", ownedItems=" + ownedItems.size() +
-                ", trustedPlayers=" + trustedPlayers.size() +
                 ", dirty=" + dirty +
                 '}';
     }

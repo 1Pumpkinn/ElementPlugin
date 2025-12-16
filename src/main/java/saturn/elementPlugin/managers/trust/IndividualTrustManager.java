@@ -1,7 +1,6 @@
 package saturn.elementPlugin.managers.trust;
 
 import saturn.elementPlugin.ElementPlugin;
-import saturn.elementPlugin.data.DataStore;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -11,10 +10,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manages individual trust relationships between players
  * Handles pending requests and mutual trust
+ * UPDATED: Removed DataStore dependency - trust is now purely in-memory
  */
 public class IndividualTrustManager {
     private final ElementPlugin plugin;
-    private final DataStore store;
 
     // Individual trust relationships (in-memory only, not persisted)
     private final Map<UUID, Set<UUID>> trusted = new ConcurrentHashMap<>();
@@ -22,17 +21,6 @@ public class IndividualTrustManager {
 
     public IndividualTrustManager(ElementPlugin plugin) {
         this.plugin = plugin;
-        this.store = plugin.getDataStore();
-    }
-
-    /**
-     * Load trust relationships from data store for a player
-     */
-    private void loadTrustFromStore(UUID owner) {
-        if (!trusted.containsKey(owner)) {
-            Set<UUID> storedTrust = store.getTrusted(owner);
-            trusted.put(owner, storedTrust);
-        }
     }
 
     /**
@@ -47,7 +35,6 @@ public class IndividualTrustManager {
      * Get all players that this player trusts
      */
     public Set<UUID> getTrusted(UUID owner) {
-        loadTrustFromStore(owner);
         return trusted.computeIfAbsent(owner, k -> ConcurrentHashMap.newKeySet());
     }
 
@@ -57,7 +44,6 @@ public class IndividualTrustManager {
     public void addTrust(UUID owner, UUID other) {
         Set<UUID> set = getTrusted(owner);
         set.add(other);
-        store.setTrusted(owner, set);
     }
 
     /**
@@ -74,7 +60,6 @@ public class IndividualTrustManager {
     public void removeTrust(UUID owner, UUID other) {
         Set<UUID> set = getTrusted(owner);
         set.remove(other);
-        store.setTrusted(owner, set);
     }
 
     /**
