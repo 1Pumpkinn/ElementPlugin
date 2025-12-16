@@ -93,10 +93,7 @@ public class PassiveEffectMonitor implements Listener {
     }
 
     private void checkLifeEffects(Player player) {
-        // Upside 1: Regeneration I
-        if (!hasEffect(player, PotionEffectType.REGENERATION)) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, Integer.MAX_VALUE, 0, true, false));
-        }
+        // Upside 1: Slower hunger drain (handled in LifeHungerListener, no potion effect needed)
 
         // Upside 2: 15 Hearts (30 HP)
         var attr = player.getAttribute(Attribute.MAX_HEALTH);

@@ -10,8 +10,6 @@ import saturn.elementPlugin.elements.abilities.impl.life.LifeRegenAbility;
 import org.bukkit.ChatColor;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
 public class LifeElement extends BaseElement {
 
@@ -33,8 +31,8 @@ public class LifeElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: Regeneration I permanently
-        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, Integer.MAX_VALUE, 0, true, false));
+        // Upside 1: Slower hunger drain (handled in LifeHungerListener)
+        // No potion effect needed here
 
         // Upside 2: 15 Hearts (30 HP) instead of 20 HP
         var attr = player.getAttribute(Attribute.MAX_HEALTH);
@@ -58,8 +56,7 @@ public class LifeElement extends BaseElement {
 
     @Override
     public void clearEffects(Player player) {
-        // Remove Regeneration
-        player.removePotionEffect(PotionEffectType.REGENERATION);
+        // No potion effects to remove anymore
 
         // Reset health to normal
         var attr = player.getAttribute(Attribute.MAX_HEALTH);
@@ -81,7 +78,7 @@ public class LifeElement extends BaseElement {
 
     @Override
     public String getDescription() {
-        return "Masters of healing and growth. Life users have enhanced regeneration and increased health.";
+        return "Masters of healing and growth. Life users have slower hunger drain and increased health.";
     }
 
     @Override

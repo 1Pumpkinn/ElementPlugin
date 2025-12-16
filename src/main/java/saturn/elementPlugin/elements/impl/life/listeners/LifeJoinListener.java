@@ -6,8 +6,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
 public class LifeJoinListener implements Listener {
     private final ElementManager elementManager;
@@ -20,8 +18,7 @@ public class LifeJoinListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (elementManager.getPlayerElement(player) == ElementType.LIFE) {
-            // Apply regeneration effect for Life element users
-            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, Integer.MAX_VALUE, 0, true, false));
+            // No potion effects needed - hunger drain is handled by LifeHungerListener
         }
     }
 }

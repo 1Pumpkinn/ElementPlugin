@@ -5,8 +5,6 @@ import saturn.elementPlugin.elements.upsides.BaseUpsides;
 import saturn.elementPlugin.managers.ElementManager;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
 public class LifeUpsides extends BaseUpsides {
 
@@ -21,12 +19,14 @@ public class LifeUpsides extends BaseUpsides {
 
     /**
      * Apply all Life element upsides to a player
+     * Upside 1: Slower hunger drain (15% slower) - handled in LifeHungerListener
+     * Upside 2: 15 Hearts (30 HP) instead of 20 HP
+     *
      * @param player The player to apply upsides to
      * @param upgradeLevel The player's upgrade level for Life element
      */
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: Regeneration I permanently
-        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, Integer.MAX_VALUE, 0, true, false));
+        // Upside 1: Slower hunger drain (handled in LifeHungerListener, no potion effect needed)
 
         // Upside 2: 15 Hearts (30 HP) instead of 20 HP
         var attr = player.getAttribute(Attribute.MAX_HEALTH);

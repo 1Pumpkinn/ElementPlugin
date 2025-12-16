@@ -42,9 +42,9 @@ public class SmartEffectCleaner {
 
         // ADVANCED ELEMENTS (Advanced Reroller)
 
-        // Life: Regeneration (infinite)
-        ELEMENT_EFFECTS.put(ElementType.LIFE, Set.of(PotionEffectType.REGENERATION));
-
+        // Life: No infinite potion effects (hunger drain is handled by listener)
+        ELEMENT_EFFECTS.put(ElementType.LIFE, Set.of());
+        
         // Metal: Haste (infinite) - UPDATED
         ELEMENT_EFFECTS.put(ElementType.METAL, Set.of(PotionEffectType.HASTE));
 

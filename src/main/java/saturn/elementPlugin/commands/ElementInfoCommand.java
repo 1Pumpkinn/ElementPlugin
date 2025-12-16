@@ -195,7 +195,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         map.put(ElementType.LIFE, new ElementInfo(
                 "",
                 Arrays.asList(
-                        "Regeneration I",
+                        "Slower hunger drain (15% slower)",
                         "15 hearts total"
                 ),
                 "Regeneration Aura", "Heals you and allies around you", 50,

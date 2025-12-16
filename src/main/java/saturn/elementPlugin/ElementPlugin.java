@@ -159,7 +159,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new EarthOreDropListener(elementManager), this);
 
         // Life element listeners
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.life.listeners.LifeRegenListener(elementManager), this);
+        pm.registerEvents(new saturn.elementPlugin.elements.impl.life.listeners.LifeHungerListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
 
         // Death element listeners
