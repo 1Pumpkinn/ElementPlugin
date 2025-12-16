@@ -16,45 +16,36 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-/**
- * Manages team creation, invites, allies (ONE ally per team), and tab list display with customization
- * UPDATED: Now properly saves and loads team data from DataStore
- * FIXED: Added null checks for ScoreboardManager to prevent crashes during initialization
- */
 public class TeamManager {
+
     private final ElementPlugin plugin;
     private final TeamData teamData;
 
-    // Team data structures (now synchronized with TeamData)
     private final Map<UUID, String> playerTeams;
     private final Map<String, Set<UUID>> teams;
     private final Map<String, UUID> teamLeaders;
     private final Map<UUID, Set<String>> teamInvites;
     private final Map<String, String> teamAllies;
 
-    // Team customization
     private final Map<String, TextColor> teamColors = new ConcurrentHashMap<>();
     private final Map<String, Boolean> teamBold = new ConcurrentHashMap<>();
     private final Map<String, Boolean> teamItalic = new ConcurrentHashMap<>();
 
-    // Team visibility (per-player setting - NOT persisted, resets on restart)
+    // ✅ TEAM HIDE STATE (PER PLAYER)
     private final Map<UUID, Boolean> teamHidden = new ConcurrentHashMap<>();
 
-    // Default colors for new teams
     private static final NamedTextColor[] DEFAULT_COLORS = {
             NamedTextColor.AQUA, NamedTextColor.GREEN, NamedTextColor.YELLOW,
             NamedTextColor.LIGHT_PURPLE, NamedTextColor.GOLD, NamedTextColor.RED,
             NamedTextColor.DARK_AQUA, NamedTextColor.DARK_GREEN, NamedTextColor.BLUE
     };
+
     private int colorIndex = 0;
 
     public TeamManager(ElementPlugin plugin) {
         this.plugin = plugin;
-
-        // Get TeamData from DataStore
         this.teamData = plugin.getDataStore().getTeamData();
 
-        // Initialize maps directly from TeamData
         this.playerTeams = teamData.getPlayerTeams();
         this.teams = teamData.getTeams();
         this.teamLeaders = teamData.getTeamLeaders();
@@ -67,8 +58,41 @@ public class TeamManager {
         // FIXED: Delay scoreboard recreation until server is fully loaded
         // Schedule for next tick to ensure ScoreboardManager is available
         Bukkit.getScheduler().runTask(plugin, this::recreateScoreboardTeams);
+    }
 
-        plugin.getLogger().info("TeamManager initialized with " + teams.size() + " teams");
+    // ========================================
+    // TEAM VISIBILITY (HIDE PREFIX)
+    // ========================================
+
+    public boolean isTeamHidden(UUID playerUUID) {
+        return teamHidden.getOrDefault(playerUUID, false);
+    }
+
+    public void toggleTeamHidden(UUID playerUUID) {
+        boolean current = teamHidden.getOrDefault(playerUUID, false);
+        setTeamHidden(playerUUID, !current);
+    }
+
+    // Set hidden state and save
+    public void setTeamHidden(UUID playerUUID, boolean hidden) {
+        teamHidden.put(playerUUID, hidden);
+        Player player = Bukkit.getPlayer(playerUUID);
+        if (player != null) {
+            updatePlayerTabList(player);
+        }
+        saveTeamHiddenData();
+    }
+
+    private void saveTeamHiddenData() {
+        plugin.getDataStore().saveTeamHidden(teamHidden);
+    }
+    
+    public void loadTeamHiddenData() {
+        Map<UUID, Boolean> loaded = plugin.getDataStore().loadTeamHidden();
+        if (loaded != null) {
+            teamHidden.clear();
+            teamHidden.putAll(loaded);
+        }
     }
 
     /**
@@ -624,16 +648,17 @@ public class TeamManager {
 
         Scoreboard scoreboard = scoreboardManager.getMainScoreboard();
 
+        // Always remove player first
         Team existingTeam = scoreboard.getPlayerTeam(player);
         if (existingTeam != null) {
             existingTeam.removeEntry(player.getName());
         }
 
-        if (teamName != null) {
+        // Only add back if NOT hidden
+        if (teamName != null && !isTeamHidden(player.getUniqueId())) {
             Team scoreboardTeam = getOrCreateScoreboardTeam(teamName);
             if (scoreboardTeam != null) {
                 scoreboardTeam.addEntry(player.getName());
-                plugin.getLogger().fine("Added " + player.getName() + " to scoreboard team '" + teamName + "'");
             }
         }
     }
@@ -746,6 +771,7 @@ public class TeamManager {
 
     private boolean isValidTeamName(String teamName) {
         return teamName != null
+                && !teamName.isEmpty()
                 && !teamName.isEmpty()
                 && teamName.length() <= 16
                 && !teamName.contains(" ");

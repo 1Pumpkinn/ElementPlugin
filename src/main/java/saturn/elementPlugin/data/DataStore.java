@@ -20,6 +20,10 @@ import java.util.logging.Level;
  * - Better error handling and recovery
  * UPDATED: Added TeamData support, removed trust system from PlayerData
  */
+import java.util.Map;
+import java.util.UUID;
+import org.bukkit.configuration.file.YamlConfiguration;
+
 public class DataStore {
     private static final String PLAYERS_PATH = "players";
     private static final int AUTO_SAVE_INTERVAL_TICKS = 6000; // 5 minutes
@@ -33,6 +37,10 @@ public class DataStore {
 
     private FileConfiguration playerConfig;
     private FileConfiguration teamConfig;
+
+    // Team hidden state persistence
+    private final File teamHiddenFile;
+    private YamlConfiguration teamHiddenConfig;
 
     // Thread-safe cache
     private final Map<UUID, PlayerData> playerDataCache = new ConcurrentHashMap<>();
@@ -54,11 +62,16 @@ public class DataStore {
         // Setup files
         this.playerFile = new File(dataDir, "players.yml");
         this.teamFile = new File(dataDir, "teams.yml");
+        this.teamHiddenFile = new File(dataDir, "team-hidden.yml");
         ensureFileExists(playerFile);
         ensureFileExists(teamFile);
+        ensureFileExists(teamHiddenFile);
 
         // Load configuration
         loadConfiguration();
+
+        // Load teamHidden file config
+        this.teamHiddenConfig = YamlConfiguration.loadConfiguration(teamHiddenFile);
 
         // Start auto-save task
         startAutoSave();
@@ -407,6 +420,35 @@ public class DataStore {
             plugin.getLogger().log(Level.SEVERE, "Failed to recover from backup", e);
             return false;
         }
+    }
+
+    // ========================================
+    // TEAM HIDDEN SAVE/LOAD
+    // ========================================
+    public synchronized void saveTeamHidden(Map<UUID, Boolean> teamHidden) {
+        try {
+            for (UUID uuid : teamHidden.keySet()) {
+                teamHiddenConfig.set(uuid.toString(), teamHidden.get(uuid));
+            }
+            teamHiddenConfig.save(teamHiddenFile);
+        } catch (IOException e) {
+            plugin.getLogger().severe("Failed to save team-hidden.yml: " + e.getMessage());
+        }
+    }
+
+    public Map<UUID, Boolean> loadTeamHidden() {
+        Map<UUID, Boolean> map = new HashMap<>();
+        if (teamHiddenConfig == null) {
+            teamHiddenConfig = YamlConfiguration.loadConfiguration(teamHiddenFile);
+        }
+        for (String key : teamHiddenConfig.getKeys(false)) {
+            try {
+                UUID uuid = UUID.fromString(key);
+                boolean hidden = teamHiddenConfig.getBoolean(key, false);
+                map.put(uuid, hidden);
+            } catch (IllegalArgumentException ignored) {}
+        }
+        return map;
     }
 
     // ========================================

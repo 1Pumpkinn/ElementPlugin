@@ -9,8 +9,8 @@ contributors: [ ___Vishini ]
 
 commands:
   team:
-    description: Manage teams, individual trust, allies, and customization
-    usage: /team <create|invite|accept|leave|kick|disband|trust|untrust|ally|color|bold|italic|list> [args]
+    description: Manage teams, allies, and customization
+    usage: /team <create|invite|accept|leave|kick|disband|ally|color|bold|italic|list|hide|unhide> [args]
 
   element:
     description: Element admin commands

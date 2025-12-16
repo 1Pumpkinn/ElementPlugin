@@ -3,25 +3,18 @@ package saturn.elementPlugin.managers;
 import saturn.elementPlugin.ElementPlugin;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 /**
- * Main TeamManager - handles both teams AND individual trust
- * Individual trust is managed in-memory and persisted via DataStore
- * UPDATED: Simplified ally system (ONE ally per team)
+ * Main TeamManager - handles teams and allies (ONE ally per team)
  */
 public class TeamManager {
     private final ElementPlugin plugin;
     private final saturn.elementPlugin.managers.trust.TeamManager teamManager;
-    private final saturn.elementPlugin.managers.trust.IndividualTrustManager individualTrustManager;
 
     public TeamManager(ElementPlugin plugin) {
         this.plugin = plugin;
         this.teamManager = new saturn.elementPlugin.managers.trust.TeamManager(plugin);
-        this.individualTrustManager = new saturn.elementPlugin.managers.trust.IndividualTrustManager(plugin);
     }
 
     // ========================================
@@ -29,8 +22,8 @@ public class TeamManager {
     // ========================================
 
     /**
-     * Check if two players are trusted (team, ally, or individual trust relationship)
-     * This is the MAIN method used by all element abilities
+     * Check if two players are trusted (same team or allies)
+     * This is the MAIN method used by all element abilities to prevent friendly damage
      */
     public boolean isTrusted(UUID player1, UUID player2) {
         // Same player is always trusted
@@ -40,71 +33,7 @@ public class TeamManager {
         if (teamManager.areOnSameTeam(player1, player2)) return true;
 
         // Check if they're allies
-        if (teamManager.areAllies(player1, player2)) return true;
-
-        // Check individual mutual trust
-        return individualTrustManager.areMutuallyTrusted(player1, player2);
-    }
-
-    /**
-     * Get list of team member names AND individually trusted players for display
-     */
-    public List<String> getTrustedNames(UUID owner) {
-        List<String> names = new ArrayList<>();
-
-        // Add team members
-        names.addAll(teamManager.getTeamMemberNames(owner));
-
-        // Add individually trusted players
-        names.addAll(individualTrustManager.getTrustedNames(owner));
-
-        return names;
-    }
-
-    // ========================================
-    // INDIVIDUAL TRUST MANAGEMENT
-    // ========================================
-
-    /**
-     * Add a pending individual trust request
-     */
-    public void addPending(UUID target, UUID requestor) {
-        individualTrustManager.addPending(target, requestor);
-    }
-
-    /**
-     * Check if there's a pending request
-     */
-    public boolean hasPending(UUID target, UUID requestor) {
-        return individualTrustManager.hasPending(target, requestor);
-    }
-
-    /**
-     * Clear a pending request
-     */
-    public void clearPending(UUID target, UUID requestor) {
-        individualTrustManager.clearPending(target, requestor);
-    }
-
-    /**
-     * Add mutual trust between two players
-     */
-    public void addMutualTrust(UUID a, UUID b) {
-        individualTrustManager.addMutualTrust(a, b);
-    }
-
-    /**
-     * Remove mutual trust between two players
-     */
-    public void removeMutualTrust(UUID a, UUID b) {
-        individualTrustManager.removeMutualTrust(a, b);
-    }
-
-    /**
-     * Get individually trusted players (excluding team members)
-     */
-    public Set<UUID> getIndividuallyTrusted(UUID owner) {
-        return individualTrustManager.getTrusted(owner);
+        return teamManager.areAllies(player1, player2);
     }
 
     /**
@@ -115,8 +44,11 @@ public class TeamManager {
     }
 
     /**
-     * Toggle team prefix visibility for a player
+     * Set or toggle team prefix visibility for a player
      */
+    public void setTeamHidden(UUID playerUUID, boolean hidden) {
+        teamManager.setTeamHidden(playerUUID, hidden);
+    }
     public void toggleTeamHidden(UUID playerUUID) {
         teamManager.toggleTeamHidden(playerUUID);
     }
