@@ -21,6 +21,9 @@ public class TeamManager {
     private final ElementPlugin plugin;
     private final TeamData teamData;
 
+    // UPDATED: Added team size limit constant
+    private static final int MAX_TEAM_SIZE = 4;
+
     private final Map<UUID, String> playerTeams;
     private final Map<String, Set<UUID>> teams;
     private final Map<String, UUID> teamLeaders;
@@ -86,7 +89,7 @@ public class TeamManager {
     private void saveTeamHiddenData() {
         plugin.getDataStore().saveTeamHidden(teamHidden);
     }
-    
+
     public void loadTeamHiddenData() {
         Map<UUID, Boolean> loaded = plugin.getDataStore().loadTeamHidden();
         if (loaded != null) {
@@ -320,6 +323,7 @@ public class TeamManager {
         return true;
     }
 
+    // UPDATED: Check team size before inviting
     public boolean inviteToTeam(Player inviter, Player target, String teamName) {
         if (!isTeamLeader(inviter.getUniqueId(), teamName)) {
             inviter.sendMessage(Component.text("You must be the team leader to invite players!", NamedTextColor.RED));
@@ -331,6 +335,13 @@ public class TeamManager {
             return false;
         }
 
+        // UPDATED: Check team size limit
+        Set<UUID> currentMembers = teams.get(teamName);
+        if (currentMembers != null && currentMembers.size() >= MAX_TEAM_SIZE) {
+            inviter.sendMessage(Component.text("Your team is full! Maximum team size is " + MAX_TEAM_SIZE + " players.", NamedTextColor.RED));
+            return false;
+        }
+
         teamData.addInvite(target.getUniqueId(), teamName);
         saveTeamData();
 
@@ -338,6 +349,7 @@ public class TeamManager {
         return true;
     }
 
+    // UPDATED: Check team size before accepting
     public boolean acceptTeamInvite(Player player, String teamName) {
         Set<String> invites = teamInvites.get(player.getUniqueId());
         if (invites == null || !invites.contains(teamName)) {
@@ -349,6 +361,13 @@ public class TeamManager {
         if (members == null) {
             teamData.removeInvite(player.getUniqueId(), teamName);
             player.sendMessage(Component.text("That team no longer exists!", NamedTextColor.RED));
+            return false;
+        }
+
+        // UPDATED: Check team size limit before accepting
+        if (members.size() >= MAX_TEAM_SIZE) {
+            player.sendMessage(Component.text("That team is full! Maximum team size is " + MAX_TEAM_SIZE + " players.", NamedTextColor.RED));
+            teamData.removeInvite(player.getUniqueId(), teamName);
             return false;
         }
 

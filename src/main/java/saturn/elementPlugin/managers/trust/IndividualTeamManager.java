@@ -12,14 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * Handles pending requests and mutual trust
  * UPDATED: Removed DataStore dependency - trust is now purely in-memory
  */
-public class IndividualTrustManager {
+public class IndividualTeamManager {
     private final ElementPlugin plugin;
 
     // Individual trust relationships (in-memory only, not persisted)
     private final Map<UUID, Set<UUID>> trusted = new ConcurrentHashMap<>();
     private final Map<UUID, Set<UUID>> pending = new ConcurrentHashMap<>();
 
-    public IndividualTrustManager(ElementPlugin plugin) {
+    public IndividualTeamManager(ElementPlugin plugin) {
         this.plugin = plugin;
     }
 
