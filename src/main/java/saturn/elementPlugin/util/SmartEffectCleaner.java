@@ -4,6 +4,7 @@ import saturn.elementPlugin.ElementPlugin;
 import saturn.elementPlugin.data.PlayerData;
 import saturn.elementPlugin.elements.Element;
 import saturn.elementPlugin.elements.ElementType;
+import saturn.elementPlugin.elements.abilities.Ability;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -15,7 +16,7 @@ import java.util.*;
  * Smart utility class for cleaning up element effects
  * Only removes infinite effects that DON'T belong to the current element
  * Properly handles both basic and advanced element effects
- * UPDATED: Added Haste for Metal, removed Resistance
+ * FIXED: Now clears ALL ability active states when changing elements
  */
 public class SmartEffectCleaner {
 
@@ -44,8 +45,8 @@ public class SmartEffectCleaner {
 
         // Life: No infinite potion effects (hunger drain is handled by listener)
         ELEMENT_EFFECTS.put(ElementType.LIFE, Set.of());
-        
-        // Metal: Haste (infinite) - UPDATED
+
+        // Metal: Haste (infinite)
         ELEMENT_EFFECTS.put(ElementType.METAL, Set.of(PotionEffectType.HASTE));
 
         // Death: No infinite potion effects
@@ -99,6 +100,7 @@ public class SmartEffectCleaner {
      * Clear ALL element effects for element change (reroller/advanced reroller)
      * This is used when switching elements - clears old infinite effects, applies new
      * ONLY removes INFINITE effects (duration > threshold), preserves timed effects
+     * FIXED: Now also clears ALL ability active states from AbilityManager
      */
     public static void clearForElementChange(ElementPlugin plugin, Player player) {
         int clearedCount = 0;
@@ -134,6 +136,9 @@ public class SmartEffectCleaner {
         // Clear element-specific metadata
         clearElementMetadata(plugin, player);
 
+        // CRITICAL FIX: Clear ALL ability active states from ALL elements
+        clearAllAbilityStates(plugin, player);
+
         // Reset ALL attributes to default (will be set correctly after)
         resetAttributesToDefault(player);
 
@@ -165,6 +170,65 @@ public class SmartEffectCleaner {
                     plugin.getLogger().warning("Error clearing " + type + " effects: " + ex.getMessage());
                 }
             }
+        }
+    }
+
+    /**
+     * CRITICAL FIX: Clear ALL ability active states from AbilityManager
+     * This ensures abilities from old elements don't persist
+     */
+    private static void clearAllAbilityStates(ElementPlugin plugin, Player player) {
+        var abilityManager = plugin.getAbilityManager();
+
+        // Clear ability 1 and 2 for ALL element types
+        for (ElementType elementType : ElementType.values()) {
+            for (int abilityNumber = 1; abilityNumber <= 2; abilityNumber++) {
+                try {
+                    // Get the ability from the registry
+                    String abilityId = getAbilityId(elementType, abilityNumber);
+                    Ability ability = abilityManager.getAbility(abilityId);
+
+                    if (ability != null) {
+                        // Clear the active state
+                        ability.setActive(player, false);
+                        plugin.getLogger().fine("Cleared ability state: " + abilityId + " for " + player.getName());
+                    }
+                } catch (Exception ex) {
+                    plugin.getLogger().warning("Error clearing ability state for " + elementType + " ability " + abilityNumber + ": " + ex.getMessage());
+                }
+            }
+        }
+
+        plugin.getLogger().info("Cleared ALL ability active states for " + player.getName());
+    }
+
+    /**
+     * Get ability ID based on element type and ability number
+     * This matches the IDs used when registering abilities in ElementPlugin
+     */
+    private static String getAbilityId(ElementType elementType, int abilityNumber) {
+        String elementName = elementType.name().toLowerCase();
+
+        // Match the ability ID format used in ability classes
+        switch (elementType) {
+            case AIR:
+                return abilityNumber == 1 ? "air_blast" : "air_dash";
+            case WATER:
+                return abilityNumber == 1 ? "water_whirlpool" : "water_prison";
+            case FIRE:
+                return abilityNumber == 1 ? "fire_hellish_flames" : "fire_phoenix_form";
+            case EARTH:
+                return abilityNumber == 1 ? "earth_tunnel" : "earth_earthquake";
+            case LIFE:
+                return abilityNumber == 1 ? "life_regen" : "transfusion";
+            case DEATH:
+                return abilityNumber == 1 ? "death_slash" : "death_clock";
+            case METAL:
+                return abilityNumber == 1 ? "metal_dash" : "metal_chain";
+            case FROST:
+                return abilityNumber == 1 ? "ice_shard_volley" : "frost_nova";
+            default:
+                return elementName + "_ability_" + abilityNumber;
         }
     }
 
