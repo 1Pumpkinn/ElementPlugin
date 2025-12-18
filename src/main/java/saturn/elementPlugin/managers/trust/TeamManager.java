@@ -731,11 +731,8 @@ public class TeamManager {
 
         scoreboardTeam.prefix(prefix);
 
-        if (color instanceof NamedTextColor namedColor) {
-            scoreboardTeam.color(namedColor);
-        } else {
-            scoreboardTeam.color(NamedTextColor.WHITE);
-        }
+        // FIXED: Set player name color to WHITE so only the prefix is colored
+        scoreboardTeam.color(NamedTextColor.WHITE);
 
         scoreboardTeam.setAllowFriendlyFire(false);
         scoreboardTeam.setCanSeeFriendlyInvisibles(true);
