@@ -178,8 +178,8 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
                         "Speed III on ice",
                         "Freeze on hit (10% chance, Upgrade II)"
                 ),
-                "Ice Shard Volley", "Fire 5 ice shards in a cone", 75,
-                "Frost Nova", "Create an explosion of ice around you", 50
+                "Ice Shard Volley", "Fire 5 ice shards in a cone", 50,
+                "Frost Nova", "Create an explosion of ice around you", 75
         ));
 
         map.put(ElementType.METAL, new ElementInfo(
