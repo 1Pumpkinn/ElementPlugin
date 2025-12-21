@@ -77,6 +77,12 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
             return; // Player doesn't have Fire element - don't trigger
         }
 
+        // CRITICAL FIX: Check if player has Upgrade II (required for Phoenix Form)
+        var pd = plugin.getElementManager().data(player.getUniqueId());
+        if (pd.getUpgradeLevel(saturn.elementPlugin.elements.ElementType.FIRE) < 2) {
+            return; // Player doesn't have Upgrade II - don't trigger
+        }
+
         // Check if ability is on cooldown
         if (isOnCooldown(player)) {
             // Phoenix Form is on cooldown - let death/totem happen
@@ -246,6 +252,12 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
         // CRITICAL FIX: Check if player currently has Fire element
         if (!hasFireElement(player)) {
             return; // Player doesn't have Fire element - allow totem
+        }
+
+        // CRITICAL FIX: Check if player has Upgrade II
+        var pd = plugin.getElementManager().data(player.getUniqueId());
+        if (pd.getUpgradeLevel(saturn.elementPlugin.elements.ElementType.FIRE) < 2) {
+            return; // Player doesn't have Upgrade II - allow totem
         }
 
         // Check if Phoenix Form just triggered

@@ -37,14 +37,11 @@ public final class Upgrader1Item {
             plugin.getServer().removeRecipe(key);
             
             ShapedRecipe recipe = new ShapedRecipe(key, result);
-            recipe.shape("GFG", "WDB", "GAG");
-            recipe.setIngredient('G', Material.GOLD_BLOCK);
-            recipe.setIngredient('D', Material.DIAMOND_BLOCK);
+            recipe.shape("ELE", "LSL", "ELE");
+            recipe.setIngredient('E', Material.EMERALD_BLOCK);
+            recipe.setIngredient('L', Material.LAPIS_BLOCK);
+            recipe.setIngredient('S', Material.NAUTILUS_SHELL);
 
-            recipe.setIngredient('F', Material.FIRE_CHARGE);
-            recipe.setIngredient('W', Material.WATER_BUCKET);
-            recipe.setIngredient('B', Material.GRASS_BLOCK);
-            recipe.setIngredient('A', Material.FEATHER);
 
 
             boolean success = plugin.getServer().addRecipe(recipe);

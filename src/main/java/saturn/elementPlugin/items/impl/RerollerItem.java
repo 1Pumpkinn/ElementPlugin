@@ -41,13 +41,12 @@ public final class RerollerItem {
             plugin.getServer().removeRecipe(key);
             
             ShapedRecipe recipe = new ShapedRecipe(key, result);
-            recipe.shape("IEG", "ETE", "DEM");
-            recipe.setIngredient('I', Material.IRON_BLOCK);
+            recipe.shape("GCG", "RTR", "GCG");
             recipe.setIngredient('G', Material.GOLD_BLOCK);
-            recipe.setIngredient('D', Material.DIAMOND_BLOCK);
-            recipe.setIngredient('M', Material.EMERALD_BLOCK);
-            recipe.setIngredient('E', Material.NETHERITE_SCRAP);
-            recipe.setIngredient('T', Material.TOTEM_OF_UNDYING);
+            recipe.setIngredient('C', Material.COPPER_BLOCK);
+            recipe.setIngredient('R', Material.REDSTONE_BLOCK);
+            recipe.setIngredient('T', Material.TRIAL_KEY);
+
             
             boolean success = plugin.getServer().addRecipe(recipe);
             if (!success) {

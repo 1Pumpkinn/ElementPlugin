@@ -42,10 +42,11 @@ public final class AdvancedRerollerItem {
             plugin.getServer().removeRecipe(key);
 
             ShapedRecipe recipe = new ShapedRecipe(key, result);
-            recipe.shape("DED", "ETE", "DED");
+            recipe.shape("DRD", "OWO", "DRD");
             recipe.setIngredient('D', Material.DIAMOND_BLOCK);
-            recipe.setIngredient('E', Material.NETHERITE_INGOT);
-            recipe.setIngredient('T', Material.TOTEM_OF_UNDYING);
+            recipe.setIngredient('R', Material.REDSTONE_BLOCK);
+            recipe.setIngredient('W', Material.WITHER_SKELETON_SKULL);
+            recipe.setIngredient('O', Material.OMINOUS_TRIAL_KEY);
 
             boolean success = plugin.getServer().addRecipe(recipe);
             if (!success) {
