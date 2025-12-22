@@ -2,7 +2,7 @@ name: ElementPlugin
 version: '1.2.0'
 main: saturn.elementPlugin.ElementPlugin
 website: https://ko-fi.com/1pumpkinn
-api-version: '1.21.8'
+api-version: '1.21.10'
 load: STARTUP
 authors: [ ___Pumpkinn ]
 contributors: [ ___Vishini ]
