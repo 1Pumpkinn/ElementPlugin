@@ -30,8 +30,7 @@ public class EarthOreDropListener implements Listener {
             Material.LAPIS_ORE, Material.DEEPSLATE_LAPIS_ORE,
             Material.DIAMOND_ORE, Material.DEEPSLATE_DIAMOND_ORE,
             Material.EMERALD_ORE, Material.DEEPSLATE_EMERALD_ORE,
-            Material.NETHER_GOLD_ORE, Material.NETHER_QUARTZ_ORE,
-            Material.ANCIENT_DEBRIS
+            Material.NETHER_GOLD_ORE, Material.NETHER_QUARTZ_ORE
     );
 
     public EarthOreDropListener(ElementManager elements) {
