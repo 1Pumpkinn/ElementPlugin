@@ -22,7 +22,7 @@ public class TeamManager {
     private final TeamData teamData;
 
     // UPDATED: Added team size limit constant
-    private static final int MAX_TEAM_SIZE = 4;
+    private static final int MAX_TEAM_SIZE = 5;
 
     private final Map<UUID, String> playerTeams;
     private final Map<String, Set<UUID>> teams;

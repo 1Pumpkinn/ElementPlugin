@@ -23,8 +23,8 @@ public final class RerollerItem {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Element Reroller");
         meta.setLore(List.of(
-            ChatColor.GRAY + "Allows you to change your element",
-            ChatColor.YELLOW + "Right-click to randomly reroll your element"
+                ChatColor.GRAY + "Allows you to change your element",
+                ChatColor.YELLOW + "Right-click to randomly reroll your element"
         ));
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
         pdc.set(ItemKeys.reroller(plugin), PersistentDataType.BYTE, (byte)1);
@@ -36,10 +36,7 @@ public final class RerollerItem {
         try {
             ItemStack result = make(plugin);
             NamespacedKey key = new NamespacedKey(plugin, KEY);
-            
-            // Remove existing recipe if it exists
-            plugin.getServer().removeRecipe(key);
-            
+
             ShapedRecipe recipe = new ShapedRecipe(key, result);
             recipe.shape("GCG", "RTR", "GCG");
             recipe.setIngredient('G', Material.GOLD_BLOCK);
@@ -47,13 +44,15 @@ public final class RerollerItem {
             recipe.setIngredient('R', Material.REDSTONE_BLOCK);
             recipe.setIngredient('T', Material.TRIAL_KEY);
 
-            
+            // Add the recipe
             boolean success = plugin.getServer().addRecipe(recipe);
-            if (!success) {
-                plugin.getLogger().warning("Failed to register Element Reroller recipe");
-            }
+
+
+        } catch (IllegalStateException e) {
+            plugin.getLogger().warning("Recipe already exists: " + e.getMessage());
         } catch (Exception e) {
             plugin.getLogger().severe("Error registering Element Reroller recipe: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
