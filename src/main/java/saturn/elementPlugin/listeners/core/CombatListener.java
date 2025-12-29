@@ -26,17 +26,11 @@ public class CombatListener implements Listener {
             damager = p;
         }
         if (damager == null) return;
-        
+
         // Check trust (team/ally protection)
         if (trust.isTrusted(victim.getUniqueId(), damager.getUniqueId()) || trust.isTrusted(damager.getUniqueId(), victim.getUniqueId())) {
             e.setCancelled(true);
             return;
-        }
-        
-        // Check WorldGuard - block if either player is in a protected region (PVP disabled)
-        if (!WorldGuardIntegration.canUseAbilityOnTarget(damager, victim)) {
-            e.setCancelled(true);
-            WorldGuardIntegration.sendTargetProtectionMessage(damager, victim);
         }
     }
 }

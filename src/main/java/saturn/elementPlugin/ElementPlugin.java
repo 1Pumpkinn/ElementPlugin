@@ -33,6 +33,7 @@ import saturn.elementPlugin.managers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import saturn.elementPlugin.managers.TeamManager;
+import saturn.elementPlugin.regions.DisabledRegionsManager;
 
 import static saturn.elementPlugin.recipes.util.UtilRecipes.registerRecipes;
 
@@ -45,8 +46,10 @@ public final class ElementPlugin extends JavaPlugin {
     private ItemManager itemManager;
     private AbilityManager abilityManager;
     private ElementRegistry elementRegistry;
+    private DisabledRegionsManager disabledRegionsManager;
 
     // Constants
+
     private static final int MAX_MANA = 100;
     private static final int MANA_REGEN_PER_SECOND = 1;
     private static final int ABILITY_1_COST = 50;
@@ -76,6 +79,7 @@ public final class ElementPlugin extends JavaPlugin {
         this.abilityManager = new AbilityManager(this);
         this.elementManager = new ElementManager(this, dataStore, manaManager, teamManager);
         this.itemManager = new ItemManager(this, manaManager);
+        this.disabledRegionsManager = new DisabledRegionsManager(this);
     }
 
     private void registerAbilities() {
@@ -120,6 +124,10 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("util").setExecutor(new UtilCommand(this));
         getCommand("damagetest").setExecutor(new saturn.elementPlugin.util.DamageTester());
         getCommand("data").setExecutor(new DataCommand(this));
+
+        DisableAbilitiesCommand disableCmd = new DisableAbilitiesCommand(this, disabledRegionsManager);
+        getCommand("disableabilities").setExecutor(disableCmd);
+        getCommand("disableabilities").setTabCompleter(disableCmd);
 
         getLogger().info("Commands registered successfully (Trust system removed)");
     }
@@ -199,6 +207,8 @@ public final class ElementPlugin extends JavaPlugin {
     public TeamManager getTrustManager() { return teamManager; }
     public ItemManager getItemManager() { return itemManager; }
     public AbilityManager getAbilityManager() { return abilityManager; }
+    public DisabledRegionsManager getDisabledRegionsManager() { return disabledRegionsManager; }
+
 
     // Constants
     public int getMaxMana() { return MAX_MANA; }

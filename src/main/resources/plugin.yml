@@ -41,6 +41,12 @@ commands:
     usage: /elements [element_name]
     aliases: [ elementinfo, elinfo ]
 
+  disableabilities:
+    description: Manage regions where abilities are disabled
+    usage: /disableabilities <pos1|pos2|create|remove|list|info|reload> [args]
+    aliases: [ disableability, disableab ]
+    permission: element.admin
+
 permissions:
   element.admin:
     description: Allows use of element admin commands

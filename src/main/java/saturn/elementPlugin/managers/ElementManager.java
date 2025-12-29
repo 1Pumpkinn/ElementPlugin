@@ -212,9 +212,11 @@ public class ElementManager {
 
         if (element == null) return false;
 
-        // Check WorldGuard protection - block if PVP is disabled
-        if (!WorldGuardIntegration.canUseAbility(player)) {
-            WorldGuardIntegration.sendProtectionMessage(player);
+        // Check if abilities are disabled in this region
+        if (plugin.getDisabledRegionsManager().areAbilitiesDisabled(player)) {
+            String regionName = plugin.getDisabledRegionsManager().getRegionNameAt(player.getLocation());
+            player.sendMessage(org.bukkit.ChatColor.RED + "Abilities are disabled in this region!" +
+                    (regionName != null ? " (" + regionName + ")" : ""));
             return false;
         }
 
