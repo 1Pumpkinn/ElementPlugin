@@ -2,6 +2,7 @@ package saturn.elementPlugin.listeners;
 
 import saturn.elementPlugin.data.PlayerData;
 import saturn.elementPlugin.managers.ElementManager;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -31,8 +32,15 @@ public class AbilityListener implements Listener {
     public void onSwapHands(PlayerSwapHandItemsEvent event) {
         Player player = event.getPlayer();
 
-        // Verify player has an element
-        if (!hasElement(player)) return;
+        // UPDATED: Check if player has an element first
+        if (!hasElement(player)) {
+            // Player doesn't have an element yet - show helpful message
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED + "You don't have an element yet!");
+            player.sendMessage(ChatColor.YELLOW + "Use a " + ChatColor.LIGHT_PURPLE + "Reroller" +
+                    ChatColor.YELLOW + " to get your first element.");
+            return;
+        }
 
         UUID playerId = player.getUniqueId();
         TapTracker tracker = tapTrackers.computeIfAbsent(playerId, k -> new TapTracker());

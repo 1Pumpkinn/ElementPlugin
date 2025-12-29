@@ -36,23 +36,48 @@ public class JoinListener implements Listener {
 
         // Check if player has an element
         PlayerData pd = elements.data(p.getUniqueId());
-        boolean first = (pd.getCurrentElement() == null);
+        boolean hasElement = (pd.getCurrentElement() != null);
 
-        plugin.getLogger().info("Player " + p.getName() + " joined. Has element: " + !first);
+        plugin.getLogger().info("Player " + p.getName() + " joined. Has element: " + hasElement);
 
-        if (first) {
-            plugin.getLogger().info("Assigning random element to " + p.getName());
-            // Automatically roll and assign a random element after a short delay
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (p.isOnline()) {
-                        elements.rollAndAssign(p);
-                        p.sendMessage(net.kyori.adventure.text.Component.text("Welcome! You have been assigned a random element.").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
-                        plugin.getLogger().info("Element assigned to " + p.getName());
+        if (!hasElement) {
+            // UPDATED: No longer auto-assign element - player must use a Reroller
+            plugin.getLogger().info(p.getName() + " has no element - they must use a Reroller to get one");
+
+            // Send a welcome message explaining they need a Reroller (only on first join)
+            if (!p.hasPlayedBefore()) {
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        if (p.isOnline()) {
+                            p.sendMessage(net.kyori.adventure.text.Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                                    .color(net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY));
+                            p.sendMessage(net.kyori.adventure.text.Component.text("Welcome to Element Plugin!")
+                                    .color(net.kyori.adventure.text.format.NamedTextColor.GOLD)
+                                    .decorate(net.kyori.adventure.text.format.TextDecoration.BOLD));
+                            p.sendMessage(net.kyori.adventure.text.Component.empty());
+                            p.sendMessage(net.kyori.adventure.text.Component.text("You don't have an element yet.")
+                                    .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW));
+                            p.sendMessage(net.kyori.adventure.text.Component.text("Craft or obtain a ")
+                                    .color(net.kyori.adventure.text.format.NamedTextColor.GRAY)
+                                    .append(net.kyori.adventure.text.Component.text("Reroller")
+                                            .color(net.kyori.adventure.text.format.NamedTextColor.LIGHT_PURPLE)
+                                            .decorate(net.kyori.adventure.text.format.TextDecoration.BOLD))
+                                    .append(net.kyori.adventure.text.Component.text(" to get your first element!")
+                                            .color(net.kyori.adventure.text.format.NamedTextColor.GRAY)));
+                            p.sendMessage(net.kyori.adventure.text.Component.empty());
+                            p.sendMessage(net.kyori.adventure.text.Component.text("ℹ Use ")
+                                    .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
+                                    .append(net.kyori.adventure.text.Component.text("/elements <name>")
+                                            .color(net.kyori.adventure.text.format.NamedTextColor.WHITE))
+                                    .append(net.kyori.adventure.text.Component.text(" to learn about elements")
+                                            .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)));
+                            p.sendMessage(net.kyori.adventure.text.Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                                    .color(net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY));
+                        }
                     }
-                }
-            }.runTaskLater(plugin, 20L); // 1 second delay
+                }.runTaskLater(plugin, 40L); // 2 second delay for better visibility
+            }
         } else {
             // Validate effects on join
             new BukkitRunnable() {

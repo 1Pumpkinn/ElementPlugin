@@ -37,6 +37,9 @@ public final class RerollerItem {
             ItemStack result = make(plugin);
             NamespacedKey key = new NamespacedKey(plugin, KEY);
 
+            // Remove existing recipe if it exists
+            plugin.getServer().removeRecipe(key);
+
             ShapedRecipe recipe = new ShapedRecipe(key, result);
             recipe.shape("GCG", "RTR", "GCG");
             recipe.setIngredient('G', Material.GOLD_BLOCK);
@@ -47,9 +50,12 @@ public final class RerollerItem {
             // Add the recipe
             boolean success = plugin.getServer().addRecipe(recipe);
 
+            if (!success) {
+                plugin.getLogger().warning("Failed to register Reroller recipe");
+            } else {
+                plugin.getLogger().info("Successfully registered Reroller recipe");
+            }
 
-        } catch (IllegalStateException e) {
-            plugin.getLogger().warning("Recipe already exists: " + e.getMessage());
         } catch (Exception e) {
             plugin.getLogger().severe("Error registering Element Reroller recipe: " + e.getMessage());
             e.printStackTrace();
