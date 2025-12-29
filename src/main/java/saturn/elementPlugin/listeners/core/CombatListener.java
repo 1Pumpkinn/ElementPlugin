@@ -2,7 +2,6 @@ package saturn.elementPlugin.listeners.core;
 
 import saturn.elementPlugin.managers.ElementManager;
 import saturn.elementPlugin.managers.TeamManager;
-import saturn.elementPlugin.util.WorldGuardIntegration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
