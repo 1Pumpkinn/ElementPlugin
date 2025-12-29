@@ -12,11 +12,37 @@ repositories {
         name = "papermc-repo"
         url = "https://repo.papermc.io/repository/maven-public/"
     }
+    maven {
+        name = "enginehub-maven"
+        url = "https://maven.enginehub.org/repo/"
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        // Override strict version constraints from WorldEdit
+        eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
+                details.useVersion '33.3.1-jre'
+                details.because 'Paper 1.21.10 requires this version'
+            }
+            if (details.requested.group == 'com.google.code.gson' && details.requested.name == 'gson') {
+                details.useVersion '2.11.0'
+                details.because 'Paper 1.21.10 requires this version'
+            }
+            if (details.requested.group == 'it.unimi.dsi' && details.requested.name == 'fastutil') {
+                details.useVersion '8.5.15'
+                details.because 'Paper 1.21.10 requires this version'
+            }
+        }
+    }
 }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
-}
+    compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.9")
+
+    }
 
 tasks {
     runServer {

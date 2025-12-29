@@ -6,6 +6,7 @@ api-version: '1.21.10'
 load: STARTUP
 authors: [ ___Pumpkinn ]
 contributors: [ ___Vishini ]
+depend: [WorldGuard]
 
 commands:
   team:

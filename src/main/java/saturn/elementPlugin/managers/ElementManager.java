@@ -13,6 +13,7 @@ import saturn.elementPlugin.elements.impl.fire.FireElement;
 import saturn.elementPlugin.elements.impl.life.LifeElement;
 import saturn.elementPlugin.elements.impl.water.WaterElement;
 import saturn.elementPlugin.util.SmartEffectCleaner;
+import saturn.elementPlugin.util.WorldGuardIntegration;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -211,6 +212,12 @@ public class ElementManager {
         Element element = registry.get(type);
 
         if (element == null) return false;
+
+        // Check WorldGuard protection - block if PVP is disabled
+        if (!WorldGuardIntegration.canUseAbility(player)) {
+            WorldGuardIntegration.sendProtectionMessage(player);
+            return false;
+        }
 
         ElementContext ctx = ElementContext.builder()
                 .player(player)

@@ -1,7 +1,9 @@
 package saturn.elementPlugin.listeners.core;
 
 import saturn.elementPlugin.managers.ElementManager;
-import saturn.elementPlugin.managers.TeamManager;import org.bukkit.entity.Player;
+import saturn.elementPlugin.managers.TeamManager;
+import saturn.elementPlugin.util.WorldGuardIntegration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -25,8 +27,17 @@ public class CombatListener implements Listener {
             damager = p;
         }
         if (damager == null) return;
+        
+        // Check trust (team/ally protection)
         if (trust.isTrusted(victim.getUniqueId(), damager.getUniqueId()) || trust.isTrusted(damager.getUniqueId(), victim.getUniqueId())) {
             e.setCancelled(true);
+            return;
+        }
+        
+        // Check WorldGuard - block if either player is in a protected region (PVP disabled)
+        if (!WorldGuardIntegration.canUseAbilityOnTarget(damager, victim)) {
+            e.setCancelled(true);
+            WorldGuardIntegration.sendTargetProtectionMessage(damager, victim);
         }
     }
 }

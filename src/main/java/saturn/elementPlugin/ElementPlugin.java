@@ -33,6 +33,8 @@ import saturn.elementPlugin.managers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import saturn.elementPlugin.managers.TeamManager;
+import saturn.elementPlugin.util.WorldGuardIntegration;
+
 import static saturn.elementPlugin.recipes.util.UtilRecipes.registerRecipes;
 
 public final class ElementPlugin extends JavaPlugin {
@@ -60,6 +62,7 @@ public final class ElementPlugin extends JavaPlugin {
         registerListeners();
         registerRecipes(this);
         manaManager.start();
+        WorldGuardIntegration.initialize(this);
     }
 
     @Override
