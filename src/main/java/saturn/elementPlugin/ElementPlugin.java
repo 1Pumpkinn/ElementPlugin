@@ -92,7 +92,7 @@ public final class ElementPlugin extends JavaPlugin {
         abilityManager.registerAbility(ElementType.FIRE, 1, new HellishFlamesAbility(this));
         abilityManager.registerAbility(ElementType.FIRE, 2, new PhoenixFormAbility(this));
 
-        abilityManager.registerAbility(ElementType.EARTH, 1, new EarthTunnelAbility(this));
+        // Earth Ability 1 is now handled directly in EarthElement class (Haste 5 buff)
         abilityManager.registerAbility(ElementType.EARTH, 2, new EarthquakeAbility(this));
 
         abilityManager.registerAbility(ElementType.LIFE, 1, new LifeRegenAbility(this));

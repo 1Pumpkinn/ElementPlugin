@@ -158,7 +158,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
                         "Hero of The Village",
                         "1.5x ore drops (Upgrade II)"
                 ),
-                "Earth Tunnel", "Dig tunnels through stone and dirt", 50,
+                "Mining Frenzy", "Gain Haste 5 for 10 seconds", 50,
                 "Earthquake", "Create a powerful earthquake that stuns all enemies within 10 blocks for 3 seconds", 75
         ));
 

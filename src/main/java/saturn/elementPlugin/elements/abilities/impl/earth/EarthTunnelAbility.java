@@ -1,4 +1,4 @@
-package saturn.elementPlugin.elements.abilities.impl.earth;
+/*package saturn.elementPlugin.elements.abilities.impl.earth;
 
 import saturn.elementPlugin.elements.ElementContext;
 import saturn.elementPlugin.elements.abilities.BaseAbility;
@@ -139,4 +139,4 @@ public class EarthTunnelAbility extends BaseAbility {
     public String getDescription() {
         return "Create a tunnel through earth and stone by looking in the direction you want to dig. Press again to cancel.";
     }
-}
+} */

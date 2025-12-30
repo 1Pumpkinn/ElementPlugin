@@ -218,7 +218,7 @@ public class SmartEffectCleaner {
             case FIRE:
                 return abilityNumber == 1 ? "fire_hellish_flames" : "fire_phoenix_form";
             case EARTH:
-                return abilityNumber == 1 ? "earth_tunnel" : "earth_earthquake";
+                return abilityNumber == 1 ? "earth_mining_frenzy" : "earth_earthquake";
             case LIFE:
                 return abilityNumber == 1 ? "life_regen" : "transfusion";
             case DEATH:

@@ -124,15 +124,12 @@ public class DeathListener implements Listener {
 
     /**
      * CRITICAL FIX: Clear active abilities when player dies
-     * This prevents Earth Tunnel and Water Whirlpool from staying active after respawn
+     * This prevents abilities from staying active after respawn
      */
     private void clearActiveAbilities(Player player, ElementType element) {
         if (element == null) return;
 
-        // Clear Earth Tunnel metadata
-        if (element == ElementType.EARTH) {
-            player.removeMetadata(EarthElement.META_TUNNELING, plugin);
-        }
+        // Earth no longer has tunneling metadata to clear
 
         // Clear ability active states for ALL elements
         var abilityManager = plugin.getAbilityManager();

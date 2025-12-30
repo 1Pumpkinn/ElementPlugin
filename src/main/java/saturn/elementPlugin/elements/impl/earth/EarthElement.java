@@ -1,11 +1,11 @@
 package saturn.elementPlugin.elements.impl.earth;
 
+import org.bukkit.Sound;
 import saturn.elementPlugin.ElementPlugin;
 import saturn.elementPlugin.elements.BaseElement;
 import saturn.elementPlugin.elements.ElementContext;
 import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.elements.abilities.Ability;
-import saturn.elementPlugin.elements.abilities.impl.earth.EarthTunnelAbility;
 import saturn.elementPlugin.elements.abilities.impl.earth.EarthquakeAbility;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -13,18 +13,14 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 public class EarthElement extends BaseElement {
-    public static final String META_MINE_UNTIL = "earth_mine_until";
     public static final String META_CHARM_NEXT_UNTIL = "earth_charm_next_until";
-    public static final String META_TUNNELING = "earth_tunneling";
 
     private final ElementPlugin plugin;
-    private final Ability ability1;
     private final Ability ability2;
 
     public EarthElement(ElementPlugin plugin) {
         super(plugin);
         this.plugin = plugin;
-        this.ability1 = new EarthTunnelAbility(plugin);
         this.ability2 = new EarthquakeAbility(plugin);
     }
 
@@ -40,7 +36,14 @@ public class EarthElement extends BaseElement {
 
     @Override
     protected boolean executeAbility1(ElementContext context) {
-        return ability1.execute(context);
+        Player player = context.getPlayer();
+
+        // Apply Haste 5 for 10 seconds
+        player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 200, 4, true, true, true));
+        player.sendMessage(ChatColor.GOLD + "Mining Frenzy activated for 10 seconds!");
+        player.playSound(player.getLocation(), Sound.BLOCK_STONE_BREAK, 1.0f, 0.8f);
+
+        return true;
     }
 
     @Override
@@ -50,21 +53,13 @@ public class EarthElement extends BaseElement {
 
     @Override
     protected boolean canCancelAbility1(ElementContext context) {
-        // Check if the player has the tunneling metadata - if so, they can cancel
-        boolean canCancel = context.getPlayer().hasMetadata(META_TUNNELING);
-        if (canCancel) {
-
-        }
-        return canCancel;
+        return false; // No longer cancellable since it's just a buff
     }
 
     @Override
     public void clearEffects(Player player) {
         player.removePotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE);
-        player.removeMetadata(META_MINE_UNTIL, plugin);
         player.removeMetadata(META_CHARM_NEXT_UNTIL, plugin);
-        player.removeMetadata(META_TUNNELING, plugin);
-        ability1.setActive(player, false);
         ability2.setActive(player, false);
     }
 
@@ -75,17 +70,17 @@ public class EarthElement extends BaseElement {
 
     @Override
     public String getDescription() {
-        return "Masters of stone and earth. Earth users can tunnel through blocks and charm mobs.";
+        return "Masters of stone and earth. Earth users have enhanced mining capabilities.";
     }
 
     @Override
     public String getAbility1Name() {
-        return ability1.getName();
+        return ChatColor.GOLD + "Mining Frenzy";
     }
 
     @Override
     public String getAbility1Description() {
-        return ability1.getDescription();
+        return "Gain Haste 5 for 10 seconds, allowing extremely fast mining.";
     }
 
     @Override
