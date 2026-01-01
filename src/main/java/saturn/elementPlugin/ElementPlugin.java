@@ -150,10 +150,17 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new ElementCombatProjectileListener(itemManager), this);
 
         // ========================
+        // Utility Items (CRITICAL FIX - These were missing!)
+        // ========================
+        pm.registerEvents(new saturn.elementPlugin.listeners.items.UpgraderListener(this, elementManager), this);
+        pm.registerEvents(new saturn.elementPlugin.listeners.items.RerollerListener(this), this);
+        pm.registerEvents(new saturn.elementPlugin.listeners.items.AdvancedRerollerListener(this), this);
+
+        // ========================
         // Air
         // ========================
         pm.registerEvents(new saturn.elementPlugin.elements.impl.air.listeners.AirJoinListener(elementManager), this);
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.air.listeners.AirCombatListener(elementManager), this); // ✅ ADDED
+        pm.registerEvents(new saturn.elementPlugin.elements.impl.air.listeners.AirCombatListener(elementManager), this);
 
         // ========================
         // Water
