@@ -158,7 +158,6 @@ public final class ElementPlugin extends JavaPlugin {
         // ========================
         // Water
         // ========================
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.water.listeners.WaterDrowningImmunityListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.water.listeners.WaterJoinListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.water.listeners.WaterPrisonMovementListener(), this);
 
