@@ -92,12 +92,7 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                         // Skip armor stands
                         if (entity instanceof org.bukkit.entity.ArmorStand) continue;
 
-                        // Check if valid target
-                        if (entity instanceof Player targetPlayer) {
-                            if (context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {
-                                continue;
-                            }
-                        }
+
 
                         // Deal TRUE DAMAGE (ignore armor/resistance)
                         double currentHealth = entity.getHealth();

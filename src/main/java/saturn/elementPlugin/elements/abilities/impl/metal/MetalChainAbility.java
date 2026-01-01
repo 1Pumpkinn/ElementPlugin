@@ -59,17 +59,9 @@ public class MetalChainAbility extends BaseAbility {
                     if (entity instanceof org.bukkit.entity.ArmorStand) return false;
                     if (!(entity instanceof LivingEntity)) return false;
 
-                    // Check trust for players
-                    if (entity instanceof Player targetPlayer) {
-                        return !context.getTrustManager().isTrusted(
-                                player.getUniqueId(),
-                                targetPlayer.getUniqueId()
-                        );
-                    }
 
                     return true;
-                }
-        );
+                });
 
         if (rayTrace == null || rayTrace.getHitEntity() == null) {
             player.sendMessage(ChatColor.RED + "No target found! Aim at an enemy.");
@@ -78,13 +70,6 @@ public class MetalChainAbility extends BaseAbility {
 
         LivingEntity target = (LivingEntity) rayTrace.getHitEntity();
 
-        // Don't target trusted players (redundant check but kept for safety)
-        if (target instanceof Player targetPlayer) {
-            if (context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {
-                player.sendMessage(ChatColor.RED + "You cannot chain trusted players!");
-                return false;
-            }
-        }
 
         // Play sounds
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_CHAIN_PLACE, 1.0f, 0.8f);

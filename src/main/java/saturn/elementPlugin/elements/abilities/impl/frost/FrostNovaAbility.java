@@ -87,12 +87,7 @@ public class FrostNovaAbility extends BaseAbility {
         for (LivingEntity entity : center.getNearbyLivingEntities(radius)) {
             if (entity.equals(player)) continue;
 
-            // Skip trusted players
-            if (entity instanceof Player targetPlayer) {
-                if (context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {
-                    continue;
-                }
-            }
+
 
             freezeEntity(entity, durationSeconds);
 

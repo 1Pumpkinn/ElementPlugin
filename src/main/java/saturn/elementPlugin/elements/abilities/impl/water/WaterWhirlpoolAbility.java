@@ -100,17 +100,7 @@ public class WaterWhirlpoolAbility extends BaseAbility {
                 for (LivingEntity entity : currentCenter.getNearbyLivingEntities(orbitRadius + 2)) {
                     if (entity.equals(player)) continue;
 
-                    // Don't affect trusted players
-                    if (entity instanceof Player targetPlayer) {
-                        if (context.getTrustManager().isTrusted(
-                                player.getUniqueId(),
-                                targetPlayer.getUniqueId()
-                        )) {
-                            continue;
-                        }
-                    }
 
-                    // ⭐ LINE OF SIGHT CHECK - Don't pull entities through blocks/underground
                     if (!hasLineOfSight(player, entity)) {
                         // Entity is behind blocks or underground - remove from tracking
                         entityAngles.remove(entity.getUniqueId());

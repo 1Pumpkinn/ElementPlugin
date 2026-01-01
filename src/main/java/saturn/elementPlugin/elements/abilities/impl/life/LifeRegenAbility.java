@@ -55,10 +55,10 @@ public class LifeRegenAbility extends BaseAbility {
         
         // Give regeneration 2 to player and trusted people in 5x5 radius for 10 seconds
         for (Player other : player.getWorld().getNearbyPlayers(player.getLocation(), radius)) {
-            if (other.equals(player) || context.getTrustManager().isTrusted(player.getUniqueId(), other.getUniqueId())) {
                 other.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 10 * 20, 1, true, true, true));
-            }
+
         }
+
         
         // Add regeneration to the caster as well
         player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 10 * 20, 1, true, true, true));

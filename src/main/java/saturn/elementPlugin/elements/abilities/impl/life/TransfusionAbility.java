@@ -43,12 +43,6 @@ public class TransfusionAbility extends BaseAbility {
             return false;
         }
 
-        // Check if both players are mutually trusted (same team)
-        if (!context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId()) ||
-                !context.getTrustManager().isTrusted(targetPlayer.getUniqueId(), player.getUniqueId())) {
-            player.sendMessage(ChatColor.RED + "You can only swap health with mutually trusted teammates!");
-            return false;
-        }
 
         // Store current health values
         double playerHealth = player.getHealth();

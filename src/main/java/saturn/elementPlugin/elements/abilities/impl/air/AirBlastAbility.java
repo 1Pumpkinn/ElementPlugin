@@ -30,7 +30,7 @@ public class AirBlastAbility extends BaseAbility {
             return false;
         }
 
-        mana.takeMana(player, cost);
+        mana.spend(player, cost);
 
         double radius = 6.0;
         World world = player.getWorld();

@@ -46,13 +46,7 @@ public class WaterPrisonAbility extends BaseAbility {
             return false;
         }
 
-        // Don't target trusted players
-        if (target instanceof Player targetPlayer) {
-            if (context.getTrustManager().isTrusted(player.getUniqueId(), targetPlayer.getUniqueId())) {
-                player.sendMessage(ChatColor.RED + "You cannot trap trusted players!");
-                return false;
-            }
-        }
+
 
         // Set the target as active
         setActive(player, true);

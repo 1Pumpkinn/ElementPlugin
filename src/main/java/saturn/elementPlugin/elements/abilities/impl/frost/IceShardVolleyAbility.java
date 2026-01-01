@@ -140,12 +140,7 @@ public class IceShardVolleyAbility extends BaseAbility implements Listener {
         for (LivingEntity entity : hitLoc.getNearbyLivingEntities(2.0)) {
             if (shooter != null && entity.equals(shooter)) continue;
 
-            // Check trust
-            if (shooter != null && entity instanceof Player targetPlayer) {
-                if (plugin.getTrustManager().isTrusted(shooterUUID, targetPlayer.getUniqueId())) {
-                    continue;
-                }
-            }
+
 
             // Damage (piercing - goes through armor)
             entity.damage(3.0, shooter);
