@@ -48,7 +48,7 @@ public class DeathClockAbility extends BaseAbility {
      * Called from combat listener when player hits an enemy
      */
     public static void applyEffects(ElementPlugin plugin, Player attacker, LivingEntity target) {
-        int duration = 200;
+        int duration = 200; // 10 seconds
 
         target.addPotionEffect(new PotionEffect(
                 PotionEffectType.DARKNESS, duration, 0, false, true, true
@@ -67,8 +67,15 @@ public class DeathClockAbility extends BaseAbility {
                 target.getLocation().add(0, 1, 0),
                 30, 0.3, 0.5, 0.3, 0.05
         );
-        // Remove the active marker
+
+        // CRITICAL: Remove the active marker immediately after applying
         attacker.removeMetadata(META_DEATH_CLOCK_ACTIVE, plugin);
+
+        // CRITICAL: Mark ability as inactive
+        DeathClockAbility ability = (DeathClockAbility) plugin.getAbilityManager().getAbility("death_clock");
+        if (ability != null) {
+            ability.setActive(attacker, false);
+        }
     }
 
     @Override

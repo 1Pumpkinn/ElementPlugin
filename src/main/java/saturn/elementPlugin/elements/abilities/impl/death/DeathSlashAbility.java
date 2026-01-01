@@ -10,7 +10,6 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class DeathSlashAbility extends BaseAbility {
-
     private final ElementPlugin plugin;
 
     public static final String META_SLASH_ACTIVE = "death_slash_active";
@@ -41,14 +40,13 @@ public class DeathSlashAbility extends BaseAbility {
         player.sendMessage(ChatColor.RED + "Slash activated! Your next hit will cause bleeding.");
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0f, 0.8f);
 
+        // activation blood
         bloodBurst(player.getLocation().add(0, 1, 0));
+
         setActive(player, true);
         return true;
     }
 
-    /**
-     * Called when the empowered hit lands
-     */
     public static void applyBleeding(ElementPlugin plugin, Player attacker, LivingEntity target) {
 
         long bleedUntil = System.currentTimeMillis() + 5000L;
@@ -56,11 +54,13 @@ public class DeathSlashAbility extends BaseAbility {
 
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 0.8f);
 
+        // Get THIS ability instance
         DeathSlashAbility ability =
                 (DeathSlashAbility) plugin.getAbilityManager().getAbility("death_slash");
 
-        attacker.removeMetadata(META_SLASH_ACTIVE, plugin);
+        // Initial blood burst
         ability.bloodBurst(target.getLocation().add(0, 1, 0));
+        attacker.removeMetadata(META_SLASH_ACTIVE, plugin);
 
         new BukkitRunnable() {
             int ticks = 0;
@@ -68,13 +68,13 @@ public class DeathSlashAbility extends BaseAbility {
 
             @Override
             public void run() {
-
-                // HARD STOP CONDITIONS (includes totem pop)
-                if (!target.isValid()
-                        || target.isDead()
-                        || !target.hasMetadata(META_BLEEDING)
-                        || ticks >= maxTicks) {
+                if (!target.isValid() || target.isDead() || ticks >= maxTicks) {
                     target.removeMetadata(META_BLEEDING, plugin);
+                    cancel();
+                    return;
+                }
+
+                if (!target.hasMetadata(META_BLEEDING)) {
                     cancel();
                     return;
                 }
@@ -87,32 +87,18 @@ public class DeathSlashAbility extends BaseAbility {
                 }
 
                 if (ticks % 20 == 0) {
+                    // TRUE DAMAGE - directly modify health to bypass armor completely
+                    double currentHealth = target.getHealth();
+                    double newHealth = Math.max(0.0, currentHealth - 1.0); // 1.0 damage = 0.5 hearts
 
-                    // If invulnerable (totem pop), STOP ENTIRE BLEED
-                    if (target.getNoDamageTicks() > 0) {
-                        target.removeMetadata(META_BLEEDING, plugin);
-                        cancel();
-                        return;
-                    }
+                    target.setHealth(newHealth);
 
-                    double damage = 1.0; // 0.5 hearts
-                    double health = target.getHealth();
+                    // Play hurt sound and animation
+                    target.getWorld().playSound(target.getLocation(), Sound.ENTITY_GENERIC_HURT, 0.5f, 1.0f);
+                    target.damage(0.0); // Trigger hurt animation without actual damage
 
-                    if (health - damage <= 0) {
-                        // Use damage API so totem can trigger
-                        target.damage(damage, attacker);
-                    } else {
-                        target.setHealth(health - damage);
-                        target.damage(0.0);
-                    }
-
+                    // BLEED TICK BLOOD
                     ability.bloodBurst(target.getLocation().add(0, 1, 0));
-                    target.getWorld().playSound(
-                            target.getLocation(),
-                            Sound.ENTITY_GENERIC_HURT,
-                            0.5f,
-                            1.0f
-                    );
                 }
 
                 ticks++;
@@ -127,6 +113,6 @@ public class DeathSlashAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return "Your next hit makes enemies bleed for 0.5 hearts per second for 5 seconds.";
+        return "Your next hit makes enemies bleed, dealing 0.5 hearts per second for 5 seconds.";
     }
 }

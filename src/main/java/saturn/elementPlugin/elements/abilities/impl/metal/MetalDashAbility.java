@@ -3,7 +3,10 @@ package saturn.elementPlugin.elements.abilities.impl.metal;
 import saturn.elementPlugin.ElementPlugin;
 import saturn.elementPlugin.elements.ElementContext;
 import saturn.elementPlugin.elements.abilities.BaseAbility;
-import org.bukkit.*;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,15 +18,13 @@ import org.bukkit.util.Vector;
 import java.util.*;
 
 public class MetalDashAbility extends BaseAbility implements Listener {
-
     private final ElementPlugin plugin;
-
     private final Set<UUID> stunnedPlayers = new HashSet<>();
     private final Set<UUID> dashingPlayers = new HashSet<>();
     private final Map<UUID, Boolean> pendingStuns = new HashMap<>();
 
     public MetalDashAbility(ElementPlugin plugin) {
-        super("metal_dash", 50, 15, 1);
+        super("metal_dash", 50, 15, 1); // Now ability 1: 50 mana, level 1 required
         this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
@@ -31,83 +32,85 @@ public class MetalDashAbility extends BaseAbility implements Listener {
     @Override
     public boolean execute(ElementContext context) {
         Player player = context.getPlayer();
-
         Vector direction = player.getLocation().getDirection().normalize();
-        player.setVelocity(direction.multiply(2.5).setY(0.4));
 
-        dashingPlayers.add(player.getUniqueId());
+        // Store the initial dash direction
+        final Vector dashDirection = direction.clone();
+
+        // Apply stronger initial velocity boost for longer dash
+        Vector dashVelocity = direction.multiply(2.5);
+        dashVelocity.setY(Math.max(dashVelocity.getY(), 0.4)); // Prevent downward dashing
+        player.setVelocity(dashVelocity);
+
+        // Track damaged entities to prevent multiple hits
+        Set<UUID> damagedEntities = new HashSet<>();
+
+        // Play sound
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_ATTACK, 1.0f, 1.5f);
+
         setActive(player, true);
+        dashingPlayers.add(player.getUniqueId());
 
-        Set<UUID> hitEntities = new HashSet<>();
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_ATTACK, 1f, 1.5f);
-
+        // Dash for 20 blocks (40 ticks at 0.5 blocks per tick)
         new BukkitRunnable() {
             int ticks = 0;
+            final int maxTicks = 40;
+            boolean hitEntity = false; // CRITICAL: Track if ANY entity was hit
 
             @Override
             public void run() {
+                if (!player.isOnline() || ticks >= maxTicks) {
+                    setActive(player, false);
+                    dashingPlayers.remove(player.getUniqueId());
 
-                // HARD CANCEL (includes totem pop)
-                if (!player.isOnline() || !dashingPlayers.contains(player.getUniqueId())) {
-                    cleanup(player);
-                    cancel();
-                    return;
-                }
-
-                if (ticks >= 40) {
-                    cleanup(player);
-                    if (!player.isOnGround()) {
-                        pendingStuns.put(player.getUniqueId(), true);
-                    } else {
-                        applyStun(player);
+                    // CRITICAL FIX: Only apply stun if NO entity was hit
+                    if (!hitEntity) {
+                        // Check if player is on ground, if not, mark for pending stun
+                        if (player.isOnGround()) {
+                            applyStun(player);
+                        } else {
+                            pendingStuns.put(player.getUniqueId(), true);
+                        }
                     }
+
                     cancel();
                     return;
                 }
 
                 Location loc = player.getLocation();
-                player.getWorld().spawnParticle(Particle.CRIT, loc, 10, 0.3, 0.3, 0.3, 0.1);
 
+                // Spawn metal particle trail
+                player.getWorld().spawnParticle(Particle.CRIT, loc, 10, 0.3, 0.3, 0.3, 0.1, null, true);
+                player.getWorld().spawnParticle(Particle.FIREWORK, loc, 5, 0.2, 0.2, 0.2, 0.05, null, true);
+
+                // Check for nearby entities every 2 ticks
                 if (ticks % 2 == 0) {
                     for (LivingEntity entity : loc.getNearbyLivingEntities(2.5)) {
-                        if (entity == player) continue;
-                        if (hitEntities.contains(entity.getUniqueId())) continue;
+                        if (entity.equals(player)) continue;
+                        if (damagedEntities.contains(entity.getUniqueId())) continue;
 
-                        // STOP dash if entity is invulnerable (totem pop)
-                        if (entity.getNoDamageTicks() > 0) {
-                            cleanup(player);
-                            cancel();
-                            return;
-                        }
+                        // Skip armor stands
+                        if (entity instanceof org.bukkit.entity.ArmorStand) continue;
 
-                        double damage = 4.0;
-                        double health = entity.getHealth();
+                        // Deal TRUE DAMAGE (ignore armor/resistance)
+                        double currentHealth = entity.getHealth();
+                        double newHealth = Math.max(0, currentHealth - 4.0);
+                        entity.setHealth(newHealth);
 
-                        if (health - damage <= 0) {
-                            entity.damage(damage, player);
-                        } else {
-                            entity.setHealth(health - damage);
-                            entity.damage(0.0);
-                        }
+                        // Mark as damaged
+                        damagedEntities.add(entity.getUniqueId());
+                        hitEntity = true; // CRITICAL: Mark that we hit something
 
-                        hitEntities.add(entity.getUniqueId());
-                        entity.setVelocity(
-                                entity.getLocation().toVector()
-                                        .subtract(loc.toVector())
-                                        .normalize()
-                                        .setY(0.3)
-                                        .multiply(0.5)
-                        );
+                        // Apply slight knockback
+                        Vector knockback = entity.getLocation().toVector().subtract(loc.toVector()).normalize();
+                        knockback.setY(0.3);
+                        entity.setVelocity(knockback.multiply(0.5));
 
-                        entity.getWorld().playSound(
-                                entity.getLocation(),
-                                Sound.ENTITY_PLAYER_ATTACK_CRIT,
-                                1f,
-                                1.2f
-                        );
+                        // Particle effect on hit
+                        entity.getWorld().spawnParticle(Particle.CRIT, entity.getLocation(), 15, 0.5, 0.5, 0.5, 0.1, null, true);
+                        entity.getWorld().playSound(entity.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.2f);
                     }
                 }
-
                 ticks++;
             }
         }.runTaskTimer(plugin, 0L, 1L);
@@ -115,11 +118,10 @@ public class MetalDashAbility extends BaseAbility implements Listener {
         return true;
     }
 
+    /**
+     * Cancel the dash for a player (used when totem pops)
+     */
     public void cancelDash(Player player) {
-        cleanup(player);
-    }
-
-    private void cleanup(Player player) {
         dashingPlayers.remove(player.getUniqueId());
         pendingStuns.remove(player.getUniqueId());
         stunnedPlayers.remove(player.getUniqueId());
@@ -127,13 +129,25 @@ public class MetalDashAbility extends BaseAbility implements Listener {
     }
 
     private void applyStun(Player player) {
+        // Add player to stunned set
         stunnedPlayers.add(player.getUniqueId());
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_DAMAGE, 1f, 0.8f);
+        pendingStuns.remove(player.getUniqueId());
 
+        // Visual and audio feedback for the stun
+        player.getWorld().spawnParticle(Particle.SMOKE, player.getLocation().add(0, 1, 0), 30, 0.3, 0.5, 0.3, 0.05, null, true);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_IRON_GOLEM_DAMAGE, 1.0f, 0.8f);
+
+        // Send message to player
+        player.sendMessage(ChatColor.GRAY + "You missed! Stunned for 5 seconds.");
+
+        // Remove from stunned set after 5 seconds
         new BukkitRunnable() {
             @Override
             public void run() {
                 stunnedPlayers.remove(player.getUniqueId());
+                if (player.isOnline()) {
+                    player.sendMessage(ChatColor.GREEN + "Stun ended.");
+                }
             }
         }.runTaskLater(plugin, 100L);
     }
@@ -141,15 +155,23 @@ public class MetalDashAbility extends BaseAbility implements Listener {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-        UUID id = player.getUniqueId();
+        UUID playerId = player.getUniqueId();
 
-        if (pendingStuns.containsKey(id) && player.isOnGround()) {
-            pendingStuns.remove(id);
+        // Check for pending stun when player lands
+        if (pendingStuns.containsKey(playerId) && player.isOnGround()) {
             applyStun(player);
         }
 
-        if (stunnedPlayers.contains(id)) {
-            event.setTo(event.getFrom());
+        // Check if player is stunned
+        if (stunnedPlayers.contains(playerId)) {
+            Location from = event.getFrom();
+            Location to = event.getTo();
+
+            // If player tried to move (not just looking around)
+            if (to != null && (from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ())) {
+                // Cancel the movement by teleporting back
+                event.setTo(from);
+            }
         }
     }
 
@@ -160,6 +182,6 @@ public class MetalDashAbility extends BaseAbility implements Listener {
 
     @Override
     public String getDescription() {
-        return "Dash forward, damaging enemies. Missing stuns you.";
+        return "Dash forward 20 blocks, damaging enemies you pass through. Missing all enemies stuns you for 5 seconds. (50 mana)";
     }
 }

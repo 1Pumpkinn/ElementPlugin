@@ -1,4 +1,4 @@
-package saturn.elementPlugin.listeners;
+package saturn.elementPlugin.listeners.core;
 
 import saturn.elementPlugin.ElementPlugin;
 import saturn.elementPlugin.elements.abilities.impl.death.DeathSlashAbility;
