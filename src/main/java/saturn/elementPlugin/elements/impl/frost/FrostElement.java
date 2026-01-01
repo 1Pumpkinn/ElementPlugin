@@ -31,9 +31,8 @@ public class FrostElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upsides are handled by FrostPassiveListener
-        // Upside 1: Speed 2 when wearing leather boots (always active)
-        // Upside 2: Speed 3 on ice (requires upgrade level 2)
+        // Upside 1: Speed III on ice (handled by FrostPassiveListener)
+        // Upside 2: Speed II when wearing iron trim armor (requires Upgrade II, handled by FrostPassiveListener)
     }
 
     @Override

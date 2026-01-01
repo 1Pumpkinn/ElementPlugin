@@ -32,14 +32,9 @@ public class WaterElement extends BaseElement {
         // Upside 1: Conduit power (permanent water breathing)
         player.addPotionEffect(new PotionEffect(PotionEffectType.CONDUIT_POWER, Integer.MAX_VALUE, 0, true, false));
 
-        // Upside 2: Mine faster in water - requires upgrade level 2
+        // Upside 2: Dolphin's Grace III (requires Upgrade II)
         if (upgradeLevel >= 2) {
-            var attr = player.getAttribute(org.bukkit.attribute.Attribute.SUBMERGED_MINING_SPEED);
-            if (attr != null) {
-                // Default is 0.2 (5x slower underwater)
-                // Set to 1.1 (slightly faster than on land)
-                attr.setBaseValue(1.1);
-            }
+            player.addPotionEffect(new PotionEffect(PotionEffectType.DOLPHINS_GRACE, Integer.MAX_VALUE, 2, true, false));
         }
     }
 
@@ -56,12 +51,7 @@ public class WaterElement extends BaseElement {
     @Override
     public void clearEffects(Player player) {
         player.removePotionEffect(PotionEffectType.CONDUIT_POWER);
-
-        // Reset underwater mining speed to default
-        var attr = player.getAttribute(org.bukkit.attribute.Attribute.SUBMERGED_MINING_SPEED);
-        if (attr != null) {
-            attr.setBaseValue(0.2); // Default underwater speed
-        }
+        player.removePotionEffect(PotionEffectType.DOLPHINS_GRACE);
 
         ability1.setActive(player, false);
         ability2.setActive(player, false);

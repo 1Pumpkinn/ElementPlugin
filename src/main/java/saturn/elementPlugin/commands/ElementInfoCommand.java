@@ -136,7 +136,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
                 "",
                 Arrays.asList(
                         "Conduit Power (underwater breathing)",
-                        "Mine faster underwater (Upgrade II)"
+                        "Dolphin's Grace III (Upgrade II)"
                 ),
                 "Water Whirlpool", "Create a spinning vortex", 50,
                 "Water Prison", "Trap an enemy in a sphere of water", 75
@@ -155,7 +155,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         map.put(ElementType.EARTH, new ElementInfo(
                 "",
                 Arrays.asList(
-                        "Hero of The Village",
+                        "Golden apples give +1 absorption heart",
                         "1.5x ore drops (Upgrade II)"
                 ),
                 "Mining Frenzy", "Gain Haste 5 for 10 seconds", 50,
@@ -165,8 +165,8 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
         map.put(ElementType.AIR, new ElementInfo(
                 "",
                 Arrays.asList(
-                        "No fall damage",
-                        "Immunity to powdered snow, soul sand, and slow blocks"
+                        "No fall damage + Speed I",
+                        "5% chance to give slow falling on hit (Upgrade II)"
                 ),
                 "Air Blast", "Push enemies away with a gust of wind", 50,
                 "Air Dash", "Dash forward swiftly, pushing enemies aside", 75
@@ -176,7 +176,7 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
                 "",
                 Arrays.asList(
                         "Speed III on ice",
-                        "Freeze on hit (10% chance, Upgrade II)"
+                        "Speed II with full iron trim armor (Upgrade II)"
                 ),
                 "Ice Shard Volley", "Fire 5 ice shards in a cone", 50,
                 "Frost Nova", "Create an explosion of ice around you", 75
@@ -202,12 +202,11 @@ public class ElementInfoCommand implements CommandExecutor, TabCompleter {
                 "Healing Beam", "Heal an ally directly", 75
         ));
 
-        // SWAPPED: Death Slash is ability 1, Death Clock is ability 2
         map.put(ElementType.DEATH, new ElementInfo(
                 "",
                 Arrays.asList(
                         "25% more XP from kills",
-                        "Wither on hit (10% chance, Upgrade II)"
+                        "Go invisible for 10s when on 2 hearts (Upgrade II, 30s cooldown)"
                 ),
                 "Death Slash", "Your next hit causes bleeding for 5 seconds", 50,
                 "Death Clock", "Your next hit curses with blindness, weakness, and wither", 75

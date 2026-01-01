@@ -18,7 +18,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 /**
  * Monitors and maintains element passive effects continuously
- * UPDATED: Added Haste for Metal, removed Resistance
+ * UPDATED: Added Speed for Air, Dolphin's Grace for Water
  */
 public class PassiveEffectMonitor implements Listener {
 
@@ -51,6 +51,7 @@ public class PassiveEffectMonitor implements Listener {
         int upgradeLevel = pd.getUpgradeLevel(currentElement);
 
         switch (currentElement) {
+            case AIR -> checkAirEffects(player);
             case WATER -> checkWaterEffects(player, upgradeLevel);
             case FIRE -> checkFireEffects(player);
             case EARTH -> checkEarthEffects(player);
@@ -60,22 +61,23 @@ public class PassiveEffectMonitor implements Listener {
         }
     }
 
+    private void checkAirEffects(Player player) {
+        // Upside 1: Speed I
+        if (!hasEffect(player, PotionEffectType.SPEED)) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, true, false));
+        }
+    }
+
     private void checkWaterEffects(Player player, int upgradeLevel) {
         // Upside 1: Conduit Power (always active)
         if (!hasEffect(player, PotionEffectType.CONDUIT_POWER)) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.CONDUIT_POWER, Integer.MAX_VALUE, 0, true, false));
         }
-        // Upside 2: Faster underwater mining (upgrade level 2+)
-        var attr = player.getAttribute(org.bukkit.attribute.Attribute.SUBMERGED_MINING_SPEED);
-        if (attr != null) {
-            if (upgradeLevel >= 2) {
-                if (attr.getBaseValue() != 1.2) {
-                    attr.setBaseValue(1.2);
-                }
-            } else {
-                if (attr.getBaseValue() != 0.2) {
-                    attr.setBaseValue(0.2);
-                }
+
+        // Upside 2: Dolphin's Grace III (upgrade level 2+)
+        if (upgradeLevel >= 2) {
+            if (!hasEffect(player, PotionEffectType.DOLPHINS_GRACE)) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.DOLPHINS_GRACE, Integer.MAX_VALUE, 2, true, false));
             }
         }
     }
@@ -87,9 +89,8 @@ public class PassiveEffectMonitor implements Listener {
     }
 
     private void checkEarthEffects(Player player) {
-        if (!hasEffect(player, PotionEffectType.HERO_OF_THE_VILLAGE)) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, Integer.MAX_VALUE, 0, true, false));
-        }
+        // No infinite potion effects for Earth
+        // Golden apple bonus handled by EarthGoldenAppleListener
     }
 
     private void checkLifeEffects(Player player) {
@@ -107,10 +108,10 @@ public class PassiveEffectMonitor implements Listener {
 
     private void checkDeathEffects(Player player) {
         // Death has no passive potion effects
+        // Invisibility handled by DeathInvisibilityListener
     }
 
     private void checkMetalEffects(Player player) {
-        // UPDATED: Check for Haste instead of Resistance
         if (!hasEffect(player, PotionEffectType.HASTE)) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, Integer.MAX_VALUE, 0, true, false));
         }

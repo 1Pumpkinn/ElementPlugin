@@ -4,9 +4,12 @@ import saturn.elementPlugin.ElementPlugin;
 import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.managers.ElementManager;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ArmorMeta;
+import org.bukkit.inventory.meta.trim.ArmorTrim;
+import org.bukkit.inventory.meta.trim.TrimMaterial;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -16,14 +19,17 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Handles Frost element passive speed effects
- * Upside 1: Speed III on ice (always active for Frost users)
- * Upside 2: NOT USED (freeze on hit is in FrostCombatListener)
+ * Frost passive speed effects
+ *
+ * Upside 1: Speed I (always active for Frost users)
+ * Upside 2: Speed II when wearing full IRON trim armor (requires Upgrade II)
  */
 public class FrostPassiveListener implements Listener {
 
     private final ElementPlugin plugin;
     private final ElementManager elementManager;
+
+    // Track players who currently have Frost-applied Speed
     private final Set<UUID> frostSpeedPlayers = new HashSet<>();
 
     public FrostPassiveListener(ElementPlugin plugin, ElementManager elementManager) {
@@ -37,70 +43,85 @@ public class FrostPassiveListener implements Listener {
             @Override
             public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) {
+
+                    // Skip non-Frost players
                     if (elementManager.getPlayerElement(player) != ElementType.FROST) {
-                        frostSpeedPlayers.remove(player.getUniqueId());
+                        // Only remove Frost-applied Speed
+                        if (frostSpeedPlayers.remove(player.getUniqueId())) {
+                            player.removePotionEffect(PotionEffectType.SPEED);
+                        }
                         continue;
                     }
 
-                    // Only check if on ice - Speed III on ice only
-                    boolean onIce = isOnIce(player);
+                    var pd = elementManager.data(player.getUniqueId());
+                    int upgradeLevel = pd.getUpgradeLevel(ElementType.FROST);
 
-                    // Speed III when on ice, no speed otherwise
-                    int desiredLevel = onIce ? 2 : -1; // Speed III = amplifier 2
+                    // Check if Upgrade II + full iron-trim armor
+                    boolean hasIronTrim = upgradeLevel >= 2 && hasFullIronTrimArmor(player);
+
+                    // Determine speed level:
+                    // Speed I (amplifier 0) by default
+                    // Speed II (amplifier 1) if iron-trim armor
+                    int desiredAmplifier = hasIronTrim ? 1 : 0;
+
                     PotionEffect current = player.getPotionEffect(PotionEffectType.SPEED);
 
-                    if (desiredLevel == -1) {
-                        // Not on ice - remove speed
-                        if (frostSpeedPlayers.contains(player.getUniqueId())) {
-                            player.removePotionEffect(PotionEffectType.SPEED);
-                            frostSpeedPlayers.remove(player.getUniqueId());
-                        }
-                        continue;
-                    }
-
-                    boolean hasFrostSpeed = frostSpeedPlayers.contains(player.getUniqueId());
-                    boolean needsRefresh = false;
-
-                    if (!hasFrostSpeed) {
-                        if (current == null) {
-                            needsRefresh = true;
-                        } else {
-                            continue;
-                        }
-                    } else {
-                        if (current == null) {
-                            needsRefresh = true;
-                        } else if (current.getAmplifier() != desiredLevel) {
-                            needsRefresh = true;
-                        } else if (current.getDuration() < 30) {
-                            needsRefresh = true;
-                        }
-                    }
+                    // Refresh if:
+                    // - Player doesn't have Frost-applied Speed yet
+                    // - Amplifier changed
+                    // - Duration too low (< 30 ticks)
+                    boolean needsRefresh =
+                            !frostSpeedPlayers.contains(player.getUniqueId()) ||
+                                    current == null ||
+                                    current.getAmplifier() != desiredAmplifier ||
+                                    current.getDuration() < 30;
 
                     if (needsRefresh) {
-                        if (current != null) {
+                        // Remove only Frost-applied Speed
+                        if (frostSpeedPlayers.contains(player.getUniqueId())) {
                             player.removePotionEffect(PotionEffectType.SPEED);
                         }
 
+                        // Apply new Frost speed
                         player.addPotionEffect(
-                                new PotionEffect(PotionEffectType.SPEED, 40, desiredLevel, true, false, false)
+                                new PotionEffect(
+                                        PotionEffectType.SPEED,
+                                        40, // 2 seconds, refreshed every second
+                                        desiredAmplifier,
+                                        true,
+                                        false,
+                                        false
+                                )
                         );
 
                         frostSpeedPlayers.add(player.getUniqueId());
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0L, 20L);
+        }.runTaskTimer(plugin, 0L, 20L); // Run every 20 ticks (1 second)
     }
 
     /**
-     * Checks if Frost User is on Ice
+     * Checks if the player is wearing full armor with IRON trim
      */
-    private boolean isOnIce(Player player) {
-        Material blockBelow = player.getLocation().add(0, -1, 0).getBlock().getType();
-        return switch (blockBelow) {
-            case ICE, PACKED_ICE, BLUE_ICE, FROSTED_ICE -> true;
-            default -> false;
-        };
+    private boolean hasFullIronTrimArmor(Player player) {
+        ItemStack[] armor = player.getInventory().getArmorContents();
+
+        for (ItemStack piece : armor) {
+            if (piece == null || !(piece.getItemMeta() instanceof ArmorMeta armorMeta)) {
+                return false;
+            }
+
+            if (!armorMeta.hasTrim()) {
+                return false;
+            }
+
+            ArmorTrim trim = armorMeta.getTrim();
+            if (trim.getMaterial() != TrimMaterial.IRON) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

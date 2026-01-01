@@ -14,9 +14,7 @@ import java.util.*;
 
 /**
  * Smart utility class for cleaning up element effects
- * Only removes infinite effects that DON'T belong to the current element
- * Properly handles both basic and advanced element effects
- * FIXED: Now clears ALL ability active states when changing elements
+ * UPDATED: Added Speed for Air, Dolphin's Grace for Water, removed underwater mining
  */
 public class SmartEffectCleaner {
 
@@ -29,17 +27,17 @@ public class SmartEffectCleaner {
     static {
         // BASIC ELEMENTS (Reroller)
 
-        // Water: Conduit Power
-        ELEMENT_EFFECTS.put(ElementType.WATER, Set.of(PotionEffectType.CONDUIT_POWER));
+        // Water: Conduit Power + Dolphin's Grace (Upgrade II)
+        ELEMENT_EFFECTS.put(ElementType.WATER, Set.of(PotionEffectType.CONDUIT_POWER, PotionEffectType.DOLPHINS_GRACE));
 
         // Fire: Fire Resistance
         ELEMENT_EFFECTS.put(ElementType.FIRE, Set.of(PotionEffectType.FIRE_RESISTANCE));
 
-        // Earth: Hero of the Village
-        ELEMENT_EFFECTS.put(ElementType.EARTH, Set.of(PotionEffectType.HERO_OF_THE_VILLAGE));
+        // Earth: No infinite potion effects
+        ELEMENT_EFFECTS.put(ElementType.EARTH, Set.of());
 
-        // Air: No infinite potion effects
-        ELEMENT_EFFECTS.put(ElementType.AIR, Set.of());
+        // Air: Speed I
+        ELEMENT_EFFECTS.put(ElementType.AIR, Set.of(PotionEffectType.SPEED));
 
         // ADVANCED ELEMENTS (Advanced Reroller)
 
@@ -52,14 +50,12 @@ public class SmartEffectCleaner {
         // Death: No infinite potion effects
         ELEMENT_EFFECTS.put(ElementType.DEATH, Set.of());
 
-        // Frost: No infinite potion effects (Speed is applied dynamically by FrostPassiveListener)
-        ELEMENT_EFFECTS.put(ElementType.FROST, Set.of());
+        // Frost: Speed (dynamic, applied by FrostPassiveListener)
+        ELEMENT_EFFECTS.put(ElementType.FROST, Set.of(PotionEffectType.SPEED));
     }
 
     /**
      * Clean ONLY the infinite effects that don't belong to the current element
-     * This preserves correct element effects while removing old ones
-     * ONLY removes effects with duration > INFINITE_EFFECT_THRESHOLD (1 million ticks)
      */
     public static void cleanInvalidInfiniteEffects(ElementPlugin plugin, Player player) {
         PlayerData pd = plugin.getElementManager().data(player.getUniqueId());
@@ -70,20 +66,14 @@ public class SmartEffectCleaner {
             return;
         }
 
-        // Get the effects that SHOULD be on this player
         Set<PotionEffectType> validEffects = ELEMENT_EFFECTS.getOrDefault(currentElement, Set.of());
-
-        // Check all active potion effects
         Collection<PotionEffect> activeEffects = player.getActivePotionEffects();
 
         for (PotionEffect effect : activeEffects) {
-            // CRITICAL: Only check INFINITE effects (duration > threshold)
             if (effect.getDuration() > INFINITE_EFFECT_THRESHOLD) {
                 PotionEffectType type = effect.getType();
 
-                // If this infinite effect is NOT in the valid set for current element, remove it
                 if (!validEffects.contains(type)) {
-                    // Check if it belongs to ANY element
                     boolean belongsToAnyElement = ELEMENT_EFFECTS.values().stream()
                             .anyMatch(set -> set.contains(type));
 
@@ -97,17 +87,13 @@ public class SmartEffectCleaner {
     }
 
     /**
-     * Clear ALL element effects for element change (reroller/advanced reroller)
-     * This is used when switching elements - clears old infinite effects, applies new
-     * ONLY removes INFINITE effects (duration > threshold), preserves timed effects
-     * FIXED: Now also clears ALL ability active states from AbilityManager
+     * Clear ALL element effects for element change
      */
     public static void clearForElementChange(ElementPlugin plugin, Player player) {
         int clearedCount = 0;
 
         plugin.getLogger().info("=== Starting clearForElementChange for " + player.getName() + " ===");
 
-        // Get all active effects BEFORE clearing
         Collection<PotionEffect> activeEffects = new ArrayList<>(player.getActivePotionEffects());
 
         plugin.getLogger().info("Active effects BEFORE clearing:");
@@ -115,13 +101,10 @@ public class SmartEffectCleaner {
             plugin.getLogger().info("  - " + effect.getType() + " (duration: " + effect.getDuration() + ", amplifier: " + effect.getAmplifier() + ")");
         }
 
-        // Clear ONLY element-specific INFINITE effects
         for (PotionEffect effect : activeEffects) {
-            // CRITICAL: Only remove INFINITE effects
             if (effect.getDuration() > INFINITE_EFFECT_THRESHOLD) {
                 PotionEffectType type = effect.getType();
 
-                // Check if this is an element effect
                 boolean isElementEffect = ELEMENT_EFFECTS.values().stream()
                         .anyMatch(set -> set.contains(type));
 
@@ -133,22 +116,15 @@ public class SmartEffectCleaner {
             }
         }
 
-        // Clear element-specific metadata
         clearElementMetadata(plugin, player);
-
-        // CRITICAL FIX: Clear ALL ability active states from ALL elements
         clearAllAbilityStates(plugin, player);
-
-        // Reset ALL attributes to default (will be set correctly after)
         resetAttributesToDefault(player);
 
-        // Clear temporary effects (these are always safe to clear)
         player.setFireTicks(0);
         player.setFreezeTicks(0);
 
         plugin.getLogger().info("=== Cleared " + clearedCount + " infinite element effects from " + player.getName() + " ===");
 
-        // Log remaining effects AFTER clearing
         Collection<PotionEffect> remainingEffects = player.getActivePotionEffects();
         plugin.getLogger().info("Remaining effects AFTER clearing:");
         for (PotionEffect effect : remainingEffects) {
@@ -156,11 +132,7 @@ public class SmartEffectCleaner {
         }
     }
 
-    /**
-     * Clear element-specific metadata from player
-     */
     private static void clearElementMetadata(ElementPlugin plugin, Player player) {
-        // Clear ALL element-related metadata using ElementManager
         for (ElementType type : ElementType.values()) {
             Element element = plugin.getElementManager().get(type);
             if (element != null) {
@@ -173,23 +145,16 @@ public class SmartEffectCleaner {
         }
     }
 
-    /**
-     * CRITICAL FIX: Clear ALL ability active states from AbilityManager
-     * This ensures abilities from old elements don't persist
-     */
     private static void clearAllAbilityStates(ElementPlugin plugin, Player player) {
         var abilityManager = plugin.getAbilityManager();
 
-        // Clear ability 1 and 2 for ALL element types
         for (ElementType elementType : ElementType.values()) {
             for (int abilityNumber = 1; abilityNumber <= 2; abilityNumber++) {
                 try {
-                    // Get the ability from the registry
                     String abilityId = getAbilityId(elementType, abilityNumber);
                     Ability ability = abilityManager.getAbility(abilityId);
 
                     if (ability != null) {
-                        // Clear the active state
                         ability.setActive(player, false);
                         plugin.getLogger().fine("Cleared ability state: " + abilityId + " for " + player.getName());
                     }
@@ -202,14 +167,9 @@ public class SmartEffectCleaner {
         plugin.getLogger().info("Cleared ALL ability active states for " + player.getName());
     }
 
-    /**
-     * Get ability ID based on element type and ability number
-     * This matches the IDs used when registering abilities in ElementPlugin
-     */
     private static String getAbilityId(ElementType elementType, int abilityNumber) {
         String elementName = elementType.name().toLowerCase();
 
-        // Match the ability ID format used in ability classes
         switch (elementType) {
             case AIR:
                 return abilityNumber == 1 ? "air_blast" : "air_dash";
@@ -232,9 +192,6 @@ public class SmartEffectCleaner {
         }
     }
 
-    /**
-     * Reset all element-related attributes to default values
-     */
     private static void resetAttributesToDefault(Player player) {
         // Max Health (reset to 20 - Life will set to 30 if needed)
         var healthAttr = player.getAttribute(Attribute.MAX_HEALTH);
@@ -245,32 +202,17 @@ public class SmartEffectCleaner {
                 player.setHealth(Math.min(currentHealth, 20.0));
             }
         }
-
-        // Underwater Mining Speed (reset to 0.2 - Water will set to 1.2 if needed)
-        var miningAttr = player.getAttribute(Attribute.SUBMERGED_MINING_SPEED);
-        if (miningAttr != null && miningAttr.getBaseValue() != 0.2) {
-            miningAttr.setBaseValue(0.2);
-        }
     }
 
-    /**
-     * Check if a potion effect type belongs to any element
-     */
     public static boolean isElementEffect(PotionEffectType type) {
         return ELEMENT_EFFECTS.values().stream()
                 .anyMatch(set -> set.contains(type));
     }
 
-    /**
-     * Get all effect types that belong to a specific element
-     */
     public static Set<PotionEffectType> getElementEffects(ElementType element) {
         return new HashSet<>(ELEMENT_EFFECTS.getOrDefault(element, Set.of()));
     }
 
-    /**
-     * Check if an effect is considered "infinite" (element passive)
-     */
     public static boolean isInfiniteEffect(PotionEffect effect) {
         return effect.getDuration() > INFINITE_EFFECT_THRESHOLD;
     }

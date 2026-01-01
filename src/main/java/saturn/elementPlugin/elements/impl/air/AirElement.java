@@ -9,6 +9,8 @@ import saturn.elementPlugin.elements.abilities.impl.air.AirBlastAbility;
 import saturn.elementPlugin.elements.abilities.impl.air.AirDashAbility;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 public class AirElement extends BaseElement {
     private final ElementPlugin plugin;
@@ -29,8 +31,11 @@ public class AirElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Upside 1: No fall damage (handled in FallDamageListener)
-        // No potion effects needed
+
+        // Upside 1: No fall damage (handled in FallDamageListener) + Speed I
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, true, false));
+
+        // Upside 2: Hitting someone has 5% chance to give them slow falling (handled in AirCombatListener)
     }
 
     @Override
@@ -45,6 +50,7 @@ public class AirElement extends BaseElement {
 
     @Override
     public void clearEffects(Player player) {
+        player.removePotionEffect(PotionEffectType.SPEED);
         ability1.setActive(player, false);
         ability2.setActive(player, false);
     }

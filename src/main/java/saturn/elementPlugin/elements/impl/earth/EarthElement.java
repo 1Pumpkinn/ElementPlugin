@@ -31,7 +31,8 @@ public class EarthElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, Integer.MAX_VALUE, 0, true, false));
+        // Upside 1: Golden apples give 1 more heart of absorption (handled in EarthGoldenAppleListener)
+        // Upside 2: 1.5x ore drops (requires Upgrade II, handled in EarthOreDropListener)
     }
 
     @Override
@@ -58,7 +59,6 @@ public class EarthElement extends BaseElement {
 
     @Override
     public void clearEffects(Player player) {
-        player.removePotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE);
         player.removeMetadata(META_CHARM_NEXT_UNTIL, plugin);
         ability2.setActive(player, false);
     }

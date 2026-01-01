@@ -14,7 +14,9 @@ public class DeathElement extends BaseElement {
     private final ElementPlugin plugin;
     private final Ability ability1;
     private final Ability ability2;
-    private final java.util.Map<java.util.UUID, org.bukkit.scheduler.BukkitTask> passiveTasks = new java.util.HashMap<>();
+
+    // Metadata key for tracking invisibility activation
+    public static final String META_DEATH_INVIS_COOLDOWN = "death_invis_cooldown";
 
     public DeathElement(ElementPlugin plugin) {
         super(plugin);
@@ -30,12 +32,11 @@ public class DeathElement extends BaseElement {
 
     @Override
     public void applyUpsides(Player player, int upgradeLevel) {
-        // Cancel any existing passive task for this player
-        cancelPassiveTask(player);
+        // Upside 1: 25% more XP from kills (handled in DeathXPDropListener)
+        // No potion effect needed here
 
-        if (upgradeLevel >= 2) {
-
-        }
+        // Upside 2: Go invisible for 10 seconds when on 2 hearts (requires Upgrade II)
+        // Handled by DeathInvisibilityListener
     }
 
     @Override
@@ -50,27 +51,14 @@ public class DeathElement extends BaseElement {
 
     @Override
     public void clearEffects(Player player) {
-        // Cancel passive task
-        cancelPassiveTask(player);
-
         // Clear ability metadata
         player.removeMetadata(DeathClockAbility.META_DEATH_CLOCK_ACTIVE, plugin);
         player.removeMetadata(DeathSlashAbility.META_SLASH_ACTIVE, plugin);
         player.removeMetadata(DeathSlashAbility.META_BLEEDING, plugin);
+        player.removeMetadata(META_DEATH_INVIS_COOLDOWN, plugin);
 
         ability1.setActive(player, false);
         ability2.setActive(player, false);
-    }
-
-    /**
-     * Cancel the passive task for a player
-     * @param player The player to cancel the task for
-     */
-    private void cancelPassiveTask(Player player) {
-        org.bukkit.scheduler.BukkitTask task = passiveTasks.remove(player.getUniqueId());
-        if (task != null && !task.isCancelled()) {
-            task.cancel();
-        }
     }
 
     @Override
