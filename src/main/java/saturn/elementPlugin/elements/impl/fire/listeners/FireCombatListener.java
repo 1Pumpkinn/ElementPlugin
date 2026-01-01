@@ -2,7 +2,7 @@ package saturn.elementPlugin.elements.impl.fire.listeners;
 
 import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.managers.ElementManager;
-import saturn.elementPlugin.managers.TeamManager;import org.bukkit.entity.Player;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -13,11 +13,9 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
  */
 public class FireCombatListener implements Listener {
     private final ElementManager elementManager;
-    private final TeamManager teamManager;
 
-    public FireCombatListener(ElementManager elementManager, TeamManager teamManager) {
+    public FireCombatListener(ElementManager elementManager) {
         this.elementManager = elementManager;
-        this.teamManager = teamManager;
     }
 
     @EventHandler
@@ -35,13 +33,6 @@ public class FireCombatListener implements Listener {
         // Check if they have Upgrade 2
         if (playerData.getUpgradeLevel(ElementType.FIRE) < 2) {
             return;
-        }
-
-        // Don't apply to trusted players
-        if (event.getEntity() instanceof Player victim) {
-            if (teamManager.isTrusted(damager.getUniqueId(), victim.getUniqueId())) {
-                return;
-            }
         }
 
         // Apply fire aspect (set entity on fire for 4 seconds)

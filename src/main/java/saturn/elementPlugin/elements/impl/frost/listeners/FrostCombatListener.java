@@ -2,7 +2,7 @@ package saturn.elementPlugin.elements.impl.frost.listeners;
 
 import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.managers.ElementManager;
-import saturn.elementPlugin.managers.TeamManager;import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -17,11 +17,9 @@ import org.bukkit.potion.PotionEffectType;
  */
 public class FrostCombatListener implements Listener {
     private final ElementManager elementManager;
-    private final TeamManager teamManager;
 
-    public FrostCombatListener(ElementManager elementManager, TeamManager teamManager) {
+    public FrostCombatListener(ElementManager elementManager) {
         this.elementManager = elementManager;
-        this.teamManager = teamManager;
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -44,13 +42,6 @@ public class FrostCombatListener implements Listener {
         // Check if they have Upgrade 2
         if (playerData.getUpgradeLevel(ElementType.FROST) < 2) {
             return;
-        }
-
-        // Don't apply to trusted players
-        if (target instanceof Player victim) {
-            if (teamManager.isTrusted(damager.getUniqueId(), victim.getUniqueId())) {
-                return;
-            }
         }
 
         // UPDATED: 10% chance to apply freeze effect

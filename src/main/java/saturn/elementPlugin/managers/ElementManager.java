@@ -30,16 +30,13 @@ public class ElementManager {
     private final ElementPlugin plugin;
     private final DataStore store;
     private final ManaManager manaManager;
-    private final TeamManager teamManager;
     private final Map<ElementType, Element> registry = new EnumMap<>(ElementType.class);
     private final Set<UUID> currentlyRolling = new HashSet<>();
 
-    public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager,
-                          TeamManager teamManager) {
+    public ElementManager(ElementPlugin plugin, DataStore store, ManaManager manaManager) {
         this.plugin = plugin;
         this.store = store;
         this.manaManager = manaManager;
-        this.teamManager = teamManager;
         registerAllElements();
     }
 
@@ -225,7 +222,6 @@ public class ElementManager {
                 .upgradeLevel(pd.getUpgradeLevel(type))
                 .elementType(type)
                 .manaManager(manaManager)
-                .trustManager(teamManager)
                 .plugin(plugin)
                 .build();
 

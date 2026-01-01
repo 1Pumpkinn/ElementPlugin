@@ -44,7 +44,6 @@ public class DataStore {
 
     // Thread-safe cache
     private final Map<UUID, PlayerData> playerDataCache = new ConcurrentHashMap<>();
-    private TeamData teamData;
 
     // Track last save time for debugging
     private long lastSaveTime = 0;
@@ -72,9 +71,6 @@ public class DataStore {
 
         // Load teamHidden file config
         this.teamHiddenConfig = YamlConfiguration.loadConfiguration(teamHiddenFile);
-
-        // Start auto-save task
-        startAutoSave();
 
         plugin.getLogger().info("DataStore initialized successfully");
     }
@@ -110,28 +106,9 @@ public class DataStore {
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to load player configuration: " + e.getMessage());
 
-            // Try to recover from backup
-            if (recoverFromBackup()) {
-                plugin.getLogger().info("Successfully recovered from backup");
-            } else {
-                // Create new empty config
-                this.playerConfig = new YamlConfiguration();
-                plugin.getLogger().warning("Created new empty player configuration");
             }
         }
 
-        try {
-            this.teamConfig = YamlConfiguration.loadConfiguration(teamFile);
-            ConfigurationSection teamSection = teamConfig.getConfigurationSection("teamData");
-            this.teamData = new TeamData(teamSection);
-            plugin.getLogger().info("Loaded team configuration from disk");
-        } catch (Exception e) {
-            plugin.getLogger().severe("Failed to load team configuration: " + e.getMessage());
-            this.teamConfig = new YamlConfiguration();
-            this.teamData = new TeamData();
-            plugin.getLogger().warning("Created new empty team configuration");
-        }
-    }
 
     // ========================================
     // AUTO-SAVE SYSTEM
@@ -160,15 +137,6 @@ public class DataStore {
                 save(pd);
                 savedCount++;
             }
-        }
-
-        // Save team data if dirty
-        if (teamData.isDirty()) {
-            saveTeamData();
-        }
-
-        if (savedCount > 0) {
-            plugin.getLogger().info("Auto-saved " + savedCount + " player(s) with changes");
         }
     }
 
@@ -297,11 +265,6 @@ public class DataStore {
             }
         }
 
-        // Save team data
-        if (teamData.isDirty()) {
-            saveTeamData();
-        }
-
         plugin.getLogger().info("Flushed " + count + " player(s) to disk");
     }
 
@@ -309,28 +272,6 @@ public class DataStore {
     // TEAM DATA OPERATIONS
     // ========================================
 
-    /**
-     * Get TeamData singleton
-     */
-    public TeamData getTeamData() {
-        return teamData;
-    }
-
-    /**
-     * Save team data to disk
-     */
-    public synchronized void saveTeamData() {
-        try {
-            teamConfig.set("teamData", null);
-            ConfigurationSection section = teamConfig.createSection("teamData");
-            teamData.saveTo(section);
-
-            teamConfig.save(teamFile);
-            plugin.getLogger().fine("Saved team data");
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to save team data", e);
-        }
-    }
 
     // ========================================
     // BACKUP SYSTEM

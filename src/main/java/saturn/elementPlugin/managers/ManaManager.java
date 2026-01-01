@@ -88,6 +88,8 @@ public class ManaManager {
         return true;
     }
 
+
+
     /**
      * Check if player has enough mana without spending it
      */

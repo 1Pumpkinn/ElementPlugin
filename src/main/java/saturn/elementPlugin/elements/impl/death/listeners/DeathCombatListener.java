@@ -5,7 +5,7 @@ import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.elements.abilities.impl.death.DeathClockAbility;
 import saturn.elementPlugin.elements.abilities.impl.death.DeathSlashAbility;
 import saturn.elementPlugin.managers.ElementManager;
-import saturn.elementPlugin.managers.TeamManager;import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -23,12 +23,10 @@ import org.bukkit.potion.PotionEffectType;
 public class DeathCombatListener implements Listener {
     private final ElementPlugin plugin;
     private final ElementManager elementManager;
-    private final TeamManager teamManager;
 
-    public DeathCombatListener(ElementPlugin plugin, ElementManager elementManager, TeamManager teamManager) {
+    public DeathCombatListener(ElementPlugin plugin, ElementManager elementManager) {
         this.plugin = plugin;
         this.elementManager = elementManager;
-        this.teamManager = teamManager;
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -46,13 +44,6 @@ public class DeathCombatListener implements Listener {
             return;
         }
 
-        // Don't apply to trusted players (check both directions)
-        if (target instanceof Player victim) {
-            if (teamManager.isTrusted(attacker.getUniqueId(), victim.getUniqueId()) ||
-                    teamManager.isTrusted(victim.getUniqueId(), attacker.getUniqueId())) {
-                return;
-            }
-        }
 
         // Check for ability activations first
         boolean deathClock = attacker.hasMetadata(DeathClockAbility.META_DEATH_CLOCK_ACTIVE);

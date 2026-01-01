@@ -2,7 +2,7 @@ package saturn.elementPlugin.elements;
 
 import saturn.elementPlugin.ElementPlugin;
 import saturn.elementPlugin.managers.ManaManager;
-import saturn.elementPlugin.managers.TeamManager;import org.bukkit.entity.Player;
+import org.bukkit.entity.Player;
 
 /**
  * Context object that encapsulates all managers required for element abilities.
@@ -12,7 +12,6 @@ public class ElementContext {
     private final Player player;
     private final int upgradeLevel;
     private final ManaManager manaManager;
-    private final TeamManager teamManager;
     private final ElementType elementType;
     private final ElementPlugin plugin;
 
@@ -21,7 +20,6 @@ public class ElementContext {
         this.upgradeLevel = builder.upgradeLevel;
         this.elementType = builder.elementType;
         this.manaManager = builder.manaManager;
-        this.teamManager = builder.teamManager;
         this.plugin = builder.plugin;
     }
 
@@ -30,7 +28,6 @@ public class ElementContext {
     public int getUpgradeLevel() { return upgradeLevel; }
     public ElementType getElementType() { return elementType; }
     public ManaManager getManaManager() { return manaManager; }
-    public TeamManager getTrustManager() { return teamManager; }
     public ElementPlugin getPlugin() { return plugin; }
 
     // Builder
@@ -43,7 +40,6 @@ public class ElementContext {
         private int upgradeLevel;
         private ElementType elementType;
         private ManaManager manaManager;
-        private TeamManager teamManager;
         private ElementPlugin plugin;
 
         public Builder player(Player player) {
@@ -66,10 +62,6 @@ public class ElementContext {
             return this;
         }
 
-        public Builder trustManager(TeamManager manager) {
-            this.teamManager = manager;
-            return this;
-        }
 
         public Builder plugin(ElementPlugin plugin) {
             this.plugin = plugin;

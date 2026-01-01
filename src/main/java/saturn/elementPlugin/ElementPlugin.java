@@ -31,7 +31,6 @@ import saturn.elementPlugin.listeners.items.handlers.ElementItemUseListener;
 import saturn.elementPlugin.managers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
-import saturn.elementPlugin.managers.TeamManager;
 import saturn.elementPlugin.regions.DisabledRegionsManager;
 
 import static saturn.elementPlugin.recipes.util.UtilRecipes.registerRecipes;
@@ -41,7 +40,6 @@ public final class ElementPlugin extends JavaPlugin {
     private DataStore dataStore;
     private ElementManager elementManager;
     private ManaManager manaManager;
-    private TeamManager teamManager;
     private ItemManager itemManager;
     private AbilityManager abilityManager;
     private ElementRegistry elementRegistry;
@@ -73,10 +71,9 @@ public final class ElementPlugin extends JavaPlugin {
 
     private void initializeManagers() {
         this.dataStore = new DataStore(this);
-        this.teamManager = new TeamManager(this);
         this.manaManager = new ManaManager(this, dataStore);
         this.abilityManager = new AbilityManager(this);
-        this.elementManager = new ElementManager(this, dataStore, manaManager, teamManager);
+        this.elementManager = new ElementManager(this, dataStore, manaManager);
         this.itemManager = new ItemManager(this, manaManager);
         this.disabledRegionsManager = new DisabledRegionsManager(this);
     }
@@ -114,9 +111,6 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("elements").setExecutor(elementInfoCmd);
         getCommand("elements").setTabCompleter(elementInfoCmd);
 
-        // UPDATED: Only team command (trust removed)
-        getCommand("team").setExecutor(new TeamCommand(this, teamManager));
-        getCommand("team").setTabCompleter(new TeamCommand(this, teamManager));
 
         getCommand("element").setExecutor(new ElementCommand(this));
         getCommand("mana").setExecutor(new ManaCommand(manaManager));
@@ -135,12 +129,12 @@ public final class ElementPlugin extends JavaPlugin {
         var pm = Bukkit.getPluginManager();
 
         // Core listeners
-        pm.registerEvents(new JoinListener(this, elementManager, manaManager, teamManager), this);
-        pm.registerEvents(new QuitListener(this, manaManager, teamManager), this);
-        pm.registerEvents(new CombatListener(teamManager, elementManager), this);
+        pm.registerEvents(new JoinListener(this, elementManager, manaManager), this);
+        pm.registerEvents(new QuitListener(this, manaManager), this);
+        pm.registerEvents(new CombatListener(elementManager), this);
         pm.registerEvents(new DeathListener(this, elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.listeners.AbilityListener(this, elementManager), this);
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager, teamManager), this);
+        pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager), this);
 
         // Item listeners
         pm.registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);
@@ -160,7 +154,7 @@ public final class ElementPlugin extends JavaPlugin {
         // Fire element listeners
         pm.registerEvents(new saturn.elementPlugin.elements.impl.fire.listeners.FireImmunityListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.fire.listeners.FireJoinListener(elementManager), this);
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.fire.listeners.FireCombatListener(elementManager, teamManager), this);
+        pm.registerEvents(new saturn.elementPlugin.elements.impl.fire.listeners.FireCombatListener(elementManager), this);
 
         // Earth element listeners
         pm.registerEvents(new saturn.elementPlugin.elements.impl.earth.listeners.EarthquakeMovementListener(this), this);
@@ -171,7 +165,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new saturn.elementPlugin.elements.impl.life.listeners.LifeJoinListener(elementManager), this);
 
         // Death element listeners
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager, teamManager), this);
+        pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathCombatListener(this, elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathJoinListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.death.listeners.DeathXPDropListener(elementManager), this);
 
@@ -194,7 +188,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostJoinListener(elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostPassiveListener(this, elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostNovaMovementListener(this), this);
-        pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostCombatListener(elementManager, teamManager), this);
+        pm.registerEvents(new saturn.elementPlugin.elements.impl.frost.listeners.FrostCombatListener(elementManager), this);
 
         getLogger().info("Listeners registered successfully (Team-based system only)");
     }
@@ -203,7 +197,6 @@ public final class ElementPlugin extends JavaPlugin {
     public DataStore getDataStore() { return dataStore; }
     public ElementManager getElementManager() { return elementManager; }
     public ManaManager getManaManager() { return manaManager; }
-    public TeamManager getTrustManager() { return teamManager; }
     public ItemManager getItemManager() { return itemManager; }
     public AbilityManager getAbilityManager() { return abilityManager; }
     public DisabledRegionsManager getDisabledRegionsManager() { return disabledRegionsManager; }

@@ -5,7 +5,6 @@ import saturn.elementPlugin.data.PlayerData;
 import saturn.elementPlugin.elements.ElementType;
 import saturn.elementPlugin.managers.ElementManager;
 import saturn.elementPlugin.managers.ManaManager;
-import saturn.elementPlugin.managers.TeamManager;
 import saturn.elementPlugin.util.SmartEffectCleaner;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,21 +17,17 @@ public class JoinListener implements Listener {
     private final ElementPlugin plugin;
     private final ElementManager elements;
     private final ManaManager mana;
-    private final TeamManager trust;
 
-    public JoinListener(ElementPlugin plugin, ElementManager elements, ManaManager mana, TeamManager trust) {
+    public JoinListener(ElementPlugin plugin, ElementManager elements, ManaManager mana) {
         this.plugin = plugin;
         this.elements = elements;
         this.mana = mana;
-        this.trust = trust;
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
 
-        // Restore tab list for teams
-        trust.handlePlayerJoin(p);
 
         // Check if player has an element
         PlayerData pd = elements.data(p.getUniqueId());
