@@ -90,6 +90,14 @@ public class DeathSlashAbility extends BaseAbility {
                     double currentHealth = target.getHealth();
                     double damageAmount = 1.0; // 0.5 hearts
 
+                    // CRITICAL FIX: Check if entity has invulnerability frames (includes totem pop)
+                    if (target.getNoDamageTicks() > 0) {
+                        // Entity is invulnerable - skip this damage tick
+                        // This prevents damage during totem invulnerability
+                        ticks++;
+                        return;
+                    }
+
                     // CRITICAL FIX: If this damage would kill the target, use the damage API
                     // This allows totems to trigger properly
                     if (currentHealth - damageAmount <= 0.0) {

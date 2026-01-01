@@ -92,6 +92,12 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                         // Skip armor stands
                         if (entity instanceof org.bukkit.entity.ArmorStand) continue;
 
+                        // CRITICAL FIX: Check if entity has invulnerability frames
+                        if (entity.getNoDamageTicks() > 0) {
+                            // Entity is invulnerable (including totem pop) - skip damage
+                            continue;
+                        }
+
                         // Deal TRUE DAMAGE (ignore armor/resistance)
                         double currentHealth = entity.getHealth();
                         double damageAmount = 4.0; // 2 hearts

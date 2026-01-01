@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Zombie;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.MainHand;
 
 public class DamageTester implements CommandExecutor {
 
@@ -64,6 +65,8 @@ public class DamageTester implements CommandExecutor {
         ItemStack boots = new ItemStack(Material.DIAMOND_BOOTS);
         boots.addEnchantment(Enchantment.PROTECTION, 4);
 
+        ItemStack totem = new ItemStack(Material.TOTEM_OF_UNDYING);
+
         EntityEquipment equipment = zombie.getEquipment();
         if (equipment != null) {
             equipment.setHelmet(helmet);
@@ -75,6 +78,8 @@ public class DamageTester implements CommandExecutor {
             equipment.setChestplateDropChance(0f);
             equipment.setLeggingsDropChance(0f);
             equipment.setBootsDropChance(0f);
+            equipment.setItemInMainHand(totem);
+            equipment.setItemInOffHand(totem);
         }
 
         zombie.setCustomName("§6Test Dummy");
