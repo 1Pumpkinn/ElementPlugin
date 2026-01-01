@@ -140,9 +140,8 @@ public class IceShardVolleyAbility extends BaseAbility implements Listener {
         for (LivingEntity entity : hitLoc.getNearbyLivingEntities(2.0)) {
             if (shooter != null && entity.equals(shooter)) continue;
 
-
-
             // Damage (piercing - goes through armor)
+            // Uses damage API so totems will trigger properly
             entity.damage(3.0, shooter);
 
             // Apply slowness

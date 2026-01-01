@@ -87,18 +87,31 @@ public class DeathSlashAbility extends BaseAbility {
                 }
 
                 if (ticks % 20 == 0) {
-                    // TRUE DAMAGE - directly modify health to bypass armor completely
                     double currentHealth = target.getHealth();
-                    double newHealth = Math.max(0.0, currentHealth - 1.0); // 1.0 damage = 0.5 hearts
+                    double damageAmount = 1.0; // 0.5 hearts
 
-                    target.setHealth(newHealth);
+                    // CRITICAL FIX: If this damage would kill the target, use the damage API
+                    // This allows totems to trigger properly
+                    if (currentHealth - damageAmount <= 0.0) {
+                        // Use damage API to allow totem to trigger
+                        target.damage(damageAmount, attacker);
 
-                    // Play hurt sound and animation
-                    target.getWorld().playSound(target.getLocation(), Sound.ENTITY_GENERIC_HURT, 0.5f, 1.0f);
-                    target.damage(0.0); // Trigger hurt animation without actual damage
+                        // If they survived (totem popped), continue bleeding
+                        if (target.isValid() && !target.isDead()) {
+                            target.getWorld().playSound(target.getLocation(), Sound.ENTITY_GENERIC_HURT, 0.5f, 1.0f);
+                            ability.bloodBurst(target.getLocation().add(0, 1, 0));
+                        }
+                    } else {
+                        // Safe to use true damage - won't kill them
+                        target.setHealth(currentHealth - damageAmount);
 
-                    // BLEED TICK BLOOD
-                    ability.bloodBurst(target.getLocation().add(0, 1, 0));
+                        // Play hurt sound and animation
+                        target.getWorld().playSound(target.getLocation(), Sound.ENTITY_GENERIC_HURT, 0.5f, 1.0f);
+                        target.damage(0.0); // Trigger hurt animation without actual damage
+
+                        // BLEED TICK BLOOD
+                        ability.bloodBurst(target.getLocation().add(0, 1, 0));
+                    }
                 }
 
                 ticks++;

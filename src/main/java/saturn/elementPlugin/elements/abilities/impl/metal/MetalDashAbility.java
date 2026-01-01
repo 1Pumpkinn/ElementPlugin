@@ -92,12 +92,20 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                         // Skip armor stands
                         if (entity instanceof org.bukkit.entity.ArmorStand) continue;
 
-
-
                         // Deal TRUE DAMAGE (ignore armor/resistance)
                         double currentHealth = entity.getHealth();
-                        double newHealth = Math.max(0, currentHealth - 4.0);
-                        entity.setHealth(newHealth);
+                        double damageAmount = 4.0; // 2 hearts
+
+                        // CRITICAL FIX: If this damage would kill the target, use the damage API
+                        // This allows totems to trigger properly
+                        if (currentHealth - damageAmount <= 0.0) {
+                            // Use damage API to allow totem to trigger
+                            entity.damage(damageAmount, player);
+                        } else {
+                            // Safe to use true damage - won't kill them
+                            entity.setHealth(currentHealth - damageAmount);
+                            entity.damage(0.0); // Trigger hurt animation
+                        }
 
                         // Mark as damaged
                         damagedEntities.add(entity.getUniqueId());
