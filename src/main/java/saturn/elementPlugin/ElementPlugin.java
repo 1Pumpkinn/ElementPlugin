@@ -16,6 +16,7 @@ import saturn.elementPlugin.elements.abilities.impl.metal.*;
 import saturn.elementPlugin.elements.abilities.impl.water.*;
 import saturn.elementPlugin.elements.impl.earth.listeners.EarthOreDropListener;
 import saturn.elementPlugin.elements.impl.metal.listeners.MetalChainStunListener;
+import saturn.elementPlugin.listeners.TotemListener;
 import saturn.elementPlugin.listeners.core.*;
 import saturn.elementPlugin.listeners.items.DeathListener;
 import saturn.elementPlugin.listeners.items.handlers.*;
@@ -142,6 +143,7 @@ public final class ElementPlugin extends JavaPlugin {
         pm.registerEvents(new CombatListener(elementManager), this);
         pm.registerEvents(new DeathListener(this, elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.listeners.AbilityListener(this, elementManager), this);
+        pm.registerEvents(new TotemListener(this), this);
 
         // Items
         pm.registerEvents(new ElementItemUseListener(this, elementManager, itemManager), this);

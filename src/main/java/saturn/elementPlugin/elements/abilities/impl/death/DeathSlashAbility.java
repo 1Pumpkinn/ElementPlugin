@@ -10,6 +10,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class DeathSlashAbility extends BaseAbility {
+
     private final ElementPlugin plugin;
 
     public static final String META_SLASH_ACTIVE = "death_slash_active";
@@ -40,13 +41,14 @@ public class DeathSlashAbility extends BaseAbility {
         player.sendMessage(ChatColor.RED + "Slash activated! Your next hit will cause bleeding.");
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0f, 0.8f);
 
-        // activation blood
         bloodBurst(player.getLocation().add(0, 1, 0));
-
         setActive(player, true);
         return true;
     }
 
+    /**
+     * Called when the empowered hit lands
+     */
     public static void applyBleeding(ElementPlugin plugin, Player attacker, LivingEntity target) {
 
         long bleedUntil = System.currentTimeMillis() + 5000L;
@@ -54,13 +56,11 @@ public class DeathSlashAbility extends BaseAbility {
 
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 0.8f);
 
-        // Get THIS ability instance
         DeathSlashAbility ability =
                 (DeathSlashAbility) plugin.getAbilityManager().getAbility("death_slash");
 
-        // Initial blood burst
-        ability.bloodBurst(target.getLocation().add(0, 1, 0));
         attacker.removeMetadata(META_SLASH_ACTIVE, plugin);
+        ability.bloodBurst(target.getLocation().add(0, 1, 0));
 
         new BukkitRunnable() {
             int ticks = 0;
@@ -68,13 +68,13 @@ public class DeathSlashAbility extends BaseAbility {
 
             @Override
             public void run() {
-                if (!target.isValid() || target.isDead() || ticks >= maxTicks) {
-                    target.removeMetadata(META_BLEEDING, plugin);
-                    cancel();
-                    return;
-                }
 
-                if (!target.hasMetadata(META_BLEEDING)) {
+                // HARD STOP CONDITIONS (includes totem pop)
+                if (!target.isValid()
+                        || target.isDead()
+                        || !target.hasMetadata(META_BLEEDING)
+                        || ticks >= maxTicks) {
+                    target.removeMetadata(META_BLEEDING, plugin);
                     cancel();
                     return;
                 }
@@ -87,39 +87,32 @@ public class DeathSlashAbility extends BaseAbility {
                 }
 
                 if (ticks % 20 == 0) {
-                    double currentHealth = target.getHealth();
-                    double damageAmount = 1.0; // 0.5 hearts
 
-                    // CRITICAL FIX: Check if entity has invulnerability frames (includes totem pop)
+                    // If invulnerable (totem pop), STOP ENTIRE BLEED
                     if (target.getNoDamageTicks() > 0) {
-                        // Entity is invulnerable - skip this damage tick
-                        // This prevents damage during totem invulnerability
-                        ticks++;
+                        target.removeMetadata(META_BLEEDING, plugin);
+                        cancel();
                         return;
                     }
 
-                    // CRITICAL FIX: If this damage would kill the target, use the damage API
-                    // This allows totems to trigger properly
-                    if (currentHealth - damageAmount <= 0.0) {
-                        // Use damage API to allow totem to trigger
-                        target.damage(damageAmount, attacker);
+                    double damage = 1.0; // 0.5 hearts
+                    double health = target.getHealth();
 
-                        // If they survived (totem popped), continue bleeding
-                        if (target.isValid() && !target.isDead()) {
-                            target.getWorld().playSound(target.getLocation(), Sound.ENTITY_GENERIC_HURT, 0.5f, 1.0f);
-                            ability.bloodBurst(target.getLocation().add(0, 1, 0));
-                        }
+                    if (health - damage <= 0) {
+                        // Use damage API so totem can trigger
+                        target.damage(damage, attacker);
                     } else {
-                        // Safe to use true damage - won't kill them
-                        target.setHealth(currentHealth - damageAmount);
-
-                        // Play hurt sound and animation
-                        target.getWorld().playSound(target.getLocation(), Sound.ENTITY_GENERIC_HURT, 0.5f, 1.0f);
-                        target.damage(0.0); // Trigger hurt animation without actual damage
-
-                        // BLEED TICK BLOOD
-                        ability.bloodBurst(target.getLocation().add(0, 1, 0));
+                        target.setHealth(health - damage);
+                        target.damage(0.0);
                     }
+
+                    ability.bloodBurst(target.getLocation().add(0, 1, 0));
+                    target.getWorld().playSound(
+                            target.getLocation(),
+                            Sound.ENTITY_GENERIC_HURT,
+                            0.5f,
+                            1.0f
+                    );
                 }
 
                 ticks++;
@@ -134,6 +127,6 @@ public class DeathSlashAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return "Your next hit makes enemies bleed, dealing 0.5 hearts per second for 5 seconds.";
+        return "Your next hit makes enemies bleed for 0.5 hearts per second for 5 seconds.";
     }
 }
