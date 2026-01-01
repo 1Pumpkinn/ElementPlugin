@@ -10,7 +10,6 @@ import saturn.elementPlugin.elements.abilities.impl.air.AirDashAbility;
 import saturn.elementPlugin.elements.abilities.impl.death.DeathClockAbility;
 import saturn.elementPlugin.elements.abilities.impl.death.DeathSlashAbility;
 import saturn.elementPlugin.elements.abilities.impl.earth.EarthquakeAbility;
-import saturn.elementPlugin.elements.abilities.impl.earth.EarthTunnelAbility;
 import saturn.elementPlugin.elements.abilities.impl.fire.HellishFlamesAbility;
 import saturn.elementPlugin.elements.abilities.impl.fire.PhoenixFormAbility;
 import saturn.elementPlugin.elements.abilities.impl.frost.FrostNovaAbility;
