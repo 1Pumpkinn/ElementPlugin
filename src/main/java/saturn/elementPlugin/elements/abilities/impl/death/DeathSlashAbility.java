@@ -14,6 +14,7 @@ public class DeathSlashAbility extends BaseAbility {
 
     public static final String META_SLASH_ACTIVE = "death_slash_active";
     public static final String META_BLEEDING = "death_slash_bleeding";
+    public static final String META_TRUE_DAMAGE = "TRUE_DAMAGE";
 
     public DeathSlashAbility(ElementPlugin plugin) {
         super("death_slash", 50, 10, 1);
@@ -36,45 +37,32 @@ public class DeathSlashAbility extends BaseAbility {
         Player player = context.getPlayer();
 
         player.setMetadata(META_SLASH_ACTIVE, new FixedMetadataValue(plugin, true));
-
         player.sendMessage(ChatColor.RED + "Slash activated! Your next hit will cause bleeding.");
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0f, 0.8f);
 
-        // activation blood
         bloodBurst(player.getLocation().add(0, 1, 0));
-
         setActive(player, true);
         return true;
     }
 
     public static void applyBleeding(ElementPlugin plugin, Player attacker, LivingEntity target) {
 
-        long bleedUntil = System.currentTimeMillis() + 5000L;
-        target.setMetadata(META_BLEEDING, new FixedMetadataValue(plugin, bleedUntil));
+        long bleedEnd = System.currentTimeMillis() + 5000L; // 5 seconds
+        target.setMetadata(META_BLEEDING, new FixedMetadataValue(plugin, bleedEnd));
 
-        target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 0.8f);
-
-        // Get THIS ability instance
         DeathSlashAbility ability =
                 (DeathSlashAbility) plugin.getAbilityManager().getAbility("death_slash");
 
-        // Initial blood burst
-        ability.bloodBurst(target.getLocation().add(0, 1, 0));
         attacker.removeMetadata(META_SLASH_ACTIVE, plugin);
+        ability.bloodBurst(target.getLocation().add(0, 1, 0));
 
         new BukkitRunnable() {
             int ticks = 0;
-            final int maxTicks = 100;
 
             @Override
             public void run() {
-                if (!target.isValid() || target.isDead() || ticks >= maxTicks) {
+                if (!target.isValid() || target.isDead()) {
                     target.removeMetadata(META_BLEEDING, plugin);
-                    cancel();
-                    return;
-                }
-
-                if (!target.hasMetadata(META_BLEEDING)) {
                     cancel();
                     return;
                 }
@@ -86,18 +74,12 @@ public class DeathSlashAbility extends BaseAbility {
                     return;
                 }
 
+                // Every second (20 ticks)
                 if (ticks % 20 == 0) {
-                    // TRUE DAMAGE - directly modify health to bypass armor completely
-                    double currentHealth = target.getHealth();
-                    double newHealth = Math.max(0.0, currentHealth - 1.0); // 1.0 damage = 0.5 hearts
+                    // TRUE DAMAGE: ½ heart per second
+                    target.setMetadata(META_TRUE_DAMAGE, new FixedMetadataValue(plugin, true));
+                    target.damage(1.0, attacker);
 
-                    target.setHealth(newHealth);
-
-                    // Play hurt sound and animation
-                    target.getWorld().playSound(target.getLocation(), Sound.ENTITY_GENERIC_HURT, 0.5f, 1.0f);
-                    target.damage(0.0); // Trigger hurt animation without actual damage
-
-                    // BLEED TICK BLOOD
                     ability.bloodBurst(target.getLocation().add(0, 1, 0));
                 }
 
@@ -113,6 +95,6 @@ public class DeathSlashAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return "Your next hit makes enemies bleed, dealing 0.5 hearts per second for 5 seconds.";
+        return "Your next hit causes bleeding, dealing ½ heart per second for 5 seconds.";
     }
 }
