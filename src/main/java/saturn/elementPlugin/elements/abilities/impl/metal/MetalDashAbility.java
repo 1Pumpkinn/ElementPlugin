@@ -83,9 +83,10 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                         if (hitEntities.contains(entity.getUniqueId())) continue;
 
                         // TRUE DAMAGE — 2 hearts
+                        // Set metadata RIGHT BEFORE damage call with timestamp
                         entity.setMetadata(
                                 META_TRUE_DAMAGE,
-                                new FixedMetadataValue(plugin, true)
+                                new FixedMetadataValue(plugin, System.currentTimeMillis())
                         );
                         entity.damage(4.0, player);
 

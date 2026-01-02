@@ -77,7 +77,8 @@ public class DeathSlashAbility extends BaseAbility {
                 // Every second (20 ticks)
                 if (ticks % 20 == 0) {
                     // TRUE DAMAGE: ½ heart per second
-                    target.setMetadata(META_TRUE_DAMAGE, new FixedMetadataValue(plugin, true));
+                    // Set metadata RIGHT BEFORE damage call with timestamp
+                    target.setMetadata(META_TRUE_DAMAGE, new FixedMetadataValue(plugin, System.currentTimeMillis()));
                     target.damage(1.0, attacker);
 
                     ability.bloodBurst(target.getLocation().add(0, 1, 0));
