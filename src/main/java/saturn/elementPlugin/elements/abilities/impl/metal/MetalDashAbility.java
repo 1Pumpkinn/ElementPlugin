@@ -82,12 +82,15 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                         if (entity instanceof ArmorStand) continue;
                         if (hitEntities.contains(entity.getUniqueId())) continue;
 
-                        // TRUE DAMAGE — 2 hearts
-                        // Set metadata RIGHT BEFORE damage call with timestamp
+                        // TRUE DAMAGE: 2 hearts (4.0 damage)
+                        // CRITICAL: Set metadata with current timestamp RIGHT BEFORE damage call
                         entity.setMetadata(
                                 META_TRUE_DAMAGE,
                                 new FixedMetadataValue(plugin, System.currentTimeMillis())
                         );
+
+                        // Deal damage - will be processed as true damage by TrueDamageListener
+                        // This will bypass armor but STILL trigger totems
                         entity.damage(4.0, player);
 
                         hitEntities.add(entity.getUniqueId());
@@ -106,6 +109,9 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                                 1.0f,
                                 1.2f
                         );
+
+                        plugin.getLogger().fine("Metal Dash hit " + entity.getName() +
+                                " with true damage (4.0) - totems will trigger if fatal");
                     }
                 }
 

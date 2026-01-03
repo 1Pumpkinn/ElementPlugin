@@ -74,14 +74,20 @@ public class DeathSlashAbility extends BaseAbility {
                     return;
                 }
 
-                // Every second (20 ticks)
+                // Every second (20 ticks) - TRUE DAMAGE: ½ heart per second
                 if (ticks % 20 == 0) {
-                    // TRUE DAMAGE: ½ heart per second
-                    // Set metadata RIGHT BEFORE damage call with timestamp
-                    target.setMetadata(META_TRUE_DAMAGE, new FixedMetadataValue(plugin, System.currentTimeMillis()));
+                    // CRITICAL: Set metadata with current timestamp RIGHT BEFORE damage
+                    // This ensures TrueDamageListener will process it
+                    target.setMetadata(META_TRUE_DAMAGE,
+                            new FixedMetadataValue(plugin, System.currentTimeMillis()));
+
+                    // Deal 1.0 damage (½ heart) - will be processed as true damage
                     target.damage(1.0, attacker);
 
                     ability.bloodBurst(target.getLocation().add(0, 1, 0));
+
+                    plugin.getLogger().fine("Applied Death Slash bleed damage (true damage) to " +
+                            target.getName());
                 }
 
                 ticks++;
@@ -96,6 +102,6 @@ public class DeathSlashAbility extends BaseAbility {
 
     @Override
     public String getDescription() {
-        return "Your next hit causes bleeding, dealing ½ heart per second for 5 seconds.";
+        return "Your next hit causes bleeding, dealing ½ heart of true damage per second for 5 seconds.";
     }
 }
