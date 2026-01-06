@@ -12,7 +12,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.EntityResurrectEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -30,6 +32,7 @@ import java.util.Map;
  * once when dropping to 2 hearts.
  * Resets when healed above threshold.
  * Reapplies if totem pops during invisibility.
+ * FIXED: Prevents random armor reappearing
  */
 public class DeathInvisibilityListener implements Listener {
 
@@ -60,22 +63,26 @@ public class DeathInvisibilityListener implements Listener {
         // Death check
         if (finalHealth <= 0) return;
 
-        // Reset passive if healed above threshold
-        if (finalHealth > TRIGGER_HEALTH) {
-            player.removeMetadata(META_ACTIVE, plugin);
-            player.removeMetadata(META_END_TIME, plugin);
-            return;
+        // CRITICAL FIX: Check if invisibility is already active FIRST
+        // This prevents flickering when getting hit while invisible
+        if (player.hasMetadata(META_ACTIVE)) {
+            // Still active - check if we should reset it due to healing
+            if (finalHealth > TRIGGER_HEALTH) {
+                // Healed above threshold while invisible - this shouldn't happen often
+                // but if it does, we'll let the invisibility finish naturally
+            }
+            return; // Don't retrigger
         }
 
-        // Already triggered while low HP
-        if (player.hasMetadata(META_ACTIVE)) return;
-
-        // Trigger passive
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            if (player.isOnline() && !player.isDead()) {
-                activate(player);
-            }
-        });
+        // Not active yet - check if we should trigger
+        if (finalHealth <= TRIGGER_HEALTH) {
+            // Trigger passive
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline() && !player.isDead()) {
+                    activate(player);
+                }
+            });
+        }
     }
 
     /**
@@ -124,7 +131,6 @@ public class DeathInvisibilityListener implements Listener {
             // Re-hide equipment
             hideEquipment(player);
 
-
         }, 10L); // 0.5 second delay after totem
     }
 
@@ -137,6 +143,8 @@ public class DeathInvisibilityListener implements Listener {
 
         // Delay slightly to ensure player is fully loaded
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!joiningPlayer.isOnline()) return;
+
             // Check all online players for active Death invisibility
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                 if (onlinePlayer.equals(joiningPlayer)) continue;
@@ -147,25 +155,91 @@ public class DeathInvisibilityListener implements Listener {
                     if (data.getCurrentElement() == ElementType.DEATH &&
                             data.getUpgradeLevel(ElementType.DEATH) >= 2) {
 
-                        // Hide this Death player's equipment to the joining player
-                        Map<EquipmentSlot, ItemStack> empty = new EnumMap<>(EquipmentSlot.class);
-                        empty.put(EquipmentSlot.HEAD, null);
-                        empty.put(EquipmentSlot.CHEST, null);
-                        empty.put(EquipmentSlot.LEGS, null);
-                        empty.put(EquipmentSlot.FEET, null);
-                        empty.put(EquipmentSlot.HAND, null);
-                        empty.put(EquipmentSlot.OFF_HAND, null);
-
-                        try {
-                            joiningPlayer.sendEquipmentChange(onlinePlayer, empty);
-                        } catch (Exception e) {
-                            plugin.getLogger().warning("Failed to hide equipment for " + onlinePlayer.getName() +
-                                    " from joining player " + joiningPlayer.getName() + ": " + e.getMessage());
-                        }
+                        hideEquipmentTo(onlinePlayer, joiningPlayer);
                     }
                 }
             }
         }, 20L); // 1 second delay
+    }
+
+    /**
+     * Monitor equipment changes during invisibility
+     * CRITICAL: Re-hide equipment when player changes held items
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onEquipmentChange(PlayerItemHeldEvent event) {
+        Player player = event.getPlayer();
+
+        if (!player.hasMetadata(META_ACTIVE)) return;
+
+        // Re-hide equipment to all viewers after short delay
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline() && player.hasMetadata(META_ACTIVE)) {
+                hideEquipment(player);
+            }
+        }, 2L);
+    }
+
+    /**
+     * Monitor armor changes during invisibility
+     * CRITICAL: Re-hide equipment when player changes armor
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onArmorChange(com.destroystokyo.paper.event.player.PlayerArmorChangeEvent event) {
+        Player player = event.getPlayer();
+
+        if (!player.hasMetadata(META_ACTIVE)) return;
+
+        // Re-hide equipment to all viewers after short delay
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline() && player.hasMetadata(META_ACTIVE)) {
+                hideEquipment(player);
+            }
+        }, 2L);
+    }
+
+    /**
+     * Monitor when invisibility potion effect is removed/expires
+     * CRITICAL: Show equipment when invisibility ends
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPotionEffectEnd(EntityPotionEffectEvent event) {
+        if (!(event.getEntity() instanceof Player player)) return;
+
+        // Only care about invisibility effect removal
+        if (event.getModifiedType() != PotionEffectType.INVISIBILITY) return;
+        if (event.getAction() != EntityPotionEffectEvent.Action.REMOVED &&
+                event.getAction() != EntityPotionEffectEvent.Action.CLEARED) return;
+
+        // Check if this is Death invisibility ending
+        if (!player.hasMetadata(META_ACTIVE)) return;
+
+        var data = elementManager.data(player.getUniqueId());
+        if (data.getCurrentElement() != ElementType.DEATH) return;
+
+        // Check if the invisibility should still be active
+        if (player.hasMetadata(META_END_TIME)) {
+            long endTime = player.getMetadata(META_END_TIME).get(0).asLong();
+            long currentTime = System.currentTimeMillis();
+
+            if (currentTime < endTime) {
+                // Invisibility should still be active - reapply potion
+                int remainingTicks = (int) ((endTime - currentTime) / 50);
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    if (player.isOnline() && player.hasMetadata(META_ACTIVE)) {
+                        player.addPotionEffect(new PotionEffect(
+                                PotionEffectType.INVISIBILITY,
+                                remainingTicks,
+                                0,
+                                false,
+                                false,
+                                false
+                        ));
+                        hideEquipment(player);
+                    }
+                }, 1L);
+            }
+        }
     }
 
     private void activate(Player player) {
@@ -198,6 +272,9 @@ public class DeathInvisibilityListener implements Listener {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline()) {
                 hideEquipment(player);
+
+                // Start periodic re-hiding to prevent armor from randomly appearing
+                startPeriodicHiding(player);
             }
         }, 2L);
 
@@ -214,6 +291,39 @@ public class DeathInvisibilityListener implements Listener {
                 showEquipment(player);
             }
         }.runTaskLater(plugin, INVIS_DURATION_TICKS + 2L);
+    }
+
+    /**
+     * CRITICAL FIX: Periodically re-hide equipment during invisibility
+     * This prevents random armor reappearing due to various events
+     */
+    private void startPeriodicHiding(Player player) {
+        new BukkitRunnable() {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                // Stop if player logged out or invisibility ended
+                if (!player.isOnline() || !player.hasMetadata(META_ACTIVE)) {
+                    cancel();
+                    return;
+                }
+
+                // Stop if time expired
+                if (player.hasMetadata(META_END_TIME)) {
+                    long endTime = player.getMetadata(META_END_TIME).get(0).asLong();
+                    if (System.currentTimeMillis() >= endTime) {
+                        cancel();
+                        return;
+                    }
+                }
+
+                // Re-hide equipment every 2 ticks (0.1 seconds)
+                hideEquipment(player);
+
+                ticks += 2;
+            }
+        }.runTaskTimer(plugin, 2L, 2L); // Run every 2 ticks (0.1 seconds)
     }
 
     /* -------------------- EQUIPMENT VISUALS -------------------- */
@@ -235,6 +345,25 @@ public class DeathInvisibilityListener implements Listener {
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to hide equipment for " + target.getName() + " from " + viewer.getName() + ": " + e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Hide equipment to a specific viewer (used when players join)
+     */
+    private void hideEquipmentTo(Player target, Player viewer) {
+        Map<EquipmentSlot, ItemStack> empty = new EnumMap<>(EquipmentSlot.class);
+        empty.put(EquipmentSlot.HEAD, null);
+        empty.put(EquipmentSlot.CHEST, null);
+        empty.put(EquipmentSlot.LEGS, null);
+        empty.put(EquipmentSlot.FEET, null);
+        empty.put(EquipmentSlot.HAND, null);
+        empty.put(EquipmentSlot.OFF_HAND, null);
+
+        try {
+            viewer.sendEquipmentChange(target, empty);
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to hide equipment for " + target.getName() + " from " + viewer.getName() + ": " + e.getMessage());
         }
     }
 
