@@ -14,6 +14,11 @@ commands:
     usage: /element <set|debug> <player> [element]
     permission: element.admin
 
+  trust:
+    description: Manage trust with other players
+    usage: /trust <player|accept|deny|remove|list|requests>
+    aliases: [ t ]
+
   mana:
     description: Manage mana (reset or set)
     usage: /mana <reset|set> [player] [amount]

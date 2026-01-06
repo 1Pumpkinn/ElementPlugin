@@ -32,6 +32,7 @@ public final class ElementPlugin extends JavaPlugin {
     private ItemManager itemManager;
     private AbilityManager abilityManager;
     private DisabledRegionsManager disabledRegionsManager;
+    private TrustManager trustManager;
 
     // ========================
     // Constants
@@ -61,6 +62,7 @@ public final class ElementPlugin extends JavaPlugin {
     public void onDisable() {
         if (dataStore != null) dataStore.flushAll();
         if (manaManager != null) manaManager.stop();
+        if (trustManager != null) trustManager.saveAll();  // NEW LINE
     }
 
     // ========================
@@ -71,6 +73,7 @@ public final class ElementPlugin extends JavaPlugin {
         this.dataStore = new DataStore(this);
         this.manaManager = new ManaManager(this, dataStore);
         this.abilityManager = new AbilityManager(this);
+        this.trustManager = new TrustManager(this);  // NEW LINE
         this.elementManager = new ElementManager(this, dataStore, manaManager);
         this.itemManager = new ItemManager(this, manaManager);
         this.disabledRegionsManager = new DisabledRegionsManager(this);
@@ -226,10 +229,12 @@ public final class ElementPlugin extends JavaPlugin {
     public ItemManager getItemManager() { return itemManager; }
     public AbilityManager getAbilityManager() { return abilityManager; }
     public DisabledRegionsManager getDisabledRegionsManager() { return disabledRegionsManager; }
+    public TrustManager getTrustManager() { return trustManager; }
 
     public int getMaxMana() { return MAX_MANA; }
     public int getManaRegenPerSecond() { return MANA_REGEN_PER_SECOND; }
     public int getAbility1Cost() { return ABILITY_1_COST; }
     public int getAbility2Cost() { return ABILITY_2_COST; }
     public boolean isUpgradersDropOnDeath() { return UPGRADERS_DROP_ON_DEATH; }
+
 }

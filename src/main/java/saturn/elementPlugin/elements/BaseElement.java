@@ -146,6 +146,7 @@ public abstract class BaseElement implements Element {
 
     /**
      * Helper method to check if target is valid using ElementContext
+     * UPDATED: Now checks trust system
      */
     protected boolean isValidTarget(ElementContext context, LivingEntity target) {
         Player player = context.getPlayer();
@@ -153,10 +154,16 @@ public abstract class BaseElement implements Element {
         if (target == null || target.isDead()) return false;
         if (target.equals(player)) return false;
 
+        // Check trust system for player targets
+        if (target instanceof Player targetPlayer) {
+            // If the caster trusts the target, don't affect them
+            if (plugin.getTrustManager().trusts(player, targetPlayer)) {
+                return false;
+            }
+        }
+
         return true;
     }
-
-
 
 
     /**
