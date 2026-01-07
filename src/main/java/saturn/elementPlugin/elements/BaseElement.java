@@ -2,12 +2,14 @@ package saturn.elementPlugin.elements;
 
 import org.bukkit.entity.LivingEntity;
 import saturn.elementPlugin.ElementPlugin;
+import saturn.elementPlugin.util.AbilityTrustValidator;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 /**
  * Abstract base class for all elements that provides common functionality
  * and reduces code duplication in element implementations.
+ * FIXED: Now uses AbilityTrustValidator for trust checking
  */
 public abstract class BaseElement implements Element {
     protected final ElementPlugin plugin;
@@ -142,11 +144,9 @@ public abstract class BaseElement implements Element {
         return false; // Default: no cancellation support
     }
 
-
-
     /**
      * Helper method to check if target is valid using ElementContext
-     * UPDATED: Now checks trust system
+     * FIXED: Now uses centralized AbilityTrustValidator
      */
     protected boolean isValidTarget(ElementContext context, LivingEntity target) {
         Player player = context.getPlayer();
@@ -154,17 +154,9 @@ public abstract class BaseElement implements Element {
         if (target == null || target.isDead()) return false;
         if (target.equals(player)) return false;
 
-        // Check trust system for player targets
-        if (target instanceof Player targetPlayer) {
-            // If the caster trusts the target, don't affect them
-            if (plugin.getTrustManager().trusts(player, targetPlayer)) {
-                return false;
-            }
-        }
-
-        return true;
+        // Use centralized trust validator (with message disabled for spam prevention)
+        return AbilityTrustValidator.canAffectTarget(plugin, player, target, false);
     }
-
 
     /**
      * Ability cooldown management methods

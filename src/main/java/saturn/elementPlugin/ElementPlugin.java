@@ -146,10 +146,10 @@ public final class ElementPlugin extends JavaPlugin {
         // Core
         pm.registerEvents(new JoinListener(this, elementManager, manaManager), this);
         pm.registerEvents(new QuitListener(this, manaManager), this);
-        pm.registerEvents(new CombatListener(elementManager), this);
-        pm.registerEvents(new DeathListener(this, elementManager), this);
+        pm.registerEvents(new CombatListener(this, elementManager), this);  // ← CHANGE THIS LINE
         pm.registerEvents(new saturn.elementPlugin.listeners.AbilityListener(this, elementManager), this);
         pm.registerEvents(new TotemListener(this), this);
+        pm.registerEvents(new DeathListener(this, elementManager), this);
         pm.registerEvents(new saturn.elementPlugin.listeners.core.TrueDamageListener(this), this);
 
         // Items
