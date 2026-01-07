@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 /**
  * Abstract base class for all elements that provides common functionality
  * and reduces code duplication in element implementations.
- * FIXED: Now uses AbilityTrustValidator for trust checking
+ * FIXED: Now properly uses AbilityTrustValidator for ALL abilities
  */
 public abstract class BaseElement implements Element {
     protected final ElementPlugin plugin;
@@ -146,7 +146,11 @@ public abstract class BaseElement implements Element {
 
     /**
      * Helper method to check if target is valid using ElementContext
-     * FIXED: Now uses centralized AbilityTrustValidator
+     * FIXED: Now uses centralized AbilityTrustValidator with proper trust checking
+     *
+     * @param context The element context containing the ability user
+     * @param target The target entity to check
+     * @return true if target is valid and can be affected by the ability
      */
     protected boolean isValidTarget(ElementContext context, LivingEntity target) {
         Player player = context.getPlayer();
@@ -154,7 +158,7 @@ public abstract class BaseElement implements Element {
         if (target == null || target.isDead()) return false;
         if (target.equals(player)) return false;
 
-        // Use centralized trust validator (with message disabled for spam prevention)
+        // CRITICAL: Use AbilityTrustValidator to check trust
         return AbilityTrustValidator.canAffectTarget(plugin, player, target, false);
     }
 

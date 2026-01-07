@@ -17,6 +17,7 @@ import java.util.logging.Level;
 /**
  * Manages the trust system for players
  * Handles trust requests, confirmations, and mutual trust checks
+ * FIXED: Accepting trust now creates MUTUAL trust (both players trust each other)
  */
 public class TrustManager {
     private final ElementPlugin plugin;
@@ -191,7 +192,8 @@ public class TrustManager {
     }
 
     /**
-     * Accept a trust request
+     * Accept a trust request - CREATES MUTUAL TRUST
+     * Both players will trust each other after acceptance
      * @return true if request was accepted, false if no pending request
      */
     public boolean acceptTrustRequest(UUID accepter, UUID requester) {
@@ -203,8 +205,11 @@ public class TrustManager {
             return false;
         }
 
-        // Add trust (only accepter trusts requester)
-        accepterData.addTrust(requester);
+        // FIXED: Add trust BOTH WAYS (mutual trust)
+        accepterData.addTrust(requester);  // Accepter trusts requester
+        requesterData.addTrust(accepter);  // Requester trusts accepter
+
+        plugin.getLogger().info("Creating mutual trust: " + accepter + " <-> " + requester);
 
         // Remove pending requests
         accepterData.removePendingIncoming(requester);
@@ -240,11 +245,20 @@ public class TrustManager {
 
     /**
      * Remove trust (one-way)
+     * UPDATED: Also removes the reverse trust to maintain mutual trust consistency
      */
     public void removeTrust(UUID player, UUID trusted) {
-        TrustData data = getTrustData(player);
-        data.removeTrust(trusted);
-        save(data);
+        TrustData playerData = getTrustData(player);
+        TrustData trustedData = getTrustData(trusted);
+
+        // Remove trust both ways to maintain mutual trust consistency
+        playerData.removeTrust(trusted);
+        trustedData.removeTrust(player);
+
+        plugin.getLogger().info("Removing mutual trust: " + player + " <-> " + trusted);
+
+        save(playerData);
+        save(trustedData);
     }
 
     /**
