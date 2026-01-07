@@ -98,8 +98,8 @@ public class WaterWhirlpoolAbility extends BaseAbility {
 
                 // Find and orbit nearby enemies
                 for (LivingEntity entity : currentCenter.getNearbyLivingEntities(orbitRadius + 2)) {
+                    if (!saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, player, entity, false)) continue;
                     if (entity.equals(player)) continue;
-
 
                     if (!hasLineOfSight(player, entity)) {
                         // Entity is behind blocks or underground - remove from tracking

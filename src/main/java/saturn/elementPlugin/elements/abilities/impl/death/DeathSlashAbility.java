@@ -81,8 +81,10 @@ public class DeathSlashAbility extends BaseAbility {
                     target.setMetadata(META_TRUE_DAMAGE,
                             new FixedMetadataValue(plugin, System.currentTimeMillis()));
 
-                    // Deal 1.0 damage (½ heart) - will be processed as true damage
-                    target.damage(1.0, attacker);
+// Only damage if not trusted
+    if (saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, attacker, target, false)) {
+        target.damage(1.0, attacker);
+    }
 
                     ability.bloodBurst(target.getLocation().add(0, 1, 0));
 

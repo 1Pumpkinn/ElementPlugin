@@ -93,8 +93,7 @@ public class HellishFlamesAbility extends BaseAbility {
 
         // Apply hellish flames to nearby enemies
         for (LivingEntity entity : center.getNearbyLivingEntities(radius)) {
-            if (entity.equals(player)) continue;
-
+            if (!saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, player, entity, true)) continue;
 
             applyHellishFlames(entity, durationSeconds);
 

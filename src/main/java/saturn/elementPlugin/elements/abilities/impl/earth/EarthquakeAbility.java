@@ -101,8 +101,7 @@ public class EarthquakeAbility extends BaseAbility {
 
         // Stun nearby entities
         for (LivingEntity entity : center.getNearbyLivingEntities(radius)) {
-            if (entity.equals(player)) continue;
-
+            if (!saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, player, entity, true)) continue;
 
             stunEntity(entity, stunDurationSeconds);
 

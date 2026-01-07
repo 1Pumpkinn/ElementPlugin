@@ -51,6 +51,11 @@ public class WaterPrisonAbility extends BaseAbility {
         // Set the target as active
         setActive(player, true);
 
+        // Check trust system: only trap if not trusted
+        if (!saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, player, target, true)) {
+            player.sendMessage(ChatColor.YELLOW + "Cannot imprison trusted players!");
+            return false;
+        }
         // Trap the target
         trapInWaterPrison(target, player);
 

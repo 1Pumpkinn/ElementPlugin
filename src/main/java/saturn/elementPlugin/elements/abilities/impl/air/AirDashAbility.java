@@ -41,7 +41,7 @@ public class AirDashAbility extends BaseAbility {
                 if (ticks % 5 == 0) {
                     for (LivingEntity entity : loc.getNearbyLivingEntities(3.0)) {
                         if (entity.equals(player)) continue;
-                        if (!AirDashAbility.this.isValidTarget(context, entity)) continue;
+                        if (!saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, player, entity, true)) continue;
 
                         Vector knockback = entity.getLocation().toVector().subtract(loc.toVector()).normalize();
                         knockback.setY(0.2);

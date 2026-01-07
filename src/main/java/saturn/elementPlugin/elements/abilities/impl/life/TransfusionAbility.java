@@ -37,9 +37,14 @@ public class TransfusionAbility extends BaseAbility {
             return false;
         }
 
-        // Check if targeting self
+        // Only allow swapping health with MUTUALLY TRUSTED teammates (not self, not strangers)
         if (targetPlayer.equals(player)) {
             player.sendMessage(ChatColor.RED + "You cannot swap health with yourself!");
+            return false;
+        }
+        // Require mutual trust to swap
+        if (!saturn.elementPlugin.util.AbilityTrustValidator.hasMutualTrust(plugin, player, targetPlayer)) {
+            player.sendMessage(ChatColor.YELLOW + "You can only swap health with a mutually trusted teammate!");
             return false;
         }
 

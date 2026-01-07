@@ -69,7 +69,10 @@ public class MetalChainAbility extends BaseAbility {
         }
 
         LivingEntity target = (LivingEntity) rayTrace.getHitEntity();
-
+        if (target instanceof Player playerTarget && !saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, player, playerTarget, true)) {
+            player.sendMessage(ChatColor.YELLOW + "Cannot target trusted players with Chain Reel!");
+            return false;
+        }
 
         // Play sounds
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_CHAIN_PLACE, 1.0f, 0.8f);

@@ -48,6 +48,7 @@ public class DeathClockAbility extends BaseAbility {
      * Called from combat listener when player hits an enemy
      */
     public static void applyEffects(ElementPlugin plugin, Player attacker, LivingEntity target) {
+        if (target instanceof Player playerTarget && !saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, attacker, playerTarget, true)) return;
         int duration = 200; // 10 seconds
 
         target.addPotionEffect(new PotionEffect(

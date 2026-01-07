@@ -139,17 +139,14 @@ public class IceShardVolleyAbility extends BaseAbility implements Listener {
 
         for (LivingEntity entity : hitLoc.getNearbyLivingEntities(2.0)) {
             if (shooter != null && entity.equals(shooter)) continue;
-
+            if (!saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, shooter, entity, false)) continue;
             // Damage (piercing - goes through armor)
             // Uses damage API so totems will trigger properly
             entity.damage(3.0, shooter);
-
             // Apply slowness
             entity.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1, false, false, false)); // 3 seconds
-
             // Visual freeze effect
             entity.setFreezeTicks(entity.getMaxFreezeTicks() / 2);
-
             // Particle effect on hit
             entity.getWorld().spawnParticle(Particle.SNOWFLAKE, entity.getLocation().add(0, 1, 0),
                     15, 0.3, 0.5, 0.3, 0, null, true);

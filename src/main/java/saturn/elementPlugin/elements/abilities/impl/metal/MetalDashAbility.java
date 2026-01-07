@@ -81,6 +81,7 @@ public class MetalDashAbility extends BaseAbility implements Listener {
                         if (entity.equals(player)) continue;
                         if (entity instanceof ArmorStand) continue;
                         if (hitEntities.contains(entity.getUniqueId())) continue;
+                        if (!saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, player, entity, false)) continue;
 
                         // TRUE DAMAGE: 2 hearts (4.0 damage)
                         // CRITICAL: Set metadata with current timestamp RIGHT BEFORE damage call

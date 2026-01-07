@@ -81,9 +81,8 @@ public class AirBlastAbility extends BaseAbility {
         }.runTaskTimer(plugin, 0L, 1L);
 
         // Launch nearby entities
-        for (LivingEntity entity : center.getNearbyLivingEntities(radius)) {
-            if (entity.equals(player)) continue;
-            if (!isValidTarget(context, entity)) continue;
+for (LivingEntity entity : center.getNearbyLivingEntities(radius)) {
+    if (!saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, player, entity, true)) continue;
 
             Vector push = entity.getLocation().toVector()
                     .subtract(center.toVector())

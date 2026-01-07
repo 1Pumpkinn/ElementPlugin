@@ -85,9 +85,7 @@ public class FrostNovaAbility extends BaseAbility {
 
         // --- FREEZE NEARBY ENTITIES ---
         for (LivingEntity entity : center.getNearbyLivingEntities(radius)) {
-            if (entity.equals(player)) continue;
-
-
+            if (!saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, player, entity, true)) continue;
 
             freezeEntity(entity, durationSeconds);
 

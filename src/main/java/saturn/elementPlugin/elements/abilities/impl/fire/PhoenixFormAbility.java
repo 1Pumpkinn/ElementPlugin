@@ -114,11 +114,7 @@ public class PhoenixFormAbility extends BaseAbility implements Listener {
             if (entity.equals(player)) continue;
 
             // Don't damage trusted players
-            if (entity instanceof Player targetPlayer) {
-                // We need to check trust, but we don't have context here
-                // So we'll skip this check for now
-            }
-
+            if (!saturn.elementPlugin.util.AbilityTrustValidator.canAffectTarget(plugin, player, entity, false)) continue;
             entity.damage(8.0, player); // Deal 4 hearts of damage
             entity.setFireTicks(100); // Set on fire for 5 seconds
 
