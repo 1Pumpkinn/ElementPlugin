@@ -129,6 +129,10 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("disableabilities").setExecutor(disableCmd);
         getCommand("disableabilities").setTabCompleter(disableCmd);
 
+        TrustCommand trustCmd = new TrustCommand(this, trustManager);
+        getCommand("trust").setExecutor(trustCmd);
+        getCommand("trust").setTabCompleter(trustCmd);
+
         getLogger().info("Commands registered successfully");
     }
 

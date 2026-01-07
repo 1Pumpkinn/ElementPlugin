@@ -77,15 +77,14 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         }
 
         // Check if already trusted
-        if (trustManager.trusts(sender, target)) {
+        if (trustManager.trusts(sender.getUniqueId(), target.getUniqueId())) {
             sender.sendMessage(ChatColor.RED + "You already trust " + target.getName() + "!");
             return;
         }
 
         // Send trust request
         if (trustManager.sendTrustRequest(sender.getUniqueId(), target.getUniqueId())) {
-            sender.sendMessage(ChatColor.GREEN + "Trust request sent to " +
-                    ChatColor.AQUA + target.getName() + ChatColor.GREEN + "!");
+            sender.sendMessage(ChatColor.GREEN + "Trust request sent to " + ChatColor.AQUA + target.getName() + ChatColor.GREEN + "!");
 
             // Send notification to target with clickable accept/deny buttons
             sendTrustRequestNotification(target, sender);
@@ -140,19 +139,14 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         }
 
         if (trustManager.acceptTrustRequest(player.getUniqueId(), requester.getUniqueId())) {
-            player.sendMessage(ChatColor.GREEN + "You now trust " +
-                    ChatColor.AQUA + requester.getName() + ChatColor.GREEN + "!");
+            player.sendMessage(ChatColor.GREEN + "You now trust " + ChatColor.AQUA + requester.getName() + ChatColor.GREEN + "!");
 
-            requester.sendMessage(ChatColor.GREEN +
-                    ChatColor.AQUA + player.getName() +
-                    ChatColor.GREEN + " accepted your trust request!");
+            requester.sendMessage(ChatColor.GREEN + "" + ChatColor.AQUA + player.getName() + ChatColor.GREEN + " accepted your trust request!");
 
             // Check if mutual trust
-            if (trustManager.mutualTrust(player, requester)) {
-                player.sendMessage(ChatColor.GOLD + "✦ You and " + requester.getName() +
-                        " now mutually trust each other!");
-                requester.sendMessage(ChatColor.GOLD + "✦ You and " + player.getName() +
-                        " now mutually trust each other!");
+            if (trustManager.mutualTrust(player.getUniqueId(), requester.getUniqueId())) {
+                player.sendMessage(ChatColor.GOLD + "✦ You and " + requester.getName() + " now mutually trust each other!");
+                requester.sendMessage(ChatColor.GOLD + "✦ You and " + player.getName() + " now mutually trust each other!");
             }
         } else {
             player.sendMessage(ChatColor.RED + "No pending trust request from " + requester.getName() + "!");
@@ -223,7 +217,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         }
 
         // Check if player trusts them
-        if (!trustManager.trusts(player, targetUuid)) {
+        if (!trustManager.trusts(player.getUniqueId(), targetUuid)) {
             player.sendMessage(ChatColor.RED + "You don't trust " + targetName + "!");
             return;
         }
@@ -245,8 +239,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
 
         if (trusted.isEmpty()) {
             player.sendMessage(ChatColor.YELLOW + "You don't trust anyone yet.");
-            player.sendMessage(ChatColor.GRAY + "Use " + ChatColor.WHITE + "/trust <player>" +
-                    ChatColor.GRAY + " to send a trust request.");
+            player.sendMessage(ChatColor.GRAY + "Use " + ChatColor.WHITE + "/trust <player>" + ChatColor.GRAY + " to send a trust request.");
             return;
         }
 
