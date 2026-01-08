@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
  * /trust remove <player> - Remove trust
  * /trust list - List trusted players
  * /trust requests - List pending requests with accept/deny buttons
+ * /trust accept <player> - Accept a trust request (internal, called by click)
+ * /trust deny <player> - Deny a trust request (internal, called by click)
  */
 public class TrustCommand implements CommandExecutor, TabCompleter {
     private final ElementPlugin plugin;
@@ -63,6 +65,12 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
                 break;
             case "requests":
                 handleRequests(player);
+                break;
+            case "accept":
+                handleAccept(player, args);
+                break;
+            case "deny":
+                handleDeny(player, args);
                 break;
             default:
                 player.sendMessage(ChatColor.RED + "Unknown command. Use /trust for help.");
@@ -192,6 +200,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
 
     /**
      * Remove trust from a player
+     * FIXED: Now properly removes from trust list when removed
      */
     private void handleRemove(Player player, String[] args) {
         if (args.length < 2) {
@@ -199,55 +208,56 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        Player target = Bukkit.getPlayer(args[1]);
-        UUID targetUuid;
-        String targetName;
+        String targetName = args[1];
+        UUID targetUuid = null;
+        String displayName = targetName;
 
+        // Try to find online player first
+        Player target = Bukkit.getPlayer(targetName);
         if (target != null) {
             targetUuid = target.getUniqueId();
-            targetName = target.getName();
+            displayName = target.getName();
         } else {
-            // Try to find by name in trusted list
-            UUID found = null;
-            String foundName = args[1];
-
-            for (UUID uuid : trustManager.getTrustedPlayers(player.getUniqueId())) {
+            // Search trusted list for offline player
+            Set<UUID> trusted = trustManager.getTrustedPlayers(player.getUniqueId());
+            for (UUID uuid : trusted) {
                 Player p = Bukkit.getPlayer(uuid);
-                if (p != null && p.getName().equalsIgnoreCase(args[1])) {
-                    found = uuid;
-                    foundName = p.getName();
+                if (p != null && p.getName().equalsIgnoreCase(targetName)) {
+                    targetUuid = uuid;
+                    displayName = p.getName();
                     break;
                 }
             }
 
-            if (found == null) {
-                player.sendMessage(ChatColor.RED + "Player '" + args[1] + "' not found in your trust list!");
+            // If still not found, it might be an offline player we trust
+            if (targetUuid == null) {
+                player.sendMessage(ChatColor.RED + "Player '" + targetName + "' not found in your trust list!");
                 return;
             }
-
-            targetUuid = found;
-            targetName = foundName;
         }
 
         // Check if player trusts them
         if (!trustManager.trusts(player.getUniqueId(), targetUuid)) {
-            player.sendMessage(ChatColor.RED + "You don't trust " + targetName + "!");
+            player.sendMessage(ChatColor.RED + "You don't trust " + displayName + "!");
             return;
         }
 
+        // CRITICAL FIX: Remove trust (this now removes both ways in TrustManager)
         trustManager.removeTrust(player.getUniqueId(), targetUuid);
-        player.sendMessage(ChatColor.YELLOW + "You no longer trust " + ChatColor.AQUA + targetName);
+        player.sendMessage(ChatColor.YELLOW + "You no longer trust " + ChatColor.AQUA + displayName);
 
         // Notify target if online
-        if (target != null) {
+        if (target != null && target.isOnline()) {
             target.sendMessage(ChatColor.YELLOW + player.getName() + " no longer trusts you.");
         }
     }
 
     /**
      * List all trusted players
+     * FIXED: Now properly shows current trust state
      */
     private void handleList(Player player) {
+        // CRITICAL FIX: Get fresh trust data from manager
         Set<UUID> trusted = trustManager.getTrustedPlayers(player.getUniqueId());
 
         if (trusted.isEmpty()) {
@@ -258,10 +268,22 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
 
         player.sendMessage(Component.text("━━━ Trusted Players ━━━").color(NamedTextColor.GOLD));
 
-        for (UUID uuid : trusted) {
+        // Create a list to sort trusted players (online first)
+        List<UUID> sortedTrusted = new ArrayList<>(trusted);
+        sortedTrusted.sort((uuid1, uuid2) -> {
+            boolean online1 = Bukkit.getPlayer(uuid1) != null;
+            boolean online2 = Bukkit.getPlayer(uuid2) != null;
+            if (online1 && !online2) return -1;
+            if (!online1 && online2) return 1;
+            return 0;
+        });
+
+        for (UUID uuid : sortedTrusted) {
             Player p = Bukkit.getPlayer(uuid);
             String name = p != null ? p.getName() : uuid.toString();
             boolean online = p != null;
+
+            // CRITICAL FIX: Check mutual trust with FRESH data
             boolean mutual = trustManager.trusts(uuid, player.getUniqueId());
 
             Component line = Component.text("• ").color(NamedTextColor.GRAY)

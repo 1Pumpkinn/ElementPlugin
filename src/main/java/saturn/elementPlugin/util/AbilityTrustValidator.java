@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Centralized utility for checking trust in abilities
  * This ensures ALL abilities respect the trust system AND disabled regions
- * UPDATED: Now prevents abilities from affecting players in disabled regions
+ * FIXED: Now shows correct message for spawn protection vs trust
  */
 public class AbilityTrustValidator {
 
@@ -19,6 +19,7 @@ public class AbilityTrustValidator {
 
     /**
      * Check if an ability can affect a target based on trust AND disabled regions
+     * PRIORITY: Spawn protection is checked BEFORE trust to show correct message
      *
      * @param plugin The plugin instance
      * @param caster The player using the ability
@@ -37,8 +38,15 @@ public class AbilityTrustValidator {
             return false;
         }
 
-        // CRITICAL: Check if target is in a disabled region (spawn protection)
-        if (plugin.getDisabledRegionsManager().isInDisabledRegion(targetPlayer.getLocation())) {
+        // === PRIORITY 1: Check spawn protection FIRST (before trust check) ===
+        boolean isInSpawn = plugin.getDisabledRegionsManager().isInDisabledRegion(targetPlayer.getLocation());
+
+        // DEBUG: Log the check
+        plugin.getLogger().info("[AbilityTrust] Checking " + caster.getName() + " -> " + targetPlayer.getName());
+        plugin.getLogger().info("[AbilityTrust] Target in spawn: " + isInSpawn);
+
+        if (isInSpawn) {
+            // Target is in spawn - IMMEDIATELY return false with spawn message
             if (sendMessage && !isOnMessageCooldown(caster)) {
                 String regionName = plugin.getDisabledRegionsManager().getRegionNameAt(targetPlayer.getLocation());
                 caster.sendMessage(ChatColor.RED + "You cannot affect " + targetPlayer.getName() +
@@ -46,19 +54,26 @@ public class AbilityTrustValidator {
                         (regionName != null ? " (" + regionName + ")" : ""));
                 setMessageCooldown(caster);
             }
-            return false;
+            plugin.getLogger().info("[AbilityTrust] BLOCKED: Spawn protection");
+            return false; // STOP HERE - don't check trust
         }
 
-        // Check trust system
-        if (plugin.getTrustManager().trusts(caster, targetPlayer)) {
+        // === PRIORITY 2: Check trust system (only after spawn check passed) ===
+        boolean trusts = plugin.getTrustManager().trusts(caster, targetPlayer);
+        plugin.getLogger().info("[AbilityTrust] Caster trusts target: " + trusts);
+
+        if (trusts) {
             if (sendMessage && !isOnMessageCooldown(caster)) {
                 caster.sendMessage(ChatColor.YELLOW + "Your ability cannot affect " +
                         targetPlayer.getName() + " - you trust them!");
                 setMessageCooldown(caster);
             }
+            plugin.getLogger().info("[AbilityTrust] BLOCKED: Trust system");
             return false;
         }
 
+        // All checks passed - can affect target
+        plugin.getLogger().info("[AbilityTrust] ALLOWED: Can affect target");
         return true;
     }
 

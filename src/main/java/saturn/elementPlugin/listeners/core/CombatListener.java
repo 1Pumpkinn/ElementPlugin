@@ -11,22 +11,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 /**
- * FIXED: Now prevents PvP damage when players trust each other
+ * FIXED: Now prevents PvP damage when players trust each other OR when target is in spawn
+ * Priority check: Spawn protection > Trust system
  */
 public class CombatListener implements Listener {
     private final ElementPlugin plugin;
     private final ElementManager elements;
 
-    // Constructor for compatibility - accepts both plugin and elementManager
     public CombatListener(ElementPlugin plugin, ElementManager elements) {
         this.plugin = plugin;
-        this.elements = elements;
-    }
-
-    // Legacy constructor for backward compatibility
-    @Deprecated
-    public CombatListener(ElementManager elements) {
-        this.plugin = null; // Will cause issues, but prevents compile error
         this.elements = elements;
     }
 
@@ -47,20 +40,40 @@ public class CombatListener implements Listener {
 
         if (damager == null) return;
 
-        // Store damager in final variable for lambda
         final Player finalDamager = damager;
 
-        // CRITICAL FIX: Check if VICTIM trusts DAMAGER (not the other way around!)
-        // The victim's trust list determines who can't hurt them
+        // === PRIORITY 1: Check if victim is in spawn (protected zone) ===
+        if (plugin.getDisabledRegionsManager().isInDisabledRegion(victim.getLocation())) {
+            e.setCancelled(true);
+
+            // Send message about spawn protection
+            if (!finalDamager.hasMetadata("spawn_protection_cooldown")) {
+                String regionName = plugin.getDisabledRegionsManager().getRegionNameAt(victim.getLocation());
+                finalDamager.sendMessage(ChatColor.RED + "You cannot damage " +
+                        victim.getName() + " - they are in a protected zone!" +
+                        (regionName != null ? " (" + regionName + ")" : ""));
+
+                // Add cooldown to prevent spam
+                finalDamager.setMetadata("spawn_protection_cooldown",
+                        new org.bukkit.metadata.FixedMetadataValue(plugin, true));
+
+                org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    finalDamager.removeMetadata("spawn_protection_cooldown", plugin);
+                }, 60L); // 3 second cooldown
+            }
+            return; // STOP HERE - don't check trust if in spawn
+        }
+
+        // === PRIORITY 2: Check trust system (only after spawn check passed) ===
         if (plugin.getTrustManager().trusts(victim, finalDamager)) {
             e.setCancelled(true);
 
-            // Optional: Send feedback message (only once per few seconds to avoid spam)
+            // Send message about trust
             if (!finalDamager.hasMetadata("trust_pvp_cooldown")) {
                 finalDamager.sendMessage(ChatColor.YELLOW + "You cannot damage " +
                         victim.getName() + " - they trust you!");
 
-                // Add cooldown metadata to prevent spam
+                // Add cooldown to prevent spam
                 finalDamager.setMetadata("trust_pvp_cooldown",
                         new org.bukkit.metadata.FixedMetadataValue(plugin, true));
 
