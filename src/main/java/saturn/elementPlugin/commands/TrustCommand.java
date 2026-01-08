@@ -48,14 +48,39 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        switch (args[0].toLowerCase()) {
-            case "accept" -> handleAccept(player, args);
-            case "deny" -> handleDeny(player, args);
-            case "remove" -> handleRemove(player, args);
-            case "list" -> handleList(player);
-            case "requests" -> handleRequests(player);
-            default -> handleTrustRequest(player, args[0]);
-        }
+        String arg0 = args[0].toLowerCase();
+            switch (arg0) {
+                case "add":
+                    if (args.length >= 2) {
+                        handleTrustRequest(player, args[1]);
+                    } else {
+                        player.sendMessage(ChatColor.RED + "Usage: /trust add <player>");
+                    }
+                    break;
+                case "remove":
+                case "untrust":
+                    handleRemove(player, args);
+                    break;
+                case "accept":
+                    handleAccept(player, args);
+                    break;
+                case "deny":
+                    handleDeny(player, args);
+                    break;
+                case "list":
+                    handleList(player);
+                    break;
+                case "requests":
+                    handleRequests(player);
+                    break;
+                case "help":
+                    sendHelp(player);
+                    break;
+                default:
+                    // If it's just a player name, treat as add
+                    handleTrustRequest(player, args[0]);
+                    break;
+            }
 
         return true;
     }
@@ -257,11 +282,18 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             if (mutual) {
                 line = line.append(Component.text(" ✦").color(NamedTextColor.GOLD)
                         .hoverEvent(HoverEvent.showText(Component.text("Mutual Trust").color(NamedTextColor.GOLD))));
+            } else {
+                line = line.append(Component.text(" (One-way)").color(NamedTextColor.YELLOW)
+                        .hoverEvent(HoverEvent.showText(Component.text("You trust them, but not vice versa.").color(NamedTextColor.YELLOW))));
             }
 
             if (!online) {
                 line = line.append(Component.text(" (Offline)").color(NamedTextColor.DARK_GRAY));
             }
+
+            line = line.append(Component.text(" [REMOVE]").color(NamedTextColor.RED)
+                .clickEvent(ClickEvent.runCommand("/trust remove " + name))
+                .hoverEvent(HoverEvent.showText(Component.text("Remove trust for " + name).color(NamedTextColor.RED))));
 
             player.sendMessage(line);
         }
@@ -291,11 +323,11 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
                     .append(Component.text("  "))
                     .append(Component.text("[ACCEPT]").color(NamedTextColor.GREEN)
                             .clickEvent(ClickEvent.runCommand("/trust accept " + name))
-                            .hoverEvent(HoverEvent.showText(Component.text("Click to accept").color(NamedTextColor.GREEN))))
+                            .hoverEvent(HoverEvent.showText(Component.text("Accept trust request from " + name).color(NamedTextColor.GREEN))))
                     .append(Component.text(" "))
                     .append(Component.text("[DENY]").color(NamedTextColor.RED)
                             .clickEvent(ClickEvent.runCommand("/trust deny " + name))
-                            .hoverEvent(HoverEvent.showText(Component.text("Click to deny").color(NamedTextColor.RED))));
+                            .hoverEvent(HoverEvent.showText(Component.text("Deny trust request from " + name).color(NamedTextColor.RED))));
 
             player.sendMessage(line);
         }
@@ -308,7 +340,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
      */
     private void sendHelp(Player player) {
         player.sendMessage(Component.text("━━━ Trust System Commands ━━━").color(NamedTextColor.GOLD));
-        player.sendMessage(Component.text("/trust <player>").color(NamedTextColor.AQUA)
+        player.sendMessage(Component.text("/trust add <player>").color(NamedTextColor.AQUA)
                 .append(Component.text(" - Send a trust request").color(NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/trust accept <player>").color(NamedTextColor.AQUA)
                 .append(Component.text(" - Accept a trust request").color(NamedTextColor.GRAY)));
@@ -320,6 +352,9 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text(" - List trusted players").color(NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/trust requests").color(NamedTextColor.AQUA)
                 .append(Component.text(" - List pending requests").color(NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/trust help").color(NamedTextColor.AQUA)
+                .append(Component.text(" - Show this help message").color(NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("Aliases: /trust untrust <player> | /trust <player>").color(NamedTextColor.GRAY));
     }
 
     @Override
