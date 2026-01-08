@@ -27,9 +27,6 @@ public class MetalUpsides extends BaseUpsides {
     public void applyUpsides(Player player, int upgradeLevel) {
         // Upside 1: Haste 1 permanently
         player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, Integer.MAX_VALUE, 0, true, false));
-
-        // Upside 2: Reduced knockback (handled in MetalKnockbackListener)
-        // No passive effect needed here
     }
 
     /**
