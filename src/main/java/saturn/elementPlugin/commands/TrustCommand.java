@@ -20,12 +20,10 @@ import java.util.stream.Collectors;
 
 /**
  * Command handler for the trust system
- * /trust <player> - Send a trust request
- * /trust accept <player> - Accept a trust request
- * /trust deny <player> - Deny a trust request
+ * /trust add <player> - Send a trust request
  * /trust remove <player> - Remove trust
  * /trust list - List trusted players
- * /trust requests - List pending requests
+ * /trust requests - List pending requests with accept/deny buttons
  */
 public class TrustCommand implements CommandExecutor, TabCompleter {
     private final ElementPlugin plugin;
@@ -49,38 +47,28 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         }
 
         String arg0 = args[0].toLowerCase();
-            switch (arg0) {
-                case "add":
-                    if (args.length >= 2) {
-                        handleTrustRequest(player, args[1]);
-                    } else {
-                        player.sendMessage(ChatColor.RED + "Usage: /trust add <player>");
-                    }
-                    break;
-                case "remove":
-                case "untrust":
-                    handleRemove(player, args);
-                    break;
-                case "accept":
-                    handleAccept(player, args);
-                    break;
-                case "deny":
-                    handleDeny(player, args);
-                    break;
-                case "list":
-                    handleList(player);
-                    break;
-                case "requests":
-                    handleRequests(player);
-                    break;
-                case "help":
-                    sendHelp(player);
-                    break;
-                default:
-                    // If it's just a player name, treat as add
-                    handleTrustRequest(player, args[0]);
-                    break;
-            }
+        switch (arg0) {
+            case "add":
+                if (args.length >= 2) {
+                    handleTrustRequest(player, args[1]);
+                } else {
+                    player.sendMessage(ChatColor.RED + "Usage: /trust add <player>");
+                }
+                break;
+            case "remove":
+                handleRemove(player, args);
+                break;
+            case "list":
+                handleList(player);
+                break;
+            case "requests":
+                handleRequests(player);
+                break;
+            default:
+                player.sendMessage(ChatColor.RED + "Unknown command. Use /trust for help.");
+                sendHelp(player);
+                break;
+        }
 
         return true;
     }
@@ -148,7 +136,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Accept a trust request
+     * Accept a trust request (internal - called by clickable button)
      */
     private void handleAccept(Player player, String[] args) {
         if (args.length < 2) {
@@ -179,7 +167,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Deny a trust request
+     * Deny a trust request (internal - called by clickable button)
      */
     private void handleDeny(Player player, String[] args) {
         if (args.length < 2) {
@@ -264,7 +252,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
 
         if (trusted.isEmpty()) {
             player.sendMessage(ChatColor.YELLOW + "You don't trust anyone yet.");
-            player.sendMessage(ChatColor.GRAY + "Use " + ChatColor.WHITE + "/trust <player>" + ChatColor.GRAY + " to send a trust request.");
+            player.sendMessage(ChatColor.GRAY + "Use " + ChatColor.WHITE + "/trust add <player>" + ChatColor.GRAY + " to send a trust request.");
             return;
         }
 
@@ -292,8 +280,8 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             }
 
             line = line.append(Component.text(" [REMOVE]").color(NamedTextColor.RED)
-                .clickEvent(ClickEvent.runCommand("/trust remove " + name))
-                .hoverEvent(HoverEvent.showText(Component.text("Remove trust for " + name).color(NamedTextColor.RED))));
+                    .clickEvent(ClickEvent.runCommand("/trust remove " + name))
+                    .hoverEvent(HoverEvent.showText(Component.text("Remove trust for " + name).color(NamedTextColor.RED))));
 
             player.sendMessage(line);
         }
@@ -342,19 +330,12 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(Component.text("━━━ Trust System Commands ━━━").color(NamedTextColor.GOLD));
         player.sendMessage(Component.text("/trust add <player>").color(NamedTextColor.AQUA)
                 .append(Component.text(" - Send a trust request").color(NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/trust accept <player>").color(NamedTextColor.AQUA)
-                .append(Component.text(" - Accept a trust request").color(NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/trust deny <player>").color(NamedTextColor.AQUA)
-                .append(Component.text(" - Deny a trust request").color(NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/trust remove <player>").color(NamedTextColor.AQUA)
                 .append(Component.text(" - Remove trust from a player").color(NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/trust list").color(NamedTextColor.AQUA)
                 .append(Component.text(" - List trusted players").color(NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/trust requests").color(NamedTextColor.AQUA)
-                .append(Component.text(" - List pending requests").color(NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/trust help").color(NamedTextColor.AQUA)
-                .append(Component.text(" - Show this help message").color(NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("Aliases: /trust untrust <player> | /trust <player>").color(NamedTextColor.GRAY));
+                .append(Component.text(" - View and manage pending requests").color(NamedTextColor.GRAY)));
     }
 
     @Override
@@ -364,16 +345,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            List<String> completions = new ArrayList<>(Arrays.asList("accept", "deny", "remove", "list", "requests"));
-
-            // Add online player names
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (!p.equals(player)) {
-                    completions.add(p.getName());
-                }
-            }
-
-            return completions.stream()
+            return Arrays.asList("add", "remove", "list", "requests").stream()
                     .filter(s -> s.toLowerCase().startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
@@ -381,12 +353,10 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         if (args.length == 2) {
             String subcommand = args[0].toLowerCase();
 
-            if (subcommand.equals("accept") || subcommand.equals("deny")) {
-                // Show players with pending requests
-                Set<UUID> pending = trustManager.getPendingRequests(player.getUniqueId());
-                return pending.stream()
-                        .map(Bukkit::getPlayer)
-                        .filter(Objects::nonNull)
+            if (subcommand.equals("add")) {
+                // Show all online players except self
+                return Bukkit.getOnlinePlayers().stream()
+                        .filter(p -> !p.equals(player))
                         .map(Player::getName)
                         .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
@@ -396,6 +366,17 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
                 // Show trusted players
                 Set<UUID> trusted = trustManager.getTrustedPlayers(player.getUniqueId());
                 return trusted.stream()
+                        .map(Bukkit::getPlayer)
+                        .filter(Objects::nonNull)
+                        .map(Player::getName)
+                        .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
+            }
+
+            // Internal commands for clickable buttons
+            if (subcommand.equals("accept") || subcommand.equals("deny")) {
+                Set<UUID> pending = trustManager.getPendingRequests(player.getUniqueId());
+                return pending.stream()
                         .map(Bukkit::getPlayer)
                         .filter(Objects::nonNull)
                         .map(Player::getName)

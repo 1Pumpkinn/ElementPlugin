@@ -16,7 +16,7 @@ commands:
 
   trust:
     description: Manage trust with other players
-    usage: /trust <player|accept|deny|remove|list|requests>
+    usage: /trust <add|remove|list|requests>
     aliases: [ t ]
 
   mana:
