@@ -43,6 +43,10 @@ commands:
     usage: /elements [element_name]
     aliases: [ elementinfo, elinfo ]
 
+  elementcheck:
+    description: Check your current element
+    usage: /elementcheck
+
   disableabilities:
     description: Manage regions where abilities are disabled
     usage: /disableabilities <pos1|pos2|create|remove|list|info|reload> [args]

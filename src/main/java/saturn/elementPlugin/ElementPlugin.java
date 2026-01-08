@@ -120,6 +120,7 @@ public final class ElementPlugin extends JavaPlugin {
         getCommand("elements").setExecutor(infoCommand);
         getCommand("elements").setTabCompleter(infoCommand);
 
+        getCommand("elementcheck").setExecutor(new ElementCheckCommand(elementManager));
         getCommand("element").setExecutor(new ElementCommand(this));
         getCommand("mana").setExecutor(new ManaCommand(manaManager));
         getCommand("util").setExecutor(new UtilCommand(this));

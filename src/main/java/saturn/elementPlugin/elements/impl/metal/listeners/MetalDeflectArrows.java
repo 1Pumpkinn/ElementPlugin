@@ -13,6 +13,7 @@ import org.bukkit.util.Vector;
 
 /**
  * Metal element passive: Deflect arrows upward when hit
+ * FIXED: Removed deprecated setBounce() call
  */
 public class MetalDeflectArrows implements Listener {
 
@@ -53,7 +54,9 @@ public class MetalDeflectArrows implements Listener {
 
         // Apply new velocity
         arrow.setVelocity(velocity);
-        arrow.setBounce(false);
+
+        // REMOVED: arrow.setBounce(false); - This method is deprecated
+        // Note: The arrow will still deflect correctly without this call
 
         // Play metallic deflect sound
         hitPlayer.getWorld().playSound(
