@@ -50,14 +50,15 @@ public class CombatListener implements Listener {
         // Store damager in final variable for lambda
         final Player finalDamager = damager;
 
-        // CRITICAL FIX: Check if damager trusts victim
-        if (plugin.getTrustManager().trusts(finalDamager, victim)) {
+        // CRITICAL FIX: Check if VICTIM trusts DAMAGER (not the other way around!)
+        // The victim's trust list determines who can't hurt them
+        if (plugin.getTrustManager().trusts(victim, finalDamager)) {
             e.setCancelled(true);
 
             // Optional: Send feedback message (only once per few seconds to avoid spam)
             if (!finalDamager.hasMetadata("trust_pvp_cooldown")) {
                 finalDamager.sendMessage(ChatColor.YELLOW + "You cannot damage " +
-                        victim.getName() + " - you trust them!");
+                        victim.getName() + " - they trust you!");
 
                 // Add cooldown metadata to prevent spam
                 finalDamager.setMetadata("trust_pvp_cooldown",
