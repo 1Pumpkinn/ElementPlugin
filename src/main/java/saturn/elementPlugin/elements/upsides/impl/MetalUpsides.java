@@ -28,15 +28,4 @@ public class MetalUpsides extends BaseUpsides {
         // Upside 1: Haste 1 permanently
         player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, Integer.MAX_VALUE, 0, true, false));
     }
-
-    /**
-     * Check if player should have reduced knockback (Upside 2)
-     * Requires Upgrade 2
-     *
-     * @param player The Metal element player
-     * @return true if knockback should be reduced
-     */
-    public boolean shouldReduceKnockback(Player player) {
-        return hasElement(player) && getUpgradeLevel(player) >= 2;
-    }
 }
